@@ -1,26 +1,34 @@
-import { Product } from '../../../shared/domain/value-objects/product.js';
+import { UUID } from 'crypto';
 import { Money } from '../../../shared/domain/value-objects/money.js';
+import { Product } from '../../../shared/domain/value-objects/product.js';
 import { OrderLine } from './order-line.js';
+import { ProductId } from 'src/shared/domain/value-objects/product-id.js';
+
+type Lines = Map<ProductId['value'], OrderLine>;
 
 export class OrderLines {
-    private readonly lines: Map<string, OrderLine>;
+    private readonly items: Lines;
 
-    constructor(lines?: Map<string, OrderLine>) {
-        this.lines = lines ? new Map<string, OrderLine>(lines) : new Map<string, OrderLine>();
+    private createLinesMap(lines: Lines): Lines {
+        return new Map(lines);
+    }
+
+    constructor(lines?: Lines) {
+        this.items = new Map<UUID, OrderLine>(lines);
     }
 
     addProduct(product: Product, quantity: number): OrderLines {
         const key = product.productId.value;
-        const existing = this.lines.get(key);
+        const existing = this.items.get(key);
         const newQuantity = existing ? existing.quantity + quantity : quantity;
-        const updated = new Map<string, OrderLine>(this.lines);
+        const updated = this.createLinesMap(this.items);
         updated.set(key, new OrderLine(product, newQuantity));
         return new OrderLines(updated);
     }
 
     changeQuantityOfProduct(product: Product, quantity: number): OrderLines {
         const key = product.productId.value;
-        const updated = new Map<string, OrderLine>(this.lines);
+        const updated = this.createLinesMap(this.items);
         if (quantity <= 0) {
             updated.delete(key);
         } else {
@@ -29,8 +37,12 @@ export class OrderLines {
         return new OrderLines(updated);
     }
 
+    removeProduct(product: Product): OrderLines {
+        return this.changeQuantityOfProduct(product, 0);
+    }
+
     getTotalPrice(): Money {
-        const entries = [...this.lines.values()];
+        const entries = [...this.items.values()];
         if (entries.length === 0) {
             return Money.ZERO;
         }
@@ -41,10 +53,10 @@ export class OrderLines {
     }
 
     isEmpty(): boolean {
-        return this.lines.size === 0;
+        return this.items.size === 0;
     }
 
-    getLines(): ReadonlyMap<string, OrderLine> {
-        return this.lines;
+    getLines(): ReadonlyMap<UUID, OrderLine> {
+        return this.items;
     }
 }
