@@ -1,1 +1,2 @@
-export * from './dissalow';
+export * from "./disallow";
+export * from "./utils";

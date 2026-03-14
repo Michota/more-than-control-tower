@@ -5,10 +5,10 @@ import { DomainPrimitive, DomainPrimitiveValue } from "./domain-primitive";
 
 type DisallowId<T> = DisallowProperty<T, "id">;
 
-type CreateValueObjectProps<T> = DisallowId<T>;
+type ValueObjectProps<T> = DisallowId<T>;
 
 export abstract class ValueObject<T> {
-    constructor(props: CreateValueObjectProps<T>) {
+    constructor(props: ValueObjectProps<T>) {
         if (has(props, "id")) {
             throw new ArgumentInvalidException(
                 `Value Objects are not capable of using 'id'! Are you sure you wanted to use ValueObject and not Entity?`,
