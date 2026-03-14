@@ -1,6 +1,7 @@
+import { BrandedId } from "../types";
 import { convertPropertiesToObject } from "./utils";
 
-type EntityId<T> = string & { __brand: T };
+type EntityId<T> = BrandedId<T, string>;
 
 interface BaseEntityProps<T> {
     id: EntityId<T>;
