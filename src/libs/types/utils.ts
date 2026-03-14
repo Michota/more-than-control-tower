@@ -1,3 +1,3 @@
 export type ObjectKey = string | number | symbol;
 
-export type BrandedId<T extends string, IdType = string> = IdType & { __brand: T };
+export type BrandedId<T, IdType = string> = T & { __brand: IdType };
