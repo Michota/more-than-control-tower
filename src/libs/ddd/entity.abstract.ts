@@ -1,15 +1,15 @@
 import { BrandedId } from "../types";
 import { convertPropertiesToObject } from "./utils";
 
-type EntityId<T> = BrandedId<T, string>;
+export type EntityId = BrandedId<"entityId", string>;
 
-interface BaseEntityProps<T> {
-    id: EntityId<T>;
+interface BaseEntityProps {
+    id: EntityId;
     createdAt: Date;
     updatedAt?: Date;
 }
 
-export interface EntityProps<T> extends BaseEntityProps<T> {
+export interface EntityProps<T> extends BaseEntityProps {
     properties: T;
 }
 
@@ -17,7 +17,7 @@ export interface EntityProps<T> extends BaseEntityProps<T> {
 export interface CreateEntityProps<T> extends EntityProps<T> {}
 
 export abstract class Entity<T> {
-    private _id: EntityId<T>;
+    private _id: EntityId;
     private _createdAt: Date;
     private _updatedAt?: Date;
     protected readonly properties: T;
@@ -29,11 +29,11 @@ export abstract class Entity<T> {
         this.properties = properties;
     }
 
-    get id(): EntityId<T> {
+    get id(): EntityId {
         return this._id;
     }
 
-    private set id(newId: EntityId<T>) {
+    private set id(newId: EntityId) {
         this._id = newId;
     }
 

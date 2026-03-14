@@ -1,6 +1,9 @@
 import { EventEmitter2 } from "@nestjs/event-emitter";
+import { BrandedId } from "../types";
 import { DomainEvent } from "./domain-event.abstract";
 import { Entity } from "./entity.abstract";
+
+export type AggregateId = BrandedId<"AggregateId">;
 
 /**
  * ## Aggregate
