@@ -5,7 +5,7 @@ import { DomainPrimitive, DomainPrimitiveValue, isDomainPrimitiveAbstract } from
 
 type DisallowId<T> = DisallowProperty<T, "id">;
 
-type ValueObjectProperties<T> = DisallowId<T>;
+type ValueObjectProperties<T> = DisallowId<T extends DomainPrimitiveValue ? DomainPrimitive<T> : T>;
 
 export abstract class ValueObject<T> {
     protected readonly properties: ValueObjectProperties<T>;
