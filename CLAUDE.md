@@ -48,7 +48,47 @@ This eliminates cascading failures, rate limit exhaustion, and latency propagati
 Exception: immediately before any irreversible physical action (e.g. finalizing a delivery, capturing a signature), a Just-In-Time synchronous verification check is performed to detect any state divergence before it becomes permanent.
 
 ## Cross-Module Communication
-Modules never import or directly call each other's classes. All cross-module communication happens through domain events published to an in-process event bus defined in the Shared Kernel. A module publishes an event when a significant state change occurs. Other modules subscribe to events they care about and react independently.
+
+Modules never import or directly call each other's internal classes — no repository, entity, service, or ORM model may cross a module boundary. All cross-module communication uses one of three mechanisms, each for a distinct purpose:
+
+### Domain Events (state change notification)
+When a significant state change occurs within a module, it publishes a Domain Event to the in-process event bus (`@nestjs/event-emitter`). Other modules subscribe to events they care about and react independently. The emitting module does not know who listens.
+
+Events are for **reactions**, not for data retrieval. Example: Warehouse emits `StockTransferredEvent` → Delivery module reacts by updating visit task status.
+
+Domain Event classes are the one permitted cross-module import: a subscribing module may import the event class from the publishing module's `domain/events/` directory. This is acceptable because events are small, immutable data objects with no business logic — they are a public contract, not an internal dependency.
+
+### Query Bus (cross-module data reads)
+When a module needs data owned by another module, it sends a Query object through the NestJS `QueryBus` (`@nestjs/cqrs`). The owning module registers a `QueryHandler` that fulfills the request. The requesting module never knows which module answers — it knows only the Query shape and the response interface.
+
+Query and response type definitions live in `src/shared/queries/`, forming the public read contract between modules. These are flat data objects with no logic.
+
+This is the **primary mechanism for cross-module reads**. It replaces direct facade imports, direct repository access, and ORM entity sharing between modules. Key properties:
+
+- **Decoupled**: Sales sends `GetProductsAvailabilityQuery` without importing anything from Warehouse. Warehouse registers the handler. Sales doesn't know Warehouse exists.
+- **Swappable**: When a tenant uses an external WMS instead of the internal Warehouse module, a different `QueryHandler` is registered for the same Query — one that calls the external API. Zero changes in Sales or any other consuming module.
+- **Batch-friendly**: Query interfaces should accept arrays of IDs to avoid N+1 patterns (e.g. `GetProductsAvailabilityQuery({ productIds: string[] })`).
+- **Synchronous within monolith**: In this deployment model, QueryBus dispatch is a direct in-process function call. There is no network hop, no serialization overhead.
+
+### Command Bus (cross-module write triggers)
+When a module needs to trigger a state-changing action in another module, it dispatches a Command through the NestJS `CommandBus`. The target module's `CommandHandler` validates and executes the action. Commands follow the same decoupling principles as Queries.
+
+Commands are for **actions**, not for data retrieval. A Command handler should not return business data — only confirmation (ID of created entity, success/failure).
+
+### What is NOT permitted
+- Importing a service, repository, entity, or ORM model from another module — at any layer, including infrastructure.
+- Querying another module's database tables directly (no cross-module SQL joins, no shared ORM entities).
+- Calling another module's facade or public service class directly. All inter-module calls go through the bus or event system.
+
+## Shared Kernel
+The `src/shared/` directory contains cross-cutting definitions that multiple modules depend on:
+
+- **Query/Response types**: `src/shared/queries/` — flat data objects defining the read contracts between modules.
+- **Command types**: `src/shared/commands/` — flat data objects defining the write contracts between modules.
+- **Domain Event base class**: The abstract event class and common event interfaces.
+- **Common Value Objects**: Shared primitives like `Money`, `Address`, `DateRange` that appear across multiple bounded contexts.
+
+The Shared Kernel contains no business logic, no services, and no database access. It is purely a type-level contract layer.
 
 ## Critical Integrity Rules
 These are non-negotiable constraints that must be enforced at the architecture level, not left to application logic:
