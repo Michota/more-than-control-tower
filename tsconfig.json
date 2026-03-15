@@ -26,7 +26,7 @@
         "paths": {
             "@src/*": ["src/*"],
             "@modules/*": ["src/modules/*"],
-            "@config/*": ["src/configs/*"],
+            "@config/*": ["src/config/*"],
             "@libs/*": ["src/libs/*"],
             "@tests/*": ["tests/*"]
         }
