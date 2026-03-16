@@ -1,38 +1,44 @@
-import { UUID } from "crypto";
+import { ValueObject } from "@src/libs/ddd/index.js";
 import { Money } from "../../../shared/value-objects/money.js";
 import { Product } from "../../../shared/value-objects/product.js";
 import { OrderLine } from "./order-line.js";
-import { ProductId } from "../../../shared/value-objects/product-id.js";
 
-type Lines = Map<ProductId["value"], OrderLine>;
+type ProductId = Product["id"];
 
-export class OrderLines {
-    private readonly items: Lines;
+type Lines = Map<ProductId, OrderLine>;
+
+interface OrderLinesProperties {
+    items: Lines;
+}
+
+export class OrderLines extends ValueObject<OrderLinesProperties> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected validate(_: OrderLinesProperties): void {}
 
     private createLinesMap(lines: Lines): Lines {
         return new Map(lines);
     }
 
-    constructor(lines?: Lines) {
-        this.items = new Map<UUID, OrderLine>(lines);
+    constructor(items: Lines = new Map()) {
+        super({ items });
     }
 
     addProduct(product: Product, quantity: number): OrderLines {
-        const key = product.productId.value;
-        const existing = this.items.get(key);
-        const newQuantity = existing ? existing.quantity + quantity : quantity;
-        const updated = this.createLinesMap(this.items);
-        updated.set(key, new OrderLine(product, newQuantity));
+        const key = product.id;
+        const existingOrderLine = this.properties.items.get(key);
+        const newQuantity = existingOrderLine ? existingOrderLine.quantity + quantity : quantity;
+        const updated = this.createLinesMap(this.properties.items);
+        updated.set(key, new OrderLine({ product, quantity: newQuantity }));
         return new OrderLines(updated);
     }
 
     changeQuantityOfProduct(product: Product, quantity: number): OrderLines {
-        const key = product.productId.value;
-        const updated = this.createLinesMap(this.items);
+        const key = product.id;
+        const updated = this.createLinesMap(this.properties.items);
         if (quantity <= 0) {
             updated.delete(key);
         } else {
-            updated.set(key, new OrderLine(product, quantity));
+            updated.set(key, new OrderLine({ product, quantity }));
         }
         return new OrderLines(updated);
     }
@@ -42,21 +48,14 @@ export class OrderLines {
     }
 
     getTotalPrice(): Money {
-        const entries = [...this.items.values()];
-        if (entries.length === 0) {
-            return Money.ZERO;
-        }
-        return entries.reduce(
-            (acc, line) => acc.add(line.subtotal),
-            new Money(entries[0].subtotal.amount.mul(0), entries[0].subtotal.currency),
-        );
+        return Money.sum(Array.from(this.properties.items.values()).map((entry) => entry.subtotal));
     }
 
-    isEmpty(): boolean {
-        return this.items.size === 0;
+    hasItems(): boolean {
+        return this.properties.items.size !== 0;
     }
 
-    getLines(): ReadonlyMap<UUID, OrderLine> {
-        return this.items;
+    getLines(): ReadonlyMap<ProductId, OrderLine> {
+        return this.properties.items;
     }
 }
