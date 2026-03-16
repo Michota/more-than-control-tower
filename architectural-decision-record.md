@@ -21,6 +21,7 @@ Several approaches were evaluated: direct facade imports, shared ORM entities ac
 When a module needs data owned by another module, it dispatches a Query object through the NestJS `QueryBus` (`@nestjs/cqrs`). The owning module registers a `QueryHandler`. The requesting module knows only the Query class and the response interface — both defined in `src/shared/queries/`.
 
 Rejected alternatives:
+
 - **Direct facade import** — creates a compile-time dependency on the providing module. If the module is removed (tenant uses external system), the import breaks. Query Bus decouples sender from receiver.
 - **Shared ORM entity import in infrastructure** — even importing an ORM entity from another module's infrastructure layer creates a dependency that breaks when the module is swapped out.
 - **Event-driven local projection** — duplicates data, introduces eventual consistency. For a B2B system with physical goods, selling stock that doesn't exist is unacceptable. Rejected as the default approach; may be adopted later for specific high-throughput read scenarios.
@@ -67,3 +68,15 @@ MikroORM manages all ORM entities and migrations globally — one config, one mi
 
 ### Future migration path
 If modules are ever extracted into separate services, the QueryBus dispatch can be replaced with an HTTP/gRPC call behind the same Query interface. The EventBus can be replaced with RabbitMQ/Kafka. The bus abstraction makes this a transport-layer change, not a domain-layer rewrite.
+
+
+# ADR-002: Mikro ORM entity definition uses `defineEntity` (schema-first, no decorators)
+
+MikroORM entities are defined using the `defineEntity` / class pattern instead of decorator-based `@Entity()` / `@Property()` annotations.
+
+Reasons:
+- Avoids `reflect-metadata` and TypeScript `experimentalDecorators` — the `defineEntity` approach is compatible with modern TypeScript without legacy compiler flags.
+- Schema definition is co-located and explicit rather than scattered across class fields as decorators.
+- Cleaner separation between the domain class and its persistence mapping.
+
+See: [MikroORM docs — comparison of approaches](https://mikro-orm.io/docs/using-decorators#comparison-of-approaches) and [defineEntity pattern](https://mikro-orm.io/docs/define-entity#the-defineentity--class-pattern-recommended).
