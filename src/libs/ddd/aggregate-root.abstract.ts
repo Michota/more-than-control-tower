@@ -30,14 +30,14 @@ export type AggregateId<T> = EntityId<T>;
  *
  * Based on [this example](https://github.com/Sairyss/domain-driven-hexagon/tree/master?tab=readme-ov-file#aggregates).
  */
-export abstract class AggregateRoot<T> extends Entity<T> {
-    private _domainEvents: DomainEvent<T>[] = [];
+export abstract class AggregateRoot<Properties> extends Entity<Properties> {
+    private _domainEvents: DomainEvent<Properties>[] = [];
 
-    get domainEvents(): DomainEvent<T>[] {
+    get domainEvents(): DomainEvent<Properties>[] {
         return this._domainEvents;
     }
 
-    protected addEvent(domainEvent: DomainEvent<T>): void {
+    protected addEvent(domainEvent: DomainEvent<Properties>): void {
         this._domainEvents.push(domainEvent);
     }
 
