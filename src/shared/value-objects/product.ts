@@ -1,5 +1,5 @@
-import { ProductId } from './product-id.js';
-import { Money } from './money.js';
+import { ProductId } from "./product-id.js";
+import { Money } from "./money.js";
 
 export class Product {
     constructor(

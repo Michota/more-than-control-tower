@@ -1,10 +1,10 @@
-import { UUID } from 'crypto';
-import { Money } from '../../../shared/domain/value-objects/money.js';
-import { Product } from '../../../shared/domain/value-objects/product.js';
-import { OrderLine } from './order-line.js';
-import { ProductId } from 'src/shared/domain/value-objects/product-id.js';
+import { UUID } from "crypto";
+import { Money } from "../../../shared/value-objects/money.js";
+import { Product } from "../../../shared/value-objects/product.js";
+import { OrderLine } from "./order-line.js";
+import { ProductId } from "../../../shared/value-objects/product-id.js";
 
-type Lines = Map<ProductId['value'], OrderLine>;
+type Lines = Map<ProductId["value"], OrderLine>;
 
 export class OrderLines {
     private readonly items: Lines;

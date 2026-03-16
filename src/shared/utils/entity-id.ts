@@ -1,4 +1,4 @@
-import { randomUUID, UUID } from 'crypto';
+import { randomUUID, UUID } from "crypto";
 
 export abstract class EntityId<T extends string> {
     declare private readonly _brand: T;

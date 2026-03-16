@@ -1,5 +1,5 @@
-import { Exception } from './exception.abstract';
-import { ExceptionCode } from './exception.codes';
+import { Exception } from "./exception.abstract";
+import { ExceptionCode } from "./exception.codes";
 
 /**
  * Used to indicate that an incorrect argument was provided to a method/function/class constructor
@@ -38,7 +38,7 @@ export class ConflictException extends Exception {
  * @extends {Exception}
  */
 export class NotFoundException extends Exception {
-    static readonly message = 'Not found';
+    static readonly message = "Not found";
 
     constructor(message = NotFoundException.message) {
         super(message);
@@ -54,7 +54,7 @@ export class NotFoundException extends Exception {
  * @extends {Exception}
  */
 export class InternalServerErrorException extends Exception {
-    static readonly message = 'Internal server error';
+    static readonly message = "Internal server error";
 
     constructor(message = InternalServerErrorException.message) {
         super(message);

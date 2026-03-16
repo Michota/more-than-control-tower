@@ -1,3 +1,3 @@
-import { EntityId } from '../../utils/entity-id.js';
+import { EntityId } from "../utils/entity-id.js";
 
-export class ProductId extends EntityId<'ProductId'> {}
+export class ProductId extends EntityId<"ProductId"> {}

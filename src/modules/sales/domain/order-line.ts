@@ -1,5 +1,5 @@
-import { Product } from '../../../shared/domain/value-objects/product.js';
-import { Money } from '../../../shared/domain/value-objects/money.js';
+import { Product } from "../../../shared/value-objects/product.js";
+import { Money } from "../../../shared/value-objects/money.js";
 
 export class OrderLine {
     constructor(

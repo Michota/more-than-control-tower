@@ -1,7 +1,7 @@
-import { Money } from '../../../shared/domain/value-objects/money.js';
-import { Product } from '../../../shared/domain/value-objects/product.js';
-import { OrderLines } from './order-lines.js';
-import { OrderId } from './value-objects/order-id.js';
+import { Money } from "../../../shared/value-objects/money.js";
+import { Product } from "../../../shared/value-objects/product.js";
+import { OrderLines } from "./order-lines.js";
+import { OrderId } from "./value-objects/order-id.js";
 
 export class Order {
     private constructor(
@@ -13,7 +13,7 @@ export class Order {
 
     static draft(orderLines: OrderLines): Order {
         if (orderLines.isEmpty()) {
-            throw new Error('Cannot draft an order with no order lines');
+            throw new Error("Cannot draft an order with no order lines");
         }
         return new Order(new OrderId(), orderLines, orderLines.getTotalPrice(), new Date());
     }

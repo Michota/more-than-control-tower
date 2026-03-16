@@ -1,9 +1,9 @@
-import { Except } from 'type-fest';
-import { ExceptionCode } from './exception.codes';
+import { Except } from "type-fest";
+import { ExceptionCode } from "./exception.codes";
 
 type ExceptionMetadata = Record<any, any>;
 
-export interface SerializedException extends Except<Error, 'name'> {
+export interface SerializedException extends Except<Error, "name"> {
     code: string;
     message: string;
     metadata?: ExceptionMetadata;
