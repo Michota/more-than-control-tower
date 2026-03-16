@@ -1,17 +1,41 @@
 import { Product } from "../../../shared/value-objects/product.js";
 import { Money } from "../../../shared/value-objects/money.js";
+import { ValueObject } from "@src/libs/ddd/index.js";
 
-export class OrderLine {
-    constructor(
-        readonly product: Product,
-        readonly quantity: number,
-    ) {}
+interface OrderLineProperties {
+    readonly product: Product;
+    readonly quantity: number;
+}
+
+export class OrderLine extends ValueObject<OrderLineProperties> {
+    protected validate(props: OrderLineProperties): void {
+        if (props.quantity < 0) {
+            throw new Error("Quantity cannot be negative");
+        }
+
+        props.product.validate();
+    }
+
+    constructor(properties: OrderLineProperties) {
+        super(properties);
+    }
+
+    get quantity() {
+        return this.properties.quantity;
+    }
 
     get subtotal(): Money {
-        return new Money(this.product.price.amount.mul(this.quantity), this.product.price.currency);
+        return new Money(
+            this.properties.product.price.amount.mul(this.properties.quantity),
+            this.properties.product.price.currency,
+        );
+    }
+
+    static create(props: OrderLineProperties) {
+        return new OrderLine(props);
     }
 
     withQuantity(quantity: number): OrderLine {
-        return new OrderLine(this.product, quantity);
+        return new OrderLine({ product: this.properties.product, quantity });
     }
 }
