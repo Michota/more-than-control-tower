@@ -20,14 +20,14 @@ interface OrderProperties {
 
 type DraftedOrderProperties = Except<OrderProperties, "status" | "cost">;
 
-export class Order extends AggregateRoot<OrderProperties> {
+export class OrderAggregate extends AggregateRoot<OrderProperties> {
     /**
      * It's not `create`, because we want to enforce that an order must be created as a draft, which means it cannot have different status than draft.
      * This way we can ensure that an order is always created with the same initial state,
      * and we can enforce that an order must have at least one order line before it can be considered as a valid order.
      */
-    static draft(properties: DraftedOrderProperties): Order {
-        const orderDraft = new Order({
+    static draft(properties: DraftedOrderProperties): OrderAggregate {
+        const orderDraft = new OrderAggregate({
             id: randomUUID() as EntityId,
             createdAt: new Date(),
             properties: {
@@ -45,8 +45,8 @@ export class Order extends AggregateRoot<OrderProperties> {
         return orderDraft;
     }
 
-    static reconstitute(props: EntityProps<OrderProperties>): Order {
-        return new Order(props);
+    static reconstitute(props: EntityProps<OrderProperties>): OrderAggregate {
+        return new OrderAggregate(props);
     }
 
     validate(): void {
