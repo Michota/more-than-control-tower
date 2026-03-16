@@ -1,9 +1,16 @@
-import { ProductId } from "./product-id.js";
+import { Entity } from "@src/libs/ddd";
 import { Money } from "./money.js";
 
-export class Product {
-    constructor(
-        readonly productId: ProductId,
-        readonly price: Money,
-    ) {}
+interface ProductProperties {
+    readonly price: Money;
+}
+
+export class Product extends Entity<ProductProperties> {
+    get price() {
+        return this.properties.price;
+    }
+
+    public validate(): void {
+        throw new Error("Method not implemented.");
+    }
 }

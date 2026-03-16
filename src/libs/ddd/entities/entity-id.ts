@@ -4,4 +4,4 @@ import { Brand } from "ts-brand";
     and this outside-generated ID can be of any type (string, number, etc.).
     The important part is that it's unique and immutable.
  */
-export type EntityId<T = string, ItemName = "entity"> = Brand<T, ItemName>;
+export type EntityId<IdType = string> = Brand<IdType, "entity">;
