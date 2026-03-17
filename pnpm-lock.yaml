@@ -11,9 +11,6 @@ importers:
       '@mikro-orm/core':
         specifier: ^7.0.2
         version: 7.0.2
-      '@mikro-orm/migrations':
-        specifier: ^7.0.2
-        version: 7.0.2(@mikro-orm/core@7.0.2)
       '@mikro-orm/nestjs':
         specifier: ^7.0.1
         version: 7.0.1(@mikro-orm/core@7.0.2)(@nestjs/common@11.1.16(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.16)(reflect-metadata@0.2.2)
@@ -72,6 +69,12 @@ importers:
       '@eslint/js':
         specifier: ^9.18.0
         version: 9.39.4
+      '@mikro-orm/cli':
+        specifier: ^7.0.2
+        version: 7.0.2
+      '@mikro-orm/migrations':
+        specifier: ^7.0.2
+        version: 7.0.2(@mikro-orm/core@7.0.2)
       '@nestjs/cli':
         specifier: ^11.0.0
         version: 11.0.16(@types/node@22.19.15)
@@ -679,6 +682,11 @@ packages:
 
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
+
+  '@mikro-orm/cli@7.0.2':
+    resolution: {integrity: sha512-l0KAogc0JshsGW65sgRTPOYcGZePaaykG7XOhdmjT8FxGq/cmrjSh6L+gstlm7jXuOmEXKRSgqW/OeV3TrWXLg==}
+    engines: {node: '>= 22.17.0'}
+    hasBin: true
 
   '@mikro-orm/core@7.0.2':
     resolution: {integrity: sha512-OzbvkyPiJnQhLpdbWcYQPh41v1jmv1KKrtJm9Irf1H7e55Kk5W2fogy74OOPIQN2mWpBz7VP6iz+o/ncEX29PQ==}
@@ -2434,6 +2442,10 @@ packages:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
 
+  mikro-orm@7.0.2:
+    resolution: {integrity: sha512-ZG8s9F6dV6MNsWp4XJpmmdNmH0/RYJhtHupouzjoenXS0IyWPRykYpLGVulCbXYOrqIZXomqhjt2PBqJQBQ4fA==}
+    engines: {node: '>= 22.17.0'}
+
   mime-db@1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
     engines: {node: '>= 0.6'}
@@ -4022,6 +4034,14 @@ snapshots:
   '@lukeed/csprng@1.1.0': {}
 
   '@microsoft/tsdoc@0.16.0': {}
+
+  '@mikro-orm/cli@7.0.2':
+    dependencies:
+      '@mikro-orm/core': 7.0.2
+      mikro-orm: 7.0.2
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - dataloader
 
   '@mikro-orm/core@7.0.2': {}
 
@@ -6001,6 +6021,8 @@ snapshots:
     dependencies:
       braces: 3.0.3
       picomatch: 2.3.1
+
+  mikro-orm@7.0.2: {}
 
   mime-db@1.52.0: {}
 
