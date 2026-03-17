@@ -1,10 +1,18 @@
 import { EntityManager } from "@mikro-orm/core";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { MikroOrmUnitOfWork } from "@src/shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "@src/shared/ports/tokens.js";
+import { DraftOrderHandler } from "./application/commands/draft-order/draft-order.handler.js";
 import { ORDER_REPOSITORY_PORT } from "./application/ports/tokens.js";
+import { OrderService } from "./application/services/order.service.js";
+import { OrderController } from "./infrastructure/http/order.controller.js";
+import { OrderLine } from "./infrastructure/persistence/order-line.embeddable.js";
+import { Order } from "./infrastructure/persistence/order.entity.js";
 import { OrderRepository } from "./infrastructure/persistence/order.repository.js";
+import { Price } from "./infrastructure/persistence/price.entity.js";
+import { Product } from "./infrastructure/persistence/product.entity.js";
 
 /**
  * Sales module — product catalog and order management.
@@ -20,7 +28,11 @@ import { OrderRepository } from "./infrastructure/persistence/order.repository.j
  * *"Fakturownia" is a name of accountancy-SaaS; it's just an example.
  */
 @Module({
+    imports: [MikroOrmModule.forFeature([Order, Product, OrderLine, Price])],
+    controllers: [OrderController],
     providers: [
+        OrderService,
+        DraftOrderHandler,
         {
             provide: ORDER_REPOSITORY_PORT,
             useFactory: (config: ConfigService, em: EntityManager) => {
