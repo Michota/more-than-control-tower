@@ -1,9 +1,18 @@
-import { Entity, EntityProps } from "@src/libs/ddd";
+import { EntityProps } from "@src/libs/ddd";
+import z from "zod";
+import { EntityWithSchema } from "../ddd/entity-with-schema.abstract";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface CustomerProperties {}
+const customerPropertiesSchema = z.object({
+    email: z.email(),
+    phoneNumber: z.number(),
+});
 
-export class Customer extends Entity<CustomerProperties> {
+type CustomerPropertiesSchema = typeof customerPropertiesSchema;
+type CustomerProperties = z.infer<CustomerPropertiesSchema>;
+
+export class Customer extends EntityWithSchema<CustomerPropertiesSchema> {
+    protected schema: CustomerPropertiesSchema = customerPropertiesSchema;
+
     static create(props: EntityProps<CustomerProperties>): Customer {
         const newCustomer = new Customer(props);
         newCustomer.validate();
@@ -13,6 +22,4 @@ export class Customer extends Entity<CustomerProperties> {
     static reconstitute(props: EntityProps<CustomerProperties>): Customer {
         return new Customer(props);
     }
-
-    public validate(): void {}
 }

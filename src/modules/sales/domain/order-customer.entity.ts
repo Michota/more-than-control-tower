@@ -1,29 +1,31 @@
 import { EntityProps } from "@src/libs/ddd";
+import { EntityWithSchema } from "@src/shared/ddd/entity-with-schema.abstract";
 import { Address } from "@src/shared/value-objects/address.value-object";
-import { Customer } from "@src/shared/value-objects/customer";
+import z from "zod";
 
-interface OrderCustomerProperties {
-    firstName: string;
-    secondName: string;
-    email: string;
-    phoneNumber: string;
-    address: Address;
-}
+const OrderCustomerPropertiesSchema = z.object({
+    firstName: z.string(),
+    secondName: z.string(),
+    address: z.instanceof(Address),
+    email: z.email(),
+    phoneNumber: z.string(),
+});
 
-export class OrderCustomer extends Customer {
-    firstName: string;
-    secondName: string;
-    email: string;
-    phoneNumber: string;
-    address: Address;
+type OrderCustomerPropertiesSchema = typeof OrderCustomerPropertiesSchema;
+type OrderCustomerProperties = z.infer<OrderCustomerPropertiesSchema>;
+
+export class OrderCustomer extends EntityWithSchema<OrderCustomerPropertiesSchema> {
+    protected schema = OrderCustomerPropertiesSchema;
+
+    readonly firstName: string;
+    readonly secondName: string;
+    readonly address: Address;
 
     constructor(props: EntityProps<OrderCustomerProperties>) {
         super(props);
 
         this.firstName = props.properties.firstName;
         this.secondName = props.properties.secondName;
-        this.email = props.properties.email;
-        this.phoneNumber = props.properties.phoneNumber;
         this.address = props.properties.address;
     }
 }
