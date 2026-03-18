@@ -1,11 +1,8 @@
 import { ValueObject } from "@src/libs/ddd";
-import z, { ZodType } from "zod";
+import { ZodType } from "zod";
 
-export abstract class ValueObjectWithSchema<
-    S extends ZodType,
-    T /* extends z.infer<S> */ = z.infer<S>,
-> extends ValueObject<T> {
-    protected abstract schema: S;
+export abstract class ValueObjectWithSchema<T, Schema extends ZodType<T> = ZodType<T>> extends ValueObject<T> {
+    protected abstract schema: Schema;
 
     /**
      * This method should be called in the constructor of the child class after setting the properties, to validate the properties against the schema.

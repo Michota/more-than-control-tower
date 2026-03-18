@@ -7,11 +7,10 @@ const customerPropertiesSchema = z.object({
     phoneNumber: z.number(),
 });
 
-type CustomerPropertiesSchema = typeof customerPropertiesSchema;
-type CustomerProperties = z.infer<CustomerPropertiesSchema>;
+type CustomerProperties = z.infer<typeof customerPropertiesSchema>;
 
-export class Customer extends EntityWithSchema<CustomerPropertiesSchema> {
-    protected schema: CustomerPropertiesSchema = customerPropertiesSchema;
+export class Customer extends EntityWithSchema<CustomerProperties> {
+    protected schema = customerPropertiesSchema;
 
     static create(props: EntityProps<CustomerProperties>): Customer {
         const newCustomer = new Customer(props);

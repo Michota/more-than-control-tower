@@ -1,10 +1,7 @@
 import { Entity } from "@src/libs/ddd";
-import z, { ZodType } from "zod";
+import { ZodType } from "zod";
 
-export abstract class EntityWithSchema<
-    PropertiesSchema extends ZodType,
-    T extends z.infer<PropertiesSchema> = z.infer<PropertiesSchema>,
-> extends Entity<T> {
+export abstract class EntityWithSchema<T, PropertiesSchema extends ZodType<T> = ZodType<T>> extends Entity<T> {
     protected abstract schema: PropertiesSchema;
 
     /**

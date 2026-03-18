@@ -10,9 +10,9 @@ const addressPropertiesSchema = z.object({
     street: z.string(),
 });
 
-type AddressPropertiesSchema = typeof addressPropertiesSchema;
+type AddressProperties = z.infer<typeof addressPropertiesSchema>;
 
-export class Address extends ValueObjectWithSchema<AddressPropertiesSchema> {
+export class Address extends ValueObjectWithSchema<AddressProperties> {
     schema = addressPropertiesSchema;
     get country(): string {
         return this.properties.country;
