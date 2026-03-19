@@ -1,5 +1,3 @@
-import { EntityId } from "@src/libs/ddd/index.js";
-import { randomUUID } from "crypto";
 import { Except } from "type-fest";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
@@ -8,8 +6,8 @@ import { Product } from "../../../shared/value-objects/product.js";
 import { OrderDraftedDomainEvent } from "./events/order-drafted.domain-event.js";
 import { OrderCustomer } from "./order-customer.entity.js";
 import { OrderLines } from "./order-lines.value-object.js";
-import { CannotChangeQuantityOfPlacedOrderError, OrderHasOrderLinesWithoutItems } from "./order.errors.js";
 import { OrderStatus } from "./order-status.enum.js";
+import { CannotChangeQuantityOfPlacedOrderError, OrderHasOrderLinesWithoutItems } from "./order.errors.js";
 
 interface OrderProperties {
     cost: Money;
@@ -28,7 +26,6 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
      */
     static draft(properties: DraftedOrderProperties): OrderAggregate {
         const orderDraft = new OrderAggregate({
-            id: randomUUID() as EntityId,
             createdAt: new Date(),
             properties: {
                 customer: properties.customer,

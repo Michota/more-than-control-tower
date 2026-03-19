@@ -1,4 +1,6 @@
+import { Except } from "type-fest";
 import { convertPropertiesToObject } from "../utils";
+import { generateEntityId } from "../utils/randomize-entity-id";
 import { EntityId } from "./entity-id";
 
 interface BaseEntityProps {
@@ -7,7 +9,8 @@ interface BaseEntityProps {
     updatedAt?: Date;
 }
 
-export interface EntityProps<T> extends BaseEntityProps {
+export interface EntityProps<T> extends Except<BaseEntityProps, "id"> {
+    id?: EntityId;
     properties: T;
 }
 
@@ -21,7 +24,7 @@ export abstract class Entity<T> {
     private readonly _properties: T;
 
     constructor({ id, createdAt, updatedAt, properties }: CreateEntityProps<T>) {
-        this._id = id;
+        this._id = id ?? generateEntityId();
         this._createdAt = createdAt || new Date();
         this._updatedAt = updatedAt;
         this._properties = properties;
