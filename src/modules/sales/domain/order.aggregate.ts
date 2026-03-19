@@ -2,7 +2,7 @@ import { Except } from "type-fest";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import { Money } from "../../../shared/value-objects/money.js";
-import { Product } from "../../../shared/value-objects/product.js";
+import { OrderItemEntity } from "./order-item.entity.js";
 import { OrderDraftedDomainEvent } from "./events/order-drafted.domain-event.js";
 import { OrderCustomer } from "./order-customer.entity.js";
 import { OrderLines } from "./order-lines.value-object.js";
@@ -65,7 +65,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
         return this.properties.orderLines;
     }
 
-    addProduct(product: Product, quantity: number): void {
+    addProduct(product: OrderItemEntity, quantity: number): void {
         if (this.properties.status !== OrderStatus.DRAFTED) {
             throw new CannotChangeQuantityOfPlacedOrderError();
         }
@@ -73,7 +73,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
         this.properties.cost = this.properties.orderLines.getTotalPrice();
     }
 
-    changeProductQuantity(product: Product, quantity: number): void {
+    changeProductQuantity(product: OrderItemEntity, quantity: number): void {
         if (this.properties.status !== OrderStatus.DRAFTED) {
             throw new CannotChangeQuantityOfPlacedOrderError();
         }
@@ -81,7 +81,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
         this.properties.cost = this.properties.orderLines.getTotalPrice();
     }
 
-    removeProduct(product: Product): void {
+    removeProduct(product: OrderItemEntity): void {
         if (this.properties.status !== OrderStatus.DRAFTED) {
             throw new CannotChangeQuantityOfPlacedOrderError();
         }

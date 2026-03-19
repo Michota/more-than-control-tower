@@ -1,11 +1,12 @@
 import { ValueObject } from "@src/libs/ddd/index.js";
 import { Money } from "../../../shared/value-objects/money.js";
-import { Product } from "../../../shared/value-objects/product.js";
+import { OrderItemEntity } from "./order-item.entity.js";
 import { OrderLine } from "./order-line.value-object.js";
 
-type ProductId = Product["id"];
+type ProductId = OrderItemEntity["id"];
 
 type Lines = Map<ProductId, OrderLine>;
+type LineAsTuple = [ProductId, OrderLine];
 
 interface OrderLinesProperties {
     items: Lines;
@@ -15,26 +16,30 @@ export class OrderLines extends ValueObject<OrderLinesProperties> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected validate(_: OrderLinesProperties): void {}
 
-    private createLinesMap(lines: Lines): Lines {
+    static createLinesMap(lines: Lines): Lines {
         return new Map(lines);
     }
 
-    constructor(items: Lines = new Map()) {
+    constructor(items: Lines | LineAsTuple[] = new Map()) {
+        if (Array.isArray(items)) {
+            super({ items: new Map(items) });
+            return;
+        }
         super({ items });
     }
 
-    addProduct(product: Product, quantity: number): OrderLines {
+    addProduct(product: OrderItemEntity, quantity: number): OrderLines {
         const key = product.id;
         const existingOrderLine = this.properties.items.get(key);
         const newQuantity = existingOrderLine ? existingOrderLine.quantity + quantity : quantity;
-        const updated = this.createLinesMap(this.properties.items);
+        const updated = OrderLines.createLinesMap(this.properties.items);
         updated.set(key, new OrderLine({ product, quantity: newQuantity }));
         return new OrderLines(updated);
     }
 
-    changeQuantityOfProduct(product: Product, quantity: number): OrderLines {
+    changeQuantityOfProduct(product: OrderItemEntity, quantity: number): OrderLines {
         const key = product.id;
-        const updated = this.createLinesMap(this.properties.items);
+        const updated = OrderLines.createLinesMap(this.properties.items);
         if (quantity <= 0) {
             updated.delete(key);
         } else {
@@ -43,7 +48,7 @@ export class OrderLines extends ValueObject<OrderLinesProperties> {
         return new OrderLines(updated);
     }
 
-    removeProduct(product: Product): OrderLines {
+    removeProduct(product: OrderItemEntity): OrderLines {
         return this.changeQuantityOfProduct(product, 0);
     }
 

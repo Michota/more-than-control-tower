@@ -1,9 +1,9 @@
-import { Product } from "../../../shared/value-objects/product.js";
+import { OrderItemEntity } from "./order-item.entity.js";
 import { Money } from "../../../shared/value-objects/money.js";
 import { ValueObject } from "@src/libs/ddd/index.js";
 
 export interface OrderLineProperties {
-    readonly product: Product;
+    readonly product: OrderItemEntity;
     readonly quantity: number;
 }
 
