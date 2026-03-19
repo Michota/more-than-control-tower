@@ -40,7 +40,13 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
 
         orderDraft.validate();
 
-        orderDraft.addEvent(new OrderDraftedDomainEvent({ aggregateId: orderDraft.id, ...orderDraft.properties }));
+        orderDraft.addEvent(
+            new OrderDraftedDomainEvent({
+                aggregateId: orderDraft.id,
+                customer: properties.customer,
+                orderLines: properties.orderLines,
+            }),
+        );
 
         return orderDraft;
     }

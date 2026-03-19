@@ -1,9 +1,9 @@
 import { DomainEvent, DomainEventProperties } from "@src/libs/ddd";
-import { Customer } from "@src/shared/value-objects/customer";
+import { OrderCustomer } from "../order-customer.entity";
 import { OrderLines } from "../order-lines.value-object";
 
 export class OrderDraftedDomainEvent extends DomainEvent {
-    readonly customer: Customer;
+    readonly customer: OrderCustomer;
     readonly orderLines: OrderLines;
 
     constructor(properties: DomainEventProperties<OrderDraftedDomainEvent>) {
