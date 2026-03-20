@@ -1,6 +1,6 @@
 import { OrderItemEntity } from "./order-item.entity.js";
 import { Money } from "../../../shared/value-objects/money.js";
-import { ValueObject } from "@src/libs/ddd/index.js";
+import { ValueObject } from "../../../libs/ddd/index.js";
 
 export interface OrderLineProperties {
     readonly product: OrderItemEntity;
@@ -14,6 +14,10 @@ export class OrderLine extends ValueObject<OrderLineProperties> {
         }
 
         props.product.validate();
+    }
+
+    get product() {
+        return this.properties.product;
     }
 
     get quantity() {

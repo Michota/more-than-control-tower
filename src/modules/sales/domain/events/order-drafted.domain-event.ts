@@ -1,16 +1,14 @@
-import { DomainEvent, DomainEventProperties } from "@src/libs/ddd";
-import { OrderCustomer } from "../order-customer.entity";
+import { DomainEvent, DomainEventProperties } from "../../../../libs/ddd";
 import { OrderLines } from "../order-lines.value-object";
 
 export class OrderDraftedDomainEvent extends DomainEvent {
-    readonly customer: OrderCustomer;
+    readonly customerId: string;
     readonly orderLines: OrderLines;
 
     constructor(properties: DomainEventProperties<OrderDraftedDomainEvent>) {
         super(properties);
 
-        // TODO: check if this can be remove as it seems redundant to declare these twice
-        this.customer = properties.customer;
+        this.customerId = properties.customerId;
         this.orderLines = properties.orderLines;
     }
 }

@@ -17,4 +17,4 @@ class OrderLine extends OrderLineSchema.class {}
 
 OrderLineSchema.setClass(OrderLine);
 
-export { OrderLine };
+export { OrderLine, OrderLineSchema };

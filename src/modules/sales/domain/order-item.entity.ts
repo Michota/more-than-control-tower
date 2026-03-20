@@ -1,23 +1,22 @@
 import { Entity, EntityProps } from "../../../libs/ddd";
 import { Money } from "../../../shared/value-objects/money.js";
-import { ItemPrice } from "./item-price.value-object.js";
 
-interface OrderItem {
-    price: ItemPrice;
+interface OrderItemProperties {
+    price: Money;
 }
 
-export class OrderItemEntity extends Entity<OrderItem> {
-    get price() {
+export class OrderItemEntity extends Entity<OrderItemProperties> {
+    get price(): Money {
         return this.properties.price;
     }
 
-    static create(props: EntityProps<OrderItem>): OrderItemEntity {
+    static create(props: EntityProps<OrderItemProperties>): OrderItemEntity {
         const item = new OrderItemEntity(props);
         item.validate();
         return item;
     }
 
-    static reconstitute(props: EntityProps<OrderItem>): OrderItemEntity {
+    static reconstitute(props: EntityProps<OrderItemProperties>): OrderItemEntity {
         return new OrderItemEntity(props);
     }
 
@@ -25,7 +24,7 @@ export class OrderItemEntity extends Entity<OrderItem> {
         // no need to validate price, as Money will validate itself
     }
 
-    changePrice(newPrice: Money) {
-        this.properties.price = new ItemPrice({ price: newPrice, itemId: this.id });
+    changePrice(newPrice: Money): void {
+        this.properties.price = newPrice;
     }
 }

@@ -4,7 +4,6 @@ import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js"
 import { Money } from "../../../shared/value-objects/money.js";
 import { OrderItemEntity } from "./order-item.entity.js";
 import { OrderDraftedDomainEvent } from "./events/order-drafted.domain-event.js";
-import { OrderCustomer } from "./order-customer.entity.js";
 import { OrderLines } from "./order-lines.value-object.js";
 import { OrderStatus } from "./order-status.enum.js";
 import { CannotChangeQuantityOfPlacedOrderError, OrderHasOrderLinesWithoutItems } from "./order.errors.js";
@@ -13,7 +12,7 @@ interface OrderProperties {
     cost: Money;
     status: OrderStatus;
     orderLines: OrderLines;
-    customer: OrderCustomer;
+    customerId: string;
 }
 
 type DraftedOrderProperties = Except<OrderProperties, "status" | "cost">;
@@ -27,7 +26,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
     static draft(properties: DraftedOrderProperties): OrderAggregate {
         const orderDraft = new OrderAggregate({
             properties: {
-                customer: properties.customer,
+                customerId: properties.customerId,
                 status: OrderStatus.DRAFTED,
                 orderLines: properties.orderLines,
                 cost: properties.orderLines.getTotalPrice(),
@@ -39,7 +38,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
         orderDraft.addEvent(
             new OrderDraftedDomainEvent({
                 aggregateId: orderDraft.id,
-                customer: properties.customer,
+                customerId: properties.customerId,
                 orderLines: properties.orderLines,
             }),
         );

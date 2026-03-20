@@ -18,6 +18,24 @@ export class OrderHasOrderLinesWithoutItems extends Exception {
     }
 }
 
+export class CustomerNotFoundForOrderError extends Exception {
+    static readonly message = "Customer not found in CRM.";
+    public readonly code = "ORDER.CUSTOMER.NOT_FOUND";
+
+    constructor(customerId: string, cause?: Error) {
+        super(`${CustomerNotFoundForOrderError.message} customerId: ${customerId}`, cause);
+    }
+}
+
+export class PriceNotFoundForOrderLineError extends Exception {
+    static readonly message = "Could not resolve a price for order line.";
+    public readonly code = "ORDER.ORDERLINE.PRICE.NOT_FOUND";
+
+    constructor(itemId: string, cause?: Error) {
+        super(`${PriceNotFoundForOrderLineError.message} itemId: ${itemId}`, cause);
+    }
+}
+
 export class CannotChangeQuantityOfPlacedOrderError extends Exception {
     static readonly message: "Can't edit quantity of placed order";
     public readonly code = "ORDER.QUANTITY.EDIT.FORBIDDEN";
