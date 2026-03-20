@@ -1,7 +1,8 @@
-import { databaseConfig, generateMikroOrmOptions, validate } from "@config/index";
+import { databaseConfig, generateMikroOrmOptions, validate } from "./config/index";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigType } from "@nestjs/config";
+import { CrmModule } from "./modules/crm/crm.module.js";
 import { SalesModule } from "./modules/sales/sales.module.js";
 import { CqrsModule } from "@nestjs/cqrs";
 
@@ -16,6 +17,7 @@ import { CqrsModule } from "@nestjs/cqrs";
         CqrsModule.forRoot(),
 
         // Modules
+        CrmModule,
         SalesModule,
     ],
     controllers: [],
