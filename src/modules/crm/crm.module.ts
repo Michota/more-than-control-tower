@@ -3,22 +3,20 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
-import { CreateCustomerCommandHandler } from "./application/commands/create-customer/create-customer.command-handler.js";
-import { CUSTOMER_REPOSITORY_PORT } from "./application/ports/tokens.js";
-import { GetCustomerQueryHandler } from "./application/queries/get-customer/get-customer.query-handler.js";
-import { SearchCustomersQueryHandler } from "./application/queries/search-customers/search-customers.query-handler.js";
-import { CustomerService } from "./application/services/customer.service.js";
-import { CustomerAddress } from "./infrastructure/persistence/customer-address.entity.js";
-import { CustomerContact } from "./infrastructure/persistence/customer-contact.entity.js";
-import { Customer } from "./infrastructure/persistence/customer.entity.js";
-import { CustomerRepository } from "./infrastructure/persistence/customer.repository.js";
-import { CustomerController } from "./infrastructure/http/customer.controller.js";
+import { CreateCustomerCommandHandler } from "./commands/create-customer/create-customer.command-handler.js";
+import { GetCustomerQueryHandler } from "./queries/get-customer/get-customer.query-handler.js";
+import { SearchCustomersQueryHandler } from "./queries/search-customers/search-customers.query-handler.js";
+import { CrmHttpController } from "./crm.http.controller.js";
+import { CustomerAddress } from "./database/customer-address.entity.js";
+import { CustomerContact } from "./database/customer-contact.entity.js";
+import { Customer } from "./database/customer.entity.js";
+import { CustomerRepository } from "./database/customer.repository.js";
+import { CUSTOMER_REPOSITORY_PORT } from "./crm.di-tokens.js";
 
 @Module({
     imports: [MikroOrmModule.forFeature([Customer, CustomerAddress, CustomerContact])],
-    controllers: [CustomerController],
+    controllers: [CrmHttpController],
     providers: [
-        CustomerService,
         CreateCustomerCommandHandler,
         GetCustomerQueryHandler,
         SearchCustomersQueryHandler,

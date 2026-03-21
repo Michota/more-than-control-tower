@@ -4,17 +4,16 @@ import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
-import { DraftOrderCommandHandler } from "./application/commands/draft-order/draft-order.command-handler.js";
-import { ITEM_PRICE_REPOSITORY_PORT, ORDER_REPOSITORY_PORT } from "./application/ports/tokens.js";
-import { OrderService } from "./application/services/order.service.js";
-import { OrderController } from "./infrastructure/http/order.controller.js";
-import { ItemPriceRepository } from "./infrastructure/persistence/item-price.repository.js";
-import { OrderLine } from "./infrastructure/persistence/order-line.embeddable.js";
-import { Order } from "./infrastructure/persistence/order.entity.js";
-import { OrderRepository } from "./infrastructure/persistence/order.repository.js";
-import { Price } from "./infrastructure/persistence/price.entity.js";
-import { PriceType } from "./infrastructure/persistence/price-type.entity.js";
-import { Product } from "./infrastructure/persistence/product.entity.js";
+import { DraftOrderCommandHandler } from "./commands/draft-order/draft-order.command-handler.js";
+import { SalesHttpController } from "./sales.http.controller.js";
+import { ITEM_PRICE_REPOSITORY_PORT, ORDER_REPOSITORY_PORT } from "./sales.di-tokens.js";
+import { ItemPriceRepository } from "./database/item-price.repository.js";
+import { OrderLine } from "./database/order-line.embeddable.js";
+import { Order } from "./database/order.entity.js";
+import { OrderRepository } from "./database/order.repository.js";
+import { Price } from "./database/price.entity.js";
+import { PriceType } from "./database/price-type.entity.js";
+import { Product } from "./database/product.entity.js";
 
 /**
  * Sales module — product catalog and order management.
@@ -31,9 +30,8 @@ import { Product } from "./infrastructure/persistence/product.entity.js";
  */
 @Module({
     imports: [MikroOrmModule.forFeature([Order, Product, OrderLine, Price, PriceType])],
-    controllers: [OrderController],
+    controllers: [SalesHttpController],
     providers: [
-        OrderService,
         DraftOrderCommandHandler,
         {
             provide: ORDER_REPOSITORY_PORT,
