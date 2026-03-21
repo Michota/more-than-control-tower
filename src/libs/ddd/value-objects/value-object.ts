@@ -65,4 +65,8 @@ export abstract class ValueObject<T> {
 
         return Object.freeze(this.properties) as T;
     }
+
+    toJSON(): T {
+        return this.unpack();
+    }
 }

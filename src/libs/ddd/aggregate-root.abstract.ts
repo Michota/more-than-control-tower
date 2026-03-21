@@ -32,7 +32,17 @@ export type IdOfEntity<T extends Entity<any>> = T["id"];
  * Based on [this example](https://github.com/Sairyss/domain-driven-hexagon/tree/master?tab=readme-ov-file#aggregates).
  */
 export abstract class AggregateRoot<Properties> extends Entity<Properties> {
-    private _domainEvents: DomainEvent<Properties>[] = [];
+    declare private _domainEvents: DomainEvent<Properties>[];
+
+    constructor(props: ConstructorParameters<typeof Entity<Properties>>[0]) {
+        super(props);
+        Object.defineProperty(this, "_domainEvents", {
+            value: [],
+            writable: true,
+            enumerable: false,
+            configurable: true,
+        });
+    }
 
     get domainEvents(): DomainEvent<Properties>[] {
         return this._domainEvents;
