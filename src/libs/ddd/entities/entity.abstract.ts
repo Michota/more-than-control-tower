@@ -1,6 +1,8 @@
 import { Except } from "type-fest";
 import { generateEntityId } from "../utils/randomize-entity-id";
 import { EntityId } from "./entity-id";
+import { isString } from "es-toolkit";
+import { ArgumentInvalidException } from "src/libs/exceptions";
 
 interface BaseEntityProps {
     id: EntityId;
@@ -23,6 +25,9 @@ export abstract class Entity<T> {
     declare private readonly _properties: T;
 
     constructor({ id, createdAt, updatedAt, properties }: CreateEntityProps<T>) {
+        if (id !== undefined && !isString(id)) {
+            throw new ArgumentInvalidException("Entity Id's needs to be stringified!");
+        }
         Object.defineProperty(this, "_id", {
             value: id ?? generateEntityId(),
             writable: true,
@@ -54,6 +59,9 @@ export abstract class Entity<T> {
     }
 
     private set id(newId: EntityId) {
+        if (!isString(newId)) {
+            throw new ArgumentInvalidException("Id's needs to be stringified!");
+        }
         this._id = newId;
     }
 
