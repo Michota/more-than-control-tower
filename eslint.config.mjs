@@ -50,6 +50,13 @@ export default tseslint.config(
                             message:
                                 "Domain layer must not import from application or infrastructure layers. Use only /domain, /libs, or /shared.",
                         },
+                        {
+                            // Relative: ../other-module/domain/**
+                            // Absolute: src/modules/other-module/domain/**
+                            regex: "(?:^(?:\\.\\./)+[^/]+|src/modules/[^/]+)/domain/",
+                            message:
+                                "Domain layer must not import from another module's domain. To react to another module's domain events, create a handler in the application layer (application/event-handlers/).",
+                        },
                     ],
                 },
             ],
