@@ -9,7 +9,6 @@ export default tseslint.config(
     {
         ignores: ["eslint.config.mjs", "src/database/migrations/**"],
     },
-    pluginJest.configs["flat/recommended"],
     eslint.configs.recommended,
     ...tseslint.configs.recommendedTypeChecked,
     eslintPluginPrettierRecommended,
@@ -24,6 +23,13 @@ export default tseslint.config(
                 projectService: true,
                 tsconfigRootDir: import.meta.dirname,
             },
+        },
+    },
+    {
+        ...pluginJest.configs["flat/recommended"],
+        rules: {
+            ...pluginJest.configs["flat/recommended"].rules,
+            "jest/no-export": "off",
         },
     },
     {
