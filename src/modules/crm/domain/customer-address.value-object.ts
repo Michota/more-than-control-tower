@@ -1,6 +1,6 @@
+import z from "zod";
 import { ValueObjectWithSchema } from "../../../shared/ddd/value-object-with-schema.abstract.js";
 import { addressPropertiesSchema } from "../../../shared/value-objects/address.value-object.js";
-import z from "zod";
 
 const customerAddressSchema = addressPropertiesSchema.extend({
     label: z.string().optional(),
