@@ -7,6 +7,7 @@
     },
     "moduleNameMapper": {
         "^src/(.*)\\.js$": "<rootDir>/$1",
+        "^src/(.*)$": "<rootDir>/$1",
         "^(\\.{1,2}/.*)\\.(t|j)s$": "$1"
     },
     "testEnvironment": "node",
