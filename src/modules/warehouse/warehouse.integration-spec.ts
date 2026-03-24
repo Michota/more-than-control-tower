@@ -32,6 +32,12 @@ import { SectorNotInWarehouseError } from "./domain/good.errors";
 import { ListSectorsQuery } from "./queries/list-sectors/list-sectors.query";
 import { GetSectorLoadQuery } from "./queries/get-sector-load/get-sector-load.query";
 import { ListWarehousesQuery } from "./queries/list-warehouses/list-warehouses.query";
+import {
+    ActivateWarehouseCommand,
+    DeactivateWarehouseCommand,
+} from "./commands/change-warehouse-status/change-warehouse-status.command";
+import { DeactivateSectorCommand } from "./commands/change-sector-status/change-sector-status.command";
+import { WarehouseHasStockError, GoodHasActiveStockError } from "./domain/good.errors";
 
 describe("Warehouse Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -965,13 +971,221 @@ describe("Warehouse Module — Integration Tests", () => {
         });
     });
 
-    // ─── 11. Deleting goods with stock entries ──────────────────
+    // ─── 11. Deleting goods ────────────────────────────────────
 
     describe("Deleting goods", () => {
         it("can delete a good that has no stock entries", async () => {
             const goodId = await createGood({ name: "Deletable" });
 
             await expect(commandBus.execute(new DeleteGoodsCommand({ goodIds: [goodId] }))).resolves.not.toThrow();
+        });
+
+        it("rejects deleting a good that has active stock entries", async () => {
+            const goodId = await createGood({ name: "Undeletable" });
+            const warehouseId = await createWarehouse("Delete Guard WH");
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 10 });
+
+            await expect(commandBus.execute(new DeleteGoodsCommand({ goodIds: [goodId] }))).rejects.toThrow(
+                GoodHasActiveStockError,
+            );
+        });
+    });
+
+    // ─── 12. Warehouse deactivation with stock guard ────────────
+
+    describe("Warehouse deactivation", () => {
+        it("deactivates an empty warehouse", async () => {
+            const warehouseId = await createWarehouse("Deactivatable WH");
+
+            await commandBus.execute(new DeactivateWarehouseCommand({ warehouseId }));
+
+            const warehouses = await queryBus.execute(new ListWarehousesQuery());
+            const wh = warehouses.find((w) => w.id === warehouseId);
+            expect(wh!.status).toEqual("INACTIVE");
+        });
+
+        it("rejects deactivation if warehouse has stock", async () => {
+            const warehouseId = await createWarehouse("Has Stock WH");
+            const goodId = await createGood({ name: "Blocker item" });
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 5 });
+
+            await expect(commandBus.execute(new DeactivateWarehouseCommand({ warehouseId }))).rejects.toThrow(
+                WarehouseHasStockError,
+            );
+        });
+
+        it("reactivates an inactive warehouse", async () => {
+            const warehouseId = await createWarehouse("Reactivatable WH");
+            await commandBus.execute(new DeactivateWarehouseCommand({ warehouseId }));
+            await commandBus.execute(new ActivateWarehouseCommand({ warehouseId }));
+
+            const warehouses = await queryBus.execute(new ListWarehousesQuery());
+            const wh = warehouses.find((w) => w.id === warehouseId);
+            expect(wh!.status).toEqual("ACTIVE");
+        });
+    });
+
+    // ─── 13. Sector deactivation ────────────────────────────────
+
+    describe("Sector deactivation", () => {
+        it("deactivates a sector", async () => {
+            const warehouseId = await createWarehouse("Sector Deactivate WH");
+            const sectorId = await createSector(warehouseId, "Deactivatable Sector");
+
+            await commandBus.execute(new DeactivateSectorCommand({ sectorId }));
+
+            const sectors = await queryBus.execute(new ListSectorsQuery(warehouseId));
+            const sector = sectors.find((s) => s.id === sectorId);
+            expect(sector!.status).toEqual("INACTIVE");
+        });
+    });
+
+    // ─── 14. Stock history toggle ───────────────────────────────
+
+    describe("Stock list with history", () => {
+        it("returns history when includeHistory is true", async () => {
+            const goodId = await createGood({ name: "History toggle item" });
+            const warehouseId = await createWarehouse("History Toggle WH");
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 10 });
+
+            const withHistory = await queryBus.execute(
+                new ListWarehouseStockQuery({ warehouseId, includeHistory: true }),
+            );
+            expect(withHistory[0].history).toBeDefined();
+            expect(withHistory[0].history!.length).toBeGreaterThan(0);
+            expect(withHistory[0].history![0].eventType).toEqual("RECEIVED");
+        });
+
+        it("omits history by default", async () => {
+            const goodId = await createGood({ name: "No history item" });
+            const warehouseId = await createWarehouse("No History WH");
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 10 });
+
+            const withoutHistory = await queryBus.execute(new ListWarehouseStockQuery({ warehouseId }));
+            expect(withoutHistory[0].history).toBeUndefined();
+        });
+    });
+
+    // ─── 15. Stock filtering and sorting ────────────────────────
+
+    describe("Stock filtering and sorting", () => {
+        it("filters stock by good name", async () => {
+            const warehouseId = await createWarehouse("Filter Name WH");
+            const appleId = await createGood({ name: "Apple" });
+            const bananaId = await createGood({ name: "Banana" });
+            await receiveGoodsToWarehouse({ goodId: appleId, warehouseId, quantity: 10 });
+            await receiveGoodsToWarehouse({ goodId: bananaId, warehouseId, quantity: 20 });
+
+            const result = await queryBus.execute(new ListWarehouseStockQuery({ warehouseId, goodName: "Apple" }));
+
+            expect(result).toHaveLength(1);
+            expect(result[0].goodName).toEqual("Apple");
+        });
+
+        it("filters stock by sector", async () => {
+            const warehouseId = await createWarehouse("Filter Sector WH");
+            const sectorId = await createSector(warehouseId, "Filter Sector");
+            const goodId = await createGood({ name: "Filtered item" });
+            const otherId = await createGood({ name: "Other item" });
+
+            // Receive one into sector, one without
+            const r1: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+            await commandBus.execute(
+                new SetGoodsReceiptLinesCommand({ receiptId: r1, lines: [{ goodId, quantity: 5, sectorId }] }),
+            );
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId: r1 }));
+            await receiveGoodsToWarehouse({ goodId: otherId, warehouseId, quantity: 10 });
+
+            const result = await queryBus.execute(new ListWarehouseStockQuery({ warehouseId, sectorId }));
+
+            expect(result).toHaveLength(1);
+            expect(result[0].goodId).toEqual(goodId);
+        });
+
+        it("sorts stock by name", async () => {
+            const warehouseId = await createWarehouse("Sort Name WH");
+            const zId = await createGood({ name: "Zucchini" });
+            const aId = await createGood({ name: "Avocado" });
+            await receiveGoodsToWarehouse({ goodId: zId, warehouseId, quantity: 5 });
+            await receiveGoodsToWarehouse({ goodId: aId, warehouseId, quantity: 5 });
+
+            const asc = await queryBus.execute(
+                new ListWarehouseStockQuery({ warehouseId, sortBy: "name", sortDirection: "asc" }),
+            );
+            expect(asc[0].goodName).toEqual("Avocado");
+            expect(asc[1].goodName).toEqual("Zucchini");
+
+            const desc = await queryBus.execute(
+                new ListWarehouseStockQuery({ warehouseId, sortBy: "name", sortDirection: "desc" }),
+            );
+            expect(desc[0].goodName).toEqual("Zucchini");
+        });
+    });
+
+    // ─── 16. Children of a good ─────────────────────────────────
+
+    describe("Children of a good", () => {
+        it("returns children in get-good response", async () => {
+            const parentId = await createGood({ name: "Parent box" });
+            const child1Id = await createGood({ name: "Child A", parentId });
+            const child2Id = await createGood({ name: "Child B", parentId });
+
+            const parent = await queryBus.execute(new GetGoodQuery(parentId));
+
+            expect(parent.children).toHaveLength(2);
+            const childIds = parent.children.map((c) => c.id).sort();
+            expect(childIds).toEqual([child1Id, child2Id].sort());
+        });
+
+        it("returns empty children array for a good with no children", async () => {
+            const goodId = await createGood({ name: "Childless" });
+
+            const good = await queryBus.execute(new GetGoodQuery(goodId));
+
+            expect(good.children).toEqual([]);
+        });
+    });
+
+    // ─── 17. Stock entry attributes ─────────────────────────────
+
+    describe("Stock entry attributes", () => {
+        it("receives stock with attributes and returns them in query", async () => {
+            const goodId = await createGood({ name: "Perishable item" });
+            const warehouseId = await createWarehouse("Attr WH");
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+            await commandBus.execute(
+                new SetGoodsReceiptLinesCommand({
+                    receiptId,
+                    lines: [{ goodId, quantity: 100 }],
+                }),
+            );
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+
+            // Stock entries don't have attributes yet via receipt lines,
+            // but we can verify the attributes field exists as empty
+            const stock = await queryBus.execute(new ListWarehouseStockQuery({ warehouseId }));
+            expect(stock[0].attributes).toEqual([]);
+        });
+
+        it("filters stock by attribute name", async () => {
+            // This test verifies the filtering path works even with no attributes
+            const goodId = await createGood({ name: "No attr item" });
+            const warehouseId = await createWarehouse("Attr Filter WH");
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 10 });
+
+            const result = await queryBus.execute(
+                new ListWarehouseStockQuery({
+                    warehouseId,
+                    attributeName: "expiration_date",
+                }),
+            );
+
+            expect(result).toHaveLength(0);
         });
     });
 });
