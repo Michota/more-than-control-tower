@@ -527,3 +527,115 @@ Modules that need logging inject `@Inject(LOGGER_PORT) private readonly logger: 
 - **Domain objects logging directly** — rejected because it couples domain logic to infrastructure. A domain aggregate should not know whether its operations are logged, or how.
 - **Global singleton logger** — rejected because it makes testing harder (can't verify log output per-test), prevents per-module log level configuration, and hides the dependency instead of making it explicit.
 - **Decorator-based logging (`@Log()`)** — rejected because it requires `reflect-metadata`, adds magic that obscures the call path, and is difficult to test or customize per-method.
+
+
+# ADR-013: Domain error codes as a shared package for frontend i18n
+
+**Status:** Accepted
+**Date:** 2026-03-24
+
+## Context
+
+The `DomainExceptionFilter` returns structured error responses containing a `code` field (e.g. `GOOD.NOT_FOUND`, `STOCK_ENTRY.INSUFFICIENT`). The frontend needs to map these codes to user-facing translated messages. Currently, error codes are string literals scattered across domain error classes in the backend — the frontend has no way to know the full set of codes without manually reading backend source code.
+
+When the codebase moves to a Turborepo monorepo (see ADR-009), error codes should be extractable into a shared package consumed by both backend and frontend.
+
+## Decision
+
+### 1. Error codes are the stable public contract
+
+The `code` field on every domain exception is the identifier the frontend uses for i18n lookups. Codes follow the pattern `MODULE.ERROR_NAME` (e.g. `GOOD.HAS_ACTIVE_STOCK`, `GOODS_RECEIPT.NOT_DRAFT`). These codes are treated as a public API — renaming or removing a code is a breaking change that requires frontend coordination.
+
+### 2. Future: shared `error-codes` package in Turborepo
+
+When the monorepo split happens, a `packages/error-codes` package will export:
+- A TypeScript enum or const object mapping all domain error codes.
+- Optionally, default English messages as fallback text.
+
+Both backend exception classes and frontend i18n dictionaries import from this package. Adding a new error code in the backend automatically surfaces it as a type error in the frontend if the i18n dictionary is incomplete.
+
+### 3. Current: codes are co-located with domain errors
+
+Until the monorepo split, error codes remain as string literals in domain error classes (e.g. `readonly code = "GOOD.NOT_FOUND"`). No separate codes file is created yet — it would be a premature abstraction with only one consumer (the backend). The shared package is justified only when the frontend exists and needs the same codes.
+
+### 4. The `message` field is for developers, not users
+
+The English `message` in the error response (e.g. "Cannot delete good X because it has active stock entries") is a developer-facing description for debugging and logs. The frontend should never display it to end users — it should map the `code` to a localized string from its own i18n dictionary.
+
+## Consequences
+
+### Positive
+- Frontend can build exhaustive i18n mappings by importing the shared codes package — TypeScript ensures completeness.
+- Error codes are decoupled from message wording — backend can reword messages without breaking the frontend.
+- The pattern works for any number of languages without backend changes.
+
+### Negative
+- Renaming an error code requires a coordinated backend + frontend change. Mitigated by treating codes as stable identifiers (like API field names) — rename only with a deprecation period.
+- Until the monorepo split, the frontend must manually maintain its own copy of the codes. Acceptable for early development with a small error surface.
+
+## Implementation status
+
+**Not yet implemented.** Error codes currently live as string literals in domain error classes. The shared package will be created when the Turborepo monorepo split occurs and a frontend consumer exists.
+
+
+# ADR-014: Replace UUID-only identifiers with opaque string IDs
+
+**Status:** Proposed (not yet implemented)
+**Date:** 2026-03-24
+
+## Context
+
+The codebase currently uses UUIDs as the sole identifier format for all entities — generated via `randomUUID()`, validated via `z.uuid()` and `@IsUUID()`, stored as `p.uuid()` columns. This works for internally-created entities but creates friction when integrating with external systems.
+
+Per the platform's multi-tenant design (see CLAUDE.md), any module can be backed by an external system instead of the internal database. External systems use their own ID formats:
+
+- ERPs often use sequential numeric IDs (`"12345"`, `"00089412"`).
+- Legacy WMS systems may use alphanumeric codes (`"WH-A-0042"`).
+- External invoicing systems may use composite keys (`"2026/03/INV-001"`).
+
+When an external adapter syncs data into the platform, it must preserve the external system's ID — not replace it with a UUID. If the platform enforces UUID format at every layer (validation, database schema, type system), external IDs cannot be stored without an additional mapping table or translation layer, adding complexity for no business value.
+
+## Decision
+
+### 1. Entity IDs become `string` throughout
+
+Replace `z.uuid()` with `z.string().min(1)` in domain schemas. Replace `@IsUUID()` with `@IsString() @IsNotEmpty()` in DTOs that accept entity references. Replace `p.uuid()` with `p.string()` for ID columns in ORM entities (except the primary key of internally-created entities, which can remain `p.uuid()` for default generation).
+
+### 2. Internal entities still default to UUID generation
+
+`AggregateRoot` and `Entity` base classes continue to generate UUIDs via `randomUUID()` when no ID is provided. The change is about what formats are *accepted*, not what is *generated*. Internally-created goods, warehouses, and orders still get UUIDs — but externally-synced entities keep their original IDs.
+
+### 3. ID format is the external system's concern, not ours
+
+The platform treats IDs as opaque strings. It does not validate whether an ID is a UUID, a number, or an alphanumeric code. The only invariant is that it is a non-empty string and unique within its entity type.
+
+### 4. Migration path
+
+This is a codebase-wide change affecting:
+- Domain schemas (Zod)
+- Request DTOs (class-validator)
+- ORM entity definitions (MikroORM `defineEntity`)
+- Database columns (migration from `uuid` to `varchar` or `text` for reference columns)
+- Tests that assert UUID format (`expect(id).toMatch(uuidRegex)`)
+
+The migration should be done module by module, starting with the module most likely to integrate with an external system first.
+
+## Rationale
+
+The cost of accepting any string as an ID is near zero — string comparison, indexing, and storage work identically for UUIDs and other formats. The cost of enforcing UUID-only is paid every time an external system integration is added: either an ID mapping table, a format translation layer, or a refusal to integrate. The platform's core value proposition is adapter swappability — rigid ID formats undermine it.
+
+## Consequences
+
+### Positive
+- External adapter implementations become simpler — they pass through the external system's ID directly, no mapping needed.
+- Anti-corruption layers (ACLs) have one less translation to perform.
+- The platform's ID handling is future-proof for any external system, regardless of their ID scheme.
+
+### Negative
+- Loss of UUID format guarantee means IDs cannot be assumed to be sortable by creation time (UUIDs v7 are, arbitrary strings are not). Anywhere that relied on ID-based ordering must use an explicit `createdAt` timestamp instead.
+- Database indexes on `varchar`/`text` are slightly less efficient than `uuid` columns. Negligible for the expected data volumes.
+- Developers lose the convenience of `ParseUUIDPipe` in controllers — must use a generic string validation instead.
+
+## Implementation status
+
+**Not yet implemented.** The codebase still uses UUIDs everywhere. This ADR documents the intended direction for when the first external system integration requires non-UUID identifiers.
