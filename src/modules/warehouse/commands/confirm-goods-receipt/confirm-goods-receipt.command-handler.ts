@@ -39,7 +39,6 @@ export class ConfirmGoodsReceiptCommandHandler implements ICommandHandler<Confir
             if (existing) {
                 existing.receive(line.quantity, {
                     note: line.note,
-                    locationDescription: line.locationDescription,
                     sectorId: line.sectorId,
                 });
                 stockEntries.push(existing);
@@ -50,7 +49,6 @@ export class ConfirmGoodsReceiptCommandHandler implements ICommandHandler<Confir
                         warehouseId: receipt.targetWarehouseId,
                         quantity: line.quantity,
                         sectorId: line.sectorId,
-                        locationDescription: line.locationDescription,
                         note: line.note,
                     }),
                 );

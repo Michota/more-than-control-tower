@@ -3,7 +3,7 @@ import { Query } from "@nestjs/cqrs";
 export interface GoodsReceiptLineResponse {
     goodId: string;
     quantity: number;
-    locationDescription?: string;
+    sectorId?: string;
     note?: string;
 }
 

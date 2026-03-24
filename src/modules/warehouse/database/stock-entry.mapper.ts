@@ -6,7 +6,6 @@ import { StockEntryAggregate } from "../domain/stock-entry.aggregate.js";
 import { StockHistoryEntry as DomainHistoryEntry } from "../domain/stock-history-entry.value-object.js";
 import { StockEventType } from "../domain/stock-event-type.enum.js";
 import { StockRemovalReason } from "../domain/stock-removal-reason.enum.js";
-import { WarehouseLocation } from "../domain/warehouse-location.value-object.js";
 import { StockEntry } from "./stock-entry.entity.js";
 import { StockHistoryEntry as OrmHistoryEntry } from "./stock-history.embeddable.js";
 
@@ -33,9 +32,6 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
                 goodId: record.goodId,
                 warehouseId: record.warehouseId,
                 sectorId: record.sectorId ?? undefined,
-                locationInWarehouse: record.locationInWarehouse
-                    ? new WarehouseLocation({ description: record.locationInWarehouse })
-                    : undefined,
                 quantity: record.quantity,
                 history,
             },
@@ -48,7 +44,6 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
             goodId: domain.goodId,
             warehouseId: domain.warehouseId,
             sectorId: domain.sectorId ?? null,
-            locationInWarehouse: domain.locationInWarehouse?.description ?? null,
             quantity: domain.quantity,
             history: domain.history.map((h) => ({
                 eventType: h.eventType,

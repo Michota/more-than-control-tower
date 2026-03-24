@@ -5,7 +5,6 @@ export class TransferStockCommand extends Command<void> {
     readonly fromWarehouseId: string;
     readonly toWarehouseId: string;
     readonly quantity: number;
-    readonly locationDescription?: string;
     readonly sectorId?: string;
     readonly note?: string;
 
@@ -15,7 +14,6 @@ export class TransferStockCommand extends Command<void> {
         this.fromWarehouseId = props.fromWarehouseId;
         this.toWarehouseId = props.toWarehouseId;
         this.quantity = props.quantity;
-        this.locationDescription = props.locationDescription;
         this.sectorId = props.sectorId;
         this.note = props.note;
     }

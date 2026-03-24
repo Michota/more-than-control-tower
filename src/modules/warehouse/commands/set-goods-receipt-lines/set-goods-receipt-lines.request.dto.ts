@@ -3,7 +3,6 @@ import {
     ArrayMinSize,
     IsArray,
     IsInt,
-    IsNotEmpty,
     IsOptional,
     IsPositive,
     IsString,
@@ -21,11 +20,10 @@ export class GoodsReceiptLineDto {
     @IsPositive()
     quantity!: number;
 
-    /** @example "Shelf A1, Zone B" */
-    @IsString()
-    @IsNotEmpty()
+    /** @example "880e8400-e29b-41d4-a716-446655440000" */
+    @IsUUID()
     @IsOptional()
-    locationDescription?: string;
+    sectorId?: string;
 
     /** @example "2 bottles had minor dents" */
     @IsString()

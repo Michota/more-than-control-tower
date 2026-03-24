@@ -93,7 +93,6 @@ describe("Warehouse Module — Integration Tests", () => {
         warehouseId: string;
         quantity: number;
         note?: string;
-        locationDescription?: string;
     }): Promise<string> {
         const receiptId: string = await commandBus.execute(
             new OpenGoodsReceiptCommand({
@@ -109,7 +108,6 @@ describe("Warehouse Module — Integration Tests", () => {
                     {
                         goodId: params.goodId,
                         quantity: params.quantity,
-                        locationDescription: params.locationDescription,
                     },
                 ],
             }),
@@ -202,7 +200,6 @@ describe("Warehouse Module — Integration Tests", () => {
                 warehouseId,
                 quantity: 50,
                 note: "Initial delivery",
-                locationDescription: "Shelf A1",
             });
 
             // Verify receipt is CONFIRMED
@@ -293,7 +290,7 @@ describe("Warehouse Module — Integration Tests", () => {
             const goodId = await createGood({ name: "Rice" });
             const warehouseId = await createWarehouse("History WH");
 
-            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 100, locationDescription: "Bay 3" });
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 100 });
 
             const entry = await getStockEntry(warehouseId, goodId);
             expect(entry.quantity).toEqual(100);
@@ -316,7 +313,6 @@ describe("Warehouse Module — Integration Tests", () => {
                     fromWarehouseId: sourceId,
                     toWarehouseId: destId,
                     quantity: 40,
-                    locationDescription: "Rack B2",
                     note: "Planned restock",
                 }),
             );
@@ -361,7 +357,7 @@ describe("Warehouse Module — Integration Tests", () => {
             ).rejects.toThrow(StockEntryNotFoundError);
         });
 
-        it("allows adding a note and location description to a transfer", async () => {
+        it("allows adding a note to a transfer", async () => {
             const goodId = await createGood({ name: "Coffee" });
             const sourceId = await createWarehouse("Note Transfer Source");
             const destId = await createWarehouse("Note Transfer Dest");
@@ -374,14 +370,12 @@ describe("Warehouse Module — Integration Tests", () => {
                     fromWarehouseId: sourceId,
                     toWarehouseId: destId,
                     quantity: 20,
-                    locationDescription: "Aisle 5, Shelf 2",
                     note: "Monthly rotation",
                 }),
             );
 
             const entry = await getStockEntry(destId, goodId);
             expect(entry.quantity).toEqual(20);
-            expect(entry.locationDescription).toEqual("Aisle 5, Shelf 2");
         });
     });
 
@@ -516,52 +510,7 @@ describe("Warehouse Module — Integration Tests", () => {
         });
     });
 
-    // ─── 6. Warehouse location tracking ───────────────────────
-
-    describe("Warehouse and location tracking", () => {
-        it("stock entry tracks location in warehouse", async () => {
-            const goodId = await createGood({ name: "Packaged food" });
-            const warehouseId = await createWarehouse("Location Track WH");
-
-            await receiveGoodsToWarehouse({
-                goodId,
-                warehouseId,
-                quantity: 30,
-                locationDescription: "Zone C, Shelf 12",
-            });
-
-            const entry = await getStockEntry(warehouseId, goodId);
-            expect(entry.locationDescription).toEqual("Zone C, Shelf 12");
-        });
-
-        it("transfer updates location in destination warehouse", async () => {
-            const goodId = await createGood({ name: "Canned soup" });
-            const sourceId = await createWarehouse("Loc Source WH");
-            const destId = await createWarehouse("Loc Dest WH");
-
-            await receiveGoodsToWarehouse({
-                goodId,
-                warehouseId: sourceId,
-                quantity: 100,
-                locationDescription: "Original location",
-            });
-
-            await commandBus.execute(
-                new TransferStockCommand({
-                    goodId,
-                    fromWarehouseId: sourceId,
-                    toWarehouseId: destId,
-                    quantity: 25,
-                    locationDescription: "New location in dest",
-                }),
-            );
-
-            const destEntry = await getStockEntry(destId, goodId);
-            expect(destEntry.locationDescription).toEqual("New location in dest");
-        });
-    });
-
-    // ─── 7. Incorporated goods: transfer and removal with parent ─
+    // ─── 6. Incorporated goods: transfer and removal with parent ─
 
     describe("Incorporated goods are transferred and removed with parent", () => {
         it("transferring a parent also transfers its children", async () => {
@@ -633,7 +582,7 @@ describe("Warehouse Module — Integration Tests", () => {
         });
     });
 
-    // ─── 8. End-to-end scenario ───────────────────────────────
+    // ─── 7. End-to-end scenario ───────────────────────────────
 
     describe("End-to-end: receive → transfer → remove", () => {
         it("full lifecycle of a good through warehouses", async () => {
@@ -646,7 +595,6 @@ describe("Warehouse Module — Integration Tests", () => {
                 goodId,
                 warehouseId: mainWh,
                 quantity: 200,
-                locationDescription: "Loading dock",
                 note: "Purchase order #123",
             });
 
@@ -659,7 +607,6 @@ describe("Warehouse Module — Integration Tests", () => {
                     fromWarehouseId: mainWh,
                     toWarehouseId: mobileWh,
                     quantity: 80,
-                    locationDescription: "Vehicle cargo bed",
                     note: "Route loading for tomorrow",
                 }),
             );
@@ -700,7 +647,6 @@ describe("Warehouse Module — Integration Tests", () => {
                     fromWarehouseId: mobileWh,
                     toWarehouseId: mainWh,
                     quantity: 25,
-                    locationDescription: "Return bay",
                     note: "End of day return",
                 }),
             );

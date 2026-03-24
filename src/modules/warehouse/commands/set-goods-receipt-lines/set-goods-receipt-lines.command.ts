@@ -3,7 +3,7 @@ import { Command, CommandProps } from "../../../../libs/cqrs/command.js";
 export interface GoodsReceiptLineInput {
     goodId: string;
     quantity: number;
-    locationDescription?: string;
+    sectorId?: string;
     note?: string;
 }
 

@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, IsUUID } from "class-validator";
+import { IsInt, IsOptional, IsPositive, IsString, IsUUID } from "class-validator";
 
 export class TransferStockRequestDto {
     /** @example "550e8400-e29b-41d4-a716-446655440000" */
@@ -18,11 +18,10 @@ export class TransferStockRequestDto {
     @IsPositive()
     quantity!: number;
 
-    /** @example "Rack B2, Aisle 5" */
-    @IsString()
-    @IsNotEmpty()
+    /** @example "880e8400-e29b-41d4-a716-446655440000" */
+    @IsUUID()
     @IsOptional()
-    locationDescription?: string;
+    sectorId?: string;
 
     /** @example "Planned restock for Monday delivery" */
     @IsString()

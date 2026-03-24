@@ -6,7 +6,7 @@ const GoodsReceiptLineSchema = defineEntity({
     properties: {
         goodId: p.uuid(),
         quantity: p.integer(),
-        locationDescription: p.string().nullable(),
+        sectorId: p.uuid().nullable(),
         note: p.string().nullable(),
     },
 });

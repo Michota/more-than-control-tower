@@ -26,7 +26,7 @@ export class GetGoodsReceiptQueryHandler implements IQueryHandler<GetGoodsReceip
             lines: receipt.lines.map((line) => ({
                 goodId: line.goodId,
                 quantity: line.quantity,
-                locationDescription: line.locationDescription,
+                sectorId: line.sectorId,
                 note: line.note,
             })),
         };

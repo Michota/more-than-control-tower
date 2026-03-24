@@ -304,7 +304,7 @@ export class WarehouseHttpController {
                 fromWarehouseId: body.fromWarehouseId,
                 toWarehouseId: body.toWarehouseId,
                 quantity: body.quantity,
-                locationDescription: body.locationDescription,
+                sectorId: body.sectorId,
                 note: body.note,
             }),
         );

@@ -16,7 +16,7 @@ export class GoodsReceiptMapper implements Mapper<GoodsReceiptAggregate, Require
                 new DomainLine({
                     goodId: l.goodId,
                     quantity: l.quantity,
-                    locationDescription: l.locationDescription ?? undefined,
+                    sectorId: l.sectorId ?? undefined,
                     note: l.note ?? undefined,
                 }),
         );
@@ -41,7 +41,7 @@ export class GoodsReceiptMapper implements Mapper<GoodsReceiptAggregate, Require
             lines: domain.lines.map((l) => ({
                 goodId: l.goodId,
                 quantity: l.quantity,
-                locationDescription: l.locationDescription ?? null,
+                sectorId: l.sectorId ?? null,
                 note: l.note ?? null,
             })) as unknown as RequiredEntityData<GoodsReceipt>["lines"],
         };

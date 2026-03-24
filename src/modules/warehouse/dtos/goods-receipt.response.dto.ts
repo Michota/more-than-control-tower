@@ -5,8 +5,8 @@ export class GoodsReceiptLineResponseDto {
     goodId!: string;
     /** @example 50 */
     quantity!: number;
-    /** @example "Shelf A1, Zone B" */
-    locationDescription?: string;
+    /** @example "880e8400-e29b-41d4-a716-446655440000" */
+    sectorId?: string;
     /** @example "2 bottles had minor dents" */
     note?: string;
 }

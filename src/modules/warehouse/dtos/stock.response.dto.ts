@@ -5,6 +5,6 @@ export class WarehouseStockItemResponseDto {
     goodId!: string;
     /** @example 120 */
     quantity!: number;
-    /** @example "Zone C, Shelf 12" */
-    locationDescription?: string;
+    /** @example "880e8400-e29b-41d4-a716-446655440000" */
+    sectorId?: string;
 }

@@ -1,7 +1,6 @@
 import z from "zod";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
-import { WarehouseLocation } from "./warehouse-location.value-object.js";
 import { StockHistoryEntry } from "./stock-history-entry.value-object.js";
 import { StockEventType } from "./stock-event-type.enum.js";
 import { StockRemovalReason } from "./stock-removal-reason.enum.js";
@@ -14,7 +13,6 @@ const stockEntrySchema = z.object({
     goodId: z.uuid(),
     warehouseId: z.uuid(),
     sectorId: z.uuid().optional(),
-    locationInWarehouse: z.instanceof(WarehouseLocation).optional(),
     quantity: z.number().int().min(0),
     history: z.array(z.instanceof(StockHistoryEntry)),
 });
@@ -27,19 +25,13 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         warehouseId: string;
         quantity: number;
         sectorId?: string;
-        locationDescription?: string;
         note?: string;
     }): StockEntryAggregate {
-        const location = props.locationDescription
-            ? new WarehouseLocation({ description: props.locationDescription })
-            : undefined;
-
         const entry = new StockEntryAggregate({
             properties: {
                 goodId: props.goodId,
                 warehouseId: props.warehouseId,
                 sectorId: props.sectorId,
-                locationInWarehouse: location,
                 quantity: props.quantity,
                 history: [
                     new StockHistoryEntry({
@@ -87,10 +79,6 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         return this.properties.sectorId;
     }
 
-    get locationInWarehouse(): WarehouseLocation | undefined {
-        return this.properties.locationInWarehouse;
-    }
-
     get quantity(): number {
         return this.properties.quantity;
     }
@@ -99,10 +87,7 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         return this.properties.history;
     }
 
-    receive(quantity: number, opts?: { note?: string; locationDescription?: string; sectorId?: string }): void {
-        if (opts?.locationDescription) {
-            this.properties.locationInWarehouse = new WarehouseLocation({ description: opts.locationDescription });
-        }
+    receive(quantity: number, opts?: { note?: string; sectorId?: string }): void {
         if (opts?.sectorId !== undefined) {
             this.properties.sectorId = opts.sectorId;
         }
@@ -190,14 +175,7 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         );
     }
 
-    transferIn(
-        quantity: number,
-        fromWarehouseId: string,
-        opts?: { note?: string; locationDescription?: string; sectorId?: string },
-    ): void {
-        if (opts?.locationDescription) {
-            this.properties.locationInWarehouse = new WarehouseLocation({ description: opts.locationDescription });
-        }
+    transferIn(quantity: number, fromWarehouseId: string, opts?: { note?: string; sectorId?: string }): void {
         if (opts?.sectorId !== undefined) {
             this.properties.sectorId = opts.sectorId;
         }

@@ -4,7 +4,7 @@ export interface WarehouseStockItem {
     id: string;
     goodId: string;
     quantity: number;
-    locationDescription?: string;
+    sectorId?: string;
 }
 
 export type ListWarehouseStockResponse = WarehouseStockItem[];

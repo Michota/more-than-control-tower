@@ -46,7 +46,6 @@ export class TransferStockCommandHandler implements ICommandHandler<TransferStoc
 
             destination.transferIn(cmd.quantity, cmd.fromWarehouseId, {
                 note: cmd.note,
-                locationDescription: cmd.locationDescription,
                 sectorId: cmd.sectorId,
             });
 

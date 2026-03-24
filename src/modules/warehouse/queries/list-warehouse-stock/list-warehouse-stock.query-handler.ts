@@ -21,7 +21,7 @@ export class ListWarehouseStockQueryHandler implements IQueryHandler<
             id: e.id as string,
             goodId: e.properties.goodId,
             quantity: e.properties.quantity,
-            locationDescription: e.properties.locationInWarehouse?.description,
+            sectorId: e.properties.sectorId,
         }));
     }
 }
