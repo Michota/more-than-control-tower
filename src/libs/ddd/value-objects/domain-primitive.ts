@@ -9,8 +9,10 @@ export interface DomainPrimitive<T extends DomainPrimitiveValue> {
 }
 
 export function isDomainPrimitiveAbstract<T>(obj: unknown): obj is DomainPrimitive<T & DomainPrimitiveValue> {
-    if (Object.prototype.hasOwnProperty.call(obj, "value")) {
-        return true;
-    }
-    return false;
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        Object.prototype.hasOwnProperty.call(obj, "value") &&
+        Object.keys(obj).length === 1
+    );
 }
