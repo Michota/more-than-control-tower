@@ -2,15 +2,8 @@
     "moduleFileExtensions": ["js", "json", "ts"],
     "rootDir": "src",
     "testRegex": ".*\\.integration-spec\\.ts$",
-    "extensionsToTreatAsEsm": [".ts"],
     "transform": {
-        "^.+\\.ts$": [
-            "ts-jest",
-            {
-                "useESM": true,
-                "tsconfig": "tsconfig.integration.json"
-            }
-        ]
+        "^.+\\.(t|j)s$": "ts-jest"
     },
     "moduleNameMapper": {
         "^src/(.*)\\.js$": "<rootDir>/$1",

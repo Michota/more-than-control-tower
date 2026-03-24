@@ -392,3 +392,46 @@ Integration tests (`*.integration-spec.ts`) use a separate Jest configuration wi
 - A second `tsconfig.integration.json` must be maintained in sync with the main one.
 - Integration and unit tests compile differently (ESM vs CJS), risking subtle module resolution differences.
 - `allowGlobalContext: true` hides bugs where production code accidentally uses the global EntityManager.
+
+
+# ADR-011: Integration tests use Vitest instead of Jest
+
+**Status:** Accepted (supersedes ADR-010)
+**Date:** 2026-03-24
+
+## Context
+
+ADR-010 documented the workarounds needed to run integration tests with Jest and MikroORM v7 (ESM-only). The approach required `--experimental-vm-modules`, a separate `tsconfig.integration.json`, and `extensionsToTreatAsEsm` — all fragile and divergent from the unit test configuration.
+
+Vitest uses Vite's native ESM module resolution and TypeScript handling, eliminating all three workarounds.
+
+## Decision
+
+Integration tests (`*.integration-spec.ts`) use Vitest with `vitest.integration.config.ts`. Unit tests (`*.spec.ts`) remain on Jest.
+
+Configuration:
+- **`vitest.integration.config.ts`** — `pool: "forks"` with `singleFork: true` (sequential execution, required for shared database state).
+- **`globals: true`** — `describe`, `it`, `expect` available without imports (Jest API compatibility).
+- **`resolve.alias`** — maps `src/` to the source directory (replaces Jest's `moduleNameMapper`).
+- **`pnpm test:integration`** — runs `vitest run --config vitest.integration.config.ts`.
+
+Removed:
+- `tsconfig.integration.json` — no longer needed; Vitest uses the project's main `tsconfig.json`.
+- `extensionsToTreatAsEsm`, `useESM`, `--experimental-vm-modules` in Jest config — all unnecessary with Vitest.
+
+Retained from ADR-010:
+- `allowGlobalContext: true` in `TestMikroOrmDatabaseModule` — still needed since tests run outside HTTP request scope.
+- `orm.schema.ensureDatabase()` + `drop()` + `create()` pattern in `beforeAll`.
+
+## Consequences
+
+### Positive
+- No experimental Node.js flags.
+- No separate tsconfig — one compiler configuration for the whole project.
+- Native ESM support — MikroORM v7, `es-toolkit`, and other ESM-only packages work without transformation workarounds.
+- Faster execution (~2s vs ~6s for the same 24 tests).
+- Test API is backward-compatible with Jest — `describe`, `it`, `expect`, `beforeAll`, `afterAll` all work identically.
+
+### Negative
+- Two test runners in the project (Jest for unit tests, Vitest for integration tests). Acceptable because unit tests have no ESM dependency issues and don't need migration.
+- Developers need both `jest` and `vitest` knowledge. Mitigated by near-identical test APIs.
