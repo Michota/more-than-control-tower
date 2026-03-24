@@ -1,30 +1,63 @@
-import { randomUUID } from "crypto";
 import { DimensionUnit, GoodDimensions } from "./good-dimensions.value-object";
 import { GoodWeight, WeightUnit } from "./good-weight.value-object";
 import { GoodAggregate } from "./good.aggregate";
-import { WarehouseLocation } from "./warehouse-location.value-object";
 import { uuidRegex } from "src/shared/utils/uuid-regex";
+import { GoodCreatedDomainEvent } from "./events/good-created.domain-event";
 
-describe("GoodAggrgate.create()", () => {
-    it("Is creating successfully", () => {
-        const good = GoodAggregate.receive({
+describe("GoodAggregate.create()", () => {
+    it("creates a good without a parent successfully", () => {
+        const good = GoodAggregate.create({
             name: "Glass bottle",
             weight: new GoodWeight({ unit: WeightUnit.KG, value: 0.1 }),
             dimensions: new GoodDimensions({ height: 15, width: 6, length: 4, unit: DimensionUnit.CM }),
-            locationInWarehouse: new WarehouseLocation({ description: "Duża hala, sektor B, kolumna 3, rząd 2." }),
-            warehouseId: randomUUID() as string,
             description: "Empty glass bottle.",
         });
 
         expect(good).toBeInstanceOf(GoodAggregate);
         expect(good.id).toMatch(uuidRegex);
-        expect(good.properties.name).toEqual("Glass bottle");
-        expect(good.properties.weight).toBeInstanceOf(GoodWeight);
-        expect(good.properties.weight.value).toEqual(0.1);
-        expect(good.properties.weight.unit).toEqual(WeightUnit.KG);
-        expect(good.locationInWarehouse).toBeInstanceOf(WarehouseLocation);
-        expect(good.locationInWarehouse?.description).toEqual("Duża hala, sektor B, kolumna 3, rząd 2.");
-        expect(typeof good.properties.warehouseId).toEqual("string");
-        expect(good.properties.description).toEqual("Empty glass bottle.");
+        expect(good.name).toEqual("Glass bottle");
+        expect(good.weight).toBeInstanceOf(GoodWeight);
+        expect(good.weight.value).toEqual(0.1);
+        expect(good.weight.unit).toEqual(WeightUnit.KG);
+        expect(good.description).toEqual("Empty glass bottle.");
+        expect(good.parentId).toBeUndefined();
+    });
+
+    it("throws Error when name is empty", () => {
+        expect(() =>
+            GoodAggregate.create({
+                name: "",
+                weight: new GoodWeight({ unit: WeightUnit.KG, value: 0.1 }),
+                dimensions: new GoodDimensions({ height: 15, width: 6, length: 4, unit: DimensionUnit.CM }),
+            }),
+        ).toThrow();
+    });
+
+    it("emits GoodCreatedDomainEvent", () => {
+        const good = GoodAggregate.create({
+            name: "Wooden crate",
+            weight: new GoodWeight({ unit: WeightUnit.KG, value: 5 }),
+            dimensions: new GoodDimensions({ height: 40, width: 60, length: 80, unit: DimensionUnit.CM }),
+        });
+
+        expect(good.domainEvents).toHaveLength(1);
+        expect(good.domainEvents[0]).toBeInstanceOf(GoodCreatedDomainEvent);
+    });
+
+    it("supports optional parentId for composite goods", () => {
+        const parent = GoodAggregate.create({
+            name: "Crate of bottles",
+            weight: new GoodWeight({ unit: WeightUnit.KG, value: 12 }),
+            dimensions: new GoodDimensions({ height: 40, width: 60, length: 80, unit: DimensionUnit.CM }),
+        });
+
+        const child = GoodAggregate.create({
+            name: "Glass bottle",
+            weight: new GoodWeight({ unit: WeightUnit.KG, value: 0.1 }),
+            dimensions: new GoodDimensions({ height: 15, width: 6, length: 4, unit: DimensionUnit.CM }),
+            parentId: String(parent.id),
+        });
+
+        expect(child.parentId).toEqual(parent.id);
     });
 });
