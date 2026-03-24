@@ -455,3 +455,75 @@ Removed:
 ### Negative
 - NestJS documentation and examples default to Jest. Developers copy-pasting from NestJS docs need to be aware that `jest.fn()` → `vi.fn()` and `jest.mock()` → `vi.mock()` if they introduce mocking in the future.
 - Vitest watch mode uses Vite's HMR, which occasionally behaves differently from Jest's `--watch` on file rename or deletion. Minor nuisance, not a correctness issue.
+
+
+# ADR-012: Logging via `LoggerPort` — infrastructure concern, not domain
+
+**Status:** Accepted
+**Date:** 2026-03-24
+
+## Context
+
+The system needs structured logging for debugging, audit trails, and production observability. The question is where logging lives in the hexagonal architecture and how it is injected.
+
+Logging is an infrastructure concern — it depends on transport (stdout, file, external service), formatting (JSON, plaintext), and configuration (log levels, sampling). None of this belongs in the domain layer. However, the infrastructure layer (repositories, interceptors, event publishing) needs to log operations like database writes, domain event publications, and transaction lifecycle.
+
+## Decision
+
+### 1. `LoggerPort` interface in `src/libs/ports/`
+
+A minimal port interface that the infrastructure layer depends on:
+
+```typescript
+export interface LoggerPort {
+    log(message: string, ...meta: unknown[]): void;
+    error(message: string, trace?: unknown, ...meta: unknown[]): void;
+    warn(message: string, ...meta: unknown[]): void;
+    debug(message: string, ...meta: unknown[]): void;
+}
+```
+
+No external library types leak through this interface. Any adapter (NestJS Logger, Pino, Winston) can implement it.
+
+### 2. Injected into repositories and infrastructure services
+
+The logger is constructor-injected into:
+- **Repository implementations** — logs database writes, deletes, unique constraint violations, and transaction start/commit/abort.
+- **`AggregateRoot.publishEvents()`** — logs every domain event publication with the event class name and aggregate ID.
+- **Exception interceptors** — logs unhandled errors with request context.
+
+The logger is **not** injected into aggregates, value objects, entities, or domain services. Domain logic does not log — it throws domain errors or emits domain events. The infrastructure layer observes and logs these.
+
+### 3. Request correlation ID in all log messages
+
+Every log message includes a correlation ID from the request context (e.g. `[req-abc123]`). This enables tracing all log entries for a single HTTP request across repositories, event handlers, and interceptors.
+
+The correlation ID is set once per request (e.g. by middleware or an interceptor) and read via a `RequestContextService`.
+
+### 4. DI token for the logger
+
+A `LOGGER_PORT` symbol in `src/shared/ports/tokens.ts` is used for injection. The concrete adapter is bound once in the application module:
+
+```typescript
+{ provide: LOGGER_PORT, useClass: NestJsLoggerAdapter }
+```
+
+Modules that need logging inject `@Inject(LOGGER_PORT) private readonly logger: LoggerPort`.
+
+## Consequences
+
+### Positive
+- Domain layer stays pure — no logging dependencies, no import of any logger library.
+- Logger implementation is swappable per environment (e.g. JSON structured logging in production, pretty-print in development, silent in tests).
+- Correlation ID threading makes production debugging tractable across the request lifecycle.
+- Consistent log structure — all infrastructure components use the same interface and patterns.
+
+### Negative
+- Every repository and infrastructure service that needs logging must accept `LoggerPort` in its constructor — slight boilerplate increase.
+- Request correlation ID requires a request-scoped context mechanism (e.g. `AsyncLocalStorage`). This adds a small runtime cost and must be set up in application bootstrap.
+
+## Rejected alternatives
+
+- **Domain objects logging directly** — rejected because it couples domain logic to infrastructure. A domain aggregate should not know whether its operations are logged, or how.
+- **Global singleton logger** — rejected because it makes testing harder (can't verify log output per-test), prevents per-module log level configuration, and hides the dependency instead of making it explicit.
+- **Decorator-based logging (`@Log()`)** — rejected because it requires `reflect-metadata`, adds magic that obscures the call path, and is difficult to test or customize per-method.
