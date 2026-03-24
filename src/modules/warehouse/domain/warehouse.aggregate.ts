@@ -68,6 +68,11 @@ export class WarehouseAggregate extends AggregateRoot<WarehouseProperties> {
         return this.properties.status;
     }
 
+    update(props: Partial<Omit<WarehouseProperties, "status">>): void {
+        Object.assign(this.properties, props);
+        this.validate();
+    }
+
     activate(): void {
         this.properties.status = WarehouseStatus.ACTIVE;
     }

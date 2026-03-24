@@ -48,6 +48,14 @@ export class IncorporatedGoodCannotBeEditedError extends Exception {
     }
 }
 
+export class WarehouseNotFoundError extends Exception {
+    public readonly code = "WAREHOUSE.NOT_FOUND";
+
+    constructor(id: string) {
+        super(`Warehouse with id ${id} not found`);
+    }
+}
+
 export class StockEntryNotFoundError extends Exception {
     public readonly code = "STOCK_ENTRY.NOT_FOUND";
 

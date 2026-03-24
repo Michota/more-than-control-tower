@@ -9,6 +9,7 @@ import { CreateGoodCommandHandler } from "./commands/create-good/create-good.com
 import { DeleteGoodsCommandHandler } from "./commands/delete-goods/delete-goods.command-handler.js";
 import { DeleteGoodsReceiptCommandHandler } from "./commands/delete-goods-receipt/delete-goods-receipt.command-handler.js";
 import { EditGoodCommandHandler } from "./commands/edit-good/edit-good.command-handler.js";
+import { EditWarehouseCommandHandler } from "./commands/edit-warehouse/edit-warehouse.command-handler.js";
 import { CreateWarehouseCommandHandler } from "./commands/create-warehouse/create-warehouse.command-handler.js";
 import { OpenGoodsReceiptCommandHandler } from "./commands/open-goods-receipt/open-goods-receipt.command-handler.js";
 import { RemoveStockCommandHandler } from "./commands/remove-stock/remove-stock.command-handler.js";
@@ -43,6 +44,7 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         DeleteGoodsCommandHandler,
         DeleteGoodsReceiptCommandHandler,
         EditGoodCommandHandler,
+        EditWarehouseCommandHandler,
         CreateWarehouseCommandHandler,
         OpenGoodsReceiptCommandHandler,
         SetGoodsReceiptLinesCommandHandler,

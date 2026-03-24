@@ -21,6 +21,8 @@ import { CreateGoodCommand } from "./commands/create-good/create-good.command.js
 import { CreateGoodRequestDto } from "./commands/create-good/create-good.request.dto.js";
 import { CreateWarehouseCommand } from "./commands/create-warehouse/create-warehouse.command.js";
 import { CreateWarehouseRequestDto } from "./commands/create-warehouse/create-warehouse.request.dto.js";
+import { EditWarehouseCommand } from "./commands/edit-warehouse/edit-warehouse.command.js";
+import { EditWarehouseRequestDto } from "./commands/edit-warehouse/edit-warehouse.request.dto.js";
 import { OpenGoodsReceiptCommand } from "./commands/open-goods-receipt/open-goods-receipt.command.js";
 import { OpenGoodsReceiptRequestDto } from "./commands/open-goods-receipt/open-goods-receipt.request.dto.js";
 import { RemoveStockCommand } from "./commands/remove-stock/remove-stock.command.js";
@@ -85,6 +87,21 @@ export class WarehouseHttpController {
             }),
         );
         return { warehouseId };
+    }
+
+    @Patch(":id")
+    @ApiOperation({ summary: "Edit warehouse properties (partial update)" })
+    @ApiResponse({ status: 200 })
+    async editWarehouse(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: EditWarehouseRequestDto): Promise<void> {
+        await this.commandBus.execute(
+            new EditWarehouseCommand({
+                warehouseId: id,
+                name: body.name,
+                latitude: body.latitude,
+                longitude: body.longitude,
+                address: body.address,
+            }),
+        );
     }
 
     // ─── Goods ───────────────────────────────────────────────
