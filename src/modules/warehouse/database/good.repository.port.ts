@@ -10,4 +10,5 @@ export interface FindGoodsParams {
 
 export interface GoodRepositoryPort extends RepositoryPort<GoodAggregate> {
     findPaginated(params: FindGoodsParams): Promise<Paginated<GoodAggregate>>;
+    findByParentId(parentId: string): Promise<GoodAggregate[]>;
 }

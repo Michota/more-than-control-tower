@@ -40,6 +40,14 @@ export class GoodsReceiptHasNoLinesError extends Exception {
     }
 }
 
+export class IncorporatedGoodCannotBeEditedError extends Exception {
+    public readonly code = "GOOD.INCORPORATED_CANNOT_EDIT";
+
+    constructor(id: string, parentId: string) {
+        super(`Good ${id} is incorporated into ${parentId} and cannot be edited while it has a parent`);
+    }
+}
+
 export class StockEntryNotFoundError extends Exception {
     public readonly code = "STOCK_ENTRY.NOT_FOUND";
 

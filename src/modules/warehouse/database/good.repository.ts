@@ -55,6 +55,11 @@ export class GoodRepository implements GoodRepositoryPort {
         });
     }
 
+    async findByParentId(parentId: string): Promise<GoodAggregate[]> {
+        const records = await this.em.find(Good, { parentId });
+        return records.map((r) => this.mapper.toDomain(r));
+    }
+
     async save(entity: GoodAggregate | GoodAggregate[]): Promise<void> {
         const goods = Array.isArray(entity) ? entity : [entity];
         for (const good of goods) {

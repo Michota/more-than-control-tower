@@ -11,7 +11,12 @@ import { SetGoodsReceiptLinesCommand } from "./commands/set-goods-receipt-lines/
 import { TransferStockCommand } from "./commands/transfer-stock/transfer-stock.command";
 import { DimensionUnit } from "./domain/good-dimensions.value-object";
 import { WeightUnit } from "./domain/good-weight.value-object";
-import { InsufficientStockError, StockEntryNotFoundError } from "./domain/good.errors";
+import { EditGoodCommand } from "./commands/edit-good/edit-good.command";
+import {
+    IncorporatedGoodCannotBeEditedError,
+    InsufficientStockError,
+    StockEntryNotFoundError,
+} from "./domain/good.errors";
 import { GoodsReceiptStatus } from "./domain/goods-receipt-status.enum";
 import { StockRemovalReason } from "./domain/stock-removal-reason.enum";
 import { GetGoodQuery } from "./queries/get-good/get-good.query";
@@ -164,6 +169,24 @@ describe("Warehouse Module — Integration Tests", () => {
             const fakeParentId = "00000000-0000-0000-0000-000000000000";
 
             await expect(createGood({ name: "Orphan", parentId: fakeParentId })).rejects.toThrow();
+        });
+
+        it("incorporated good cannot be edited while it has a parent", async () => {
+            const parentId = await createGood({ name: "Parent crate" });
+            const childId = await createGood({ name: "Child bottle", parentId });
+
+            await expect(
+                commandBus.execute(new EditGoodCommand({ goodId: childId, name: "Renamed bottle" })),
+            ).rejects.toThrow(IncorporatedGoodCannotBeEditedError);
+        });
+
+        it("standalone good (no parent) can be edited", async () => {
+            const goodId = await createGood({ name: "Editable item" });
+
+            await commandBus.execute(new EditGoodCommand({ goodId, name: "Renamed item" }));
+
+            const good = await queryBus.execute(new GetGoodQuery(goodId));
+            expect(good.name).toEqual("Renamed item");
         });
     });
 
@@ -538,7 +561,79 @@ describe("Warehouse Module — Integration Tests", () => {
         });
     });
 
-    // ─── 7. End-to-end scenario ───────────────────────────────
+    // ─── 7. Incorporated goods: transfer and removal with parent ─
+
+    describe("Incorporated goods are transferred and removed with parent", () => {
+        it("transferring a parent also transfers its children", async () => {
+            const parentId = await createGood({ name: "Pallet" });
+            const childId = await createGood({ name: "Box on pallet", parentId });
+            const sourceId = await createWarehouse("Composite Transfer Source");
+            const destId = await createWarehouse("Composite Transfer Dest");
+
+            await receiveGoodsToWarehouse({ goodId: parentId, warehouseId: sourceId, quantity: 10 });
+            await receiveGoodsToWarehouse({ goodId: childId, warehouseId: sourceId, quantity: 10 });
+
+            await commandBus.execute(
+                new TransferStockCommand({
+                    goodId: parentId,
+                    fromWarehouseId: sourceId,
+                    toWarehouseId: destId,
+                    quantity: 5,
+                }),
+            );
+
+            expect((await getStockEntry(sourceId, parentId)).quantity).toEqual(5);
+            expect((await getStockEntry(destId, parentId)).quantity).toEqual(5);
+            expect((await getStockEntry(sourceId, childId)).quantity).toEqual(5);
+            expect((await getStockEntry(destId, childId)).quantity).toEqual(5);
+        });
+
+        it("removing a parent also removes its children", async () => {
+            const parentId = await createGood({ name: "Crate" });
+            const childId = await createGood({ name: "Bottle in crate", parentId });
+            const warehouseId = await createWarehouse("Composite Removal WH");
+
+            await receiveGoodsToWarehouse({ goodId: parentId, warehouseId, quantity: 20 });
+            await receiveGoodsToWarehouse({ goodId: childId, warehouseId, quantity: 20 });
+
+            await commandBus.execute(
+                new RemoveStockCommand({
+                    goodId: parentId,
+                    warehouseId,
+                    quantity: 8,
+                    reason: StockRemovalReason.SALE,
+                }),
+            );
+
+            expect((await getStockEntry(warehouseId, parentId)).quantity).toEqual(12);
+            expect((await getStockEntry(warehouseId, childId)).quantity).toEqual(12);
+        });
+
+        it("transferring a child directly (without parent) does not affect parent", async () => {
+            const parentId = await createGood({ name: "Standalone parent" });
+            const childId = await createGood({ name: "Detachable child", parentId });
+            const sourceId = await createWarehouse("Child Transfer Source");
+            const destId = await createWarehouse("Child Transfer Dest");
+
+            await receiveGoodsToWarehouse({ goodId: parentId, warehouseId: sourceId, quantity: 10 });
+            await receiveGoodsToWarehouse({ goodId: childId, warehouseId: sourceId, quantity: 10 });
+
+            await commandBus.execute(
+                new TransferStockCommand({
+                    goodId: childId,
+                    fromWarehouseId: sourceId,
+                    toWarehouseId: destId,
+                    quantity: 3,
+                }),
+            );
+
+            expect((await getStockEntry(sourceId, parentId)).quantity).toEqual(10);
+            expect((await getStockEntry(sourceId, childId)).quantity).toEqual(7);
+            expect((await getStockEntry(destId, childId)).quantity).toEqual(3);
+        });
+    });
+
+    // ─── 8. End-to-end scenario ───────────────────────────────
 
     describe("End-to-end: receive → transfer → remove", () => {
         it("full lifecycle of a good through warehouses", async () => {

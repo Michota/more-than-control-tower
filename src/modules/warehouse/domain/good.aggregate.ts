@@ -4,6 +4,7 @@ import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js"
 import { GoodDimensions } from "./good-dimensions.value-object.js";
 import { GoodWeight } from "./good-weight.value-object.js";
 import { GoodCreatedDomainEvent } from "./events/good-created.domain-event.js";
+import { IncorporatedGoodCannotBeEditedError } from "./good.errors.js";
 
 const goodSchema = z.object({
     name: z.string().min(1),
@@ -60,6 +61,9 @@ export class GoodAggregate extends AggregateRoot<GoodProperties> {
     }
 
     update(props: Partial<GoodProperties>): void {
+        if (this.properties.parentId) {
+            throw new IncorporatedGoodCannotBeEditedError(this.id as string, this.properties.parentId);
+        }
         Object.assign(this.properties, props);
         this.validate();
     }
