@@ -36,4 +36,41 @@ export class GoodDimensions extends ValueObjectWithSchema<GoodDimensionsProperti
     get unit(): DimensionUnit {
         return this.properties.unit;
     }
+
+    static convertTo(unit: DimensionUnit, dimensions: GoodDimensions): GoodDimensions {
+        if (dimensions.unit === unit) {
+            return dimensions;
+        }
+
+        const toMm = (value: number, fromUnit: DimensionUnit): number => {
+            switch (fromUnit) {
+                case DimensionUnit.MM:
+                    return value;
+                case DimensionUnit.CM:
+                    return value * 10;
+                case DimensionUnit.M:
+                    return value * 1000;
+            }
+        };
+
+        const fromMm = (value: number, toUnit: DimensionUnit): number => {
+            switch (toUnit) {
+                case DimensionUnit.MM:
+                    return value;
+                case DimensionUnit.CM:
+                    return value / 10;
+                case DimensionUnit.M:
+                    return value / 1000;
+            }
+        };
+
+        const convert = (value: number): number => fromMm(toMm(value, dimensions.unit), unit);
+
+        return new GoodDimensions({
+            length: convert(dimensions.length),
+            width: convert(dimensions.width),
+            height: convert(dimensions.height),
+            unit,
+        });
+    }
 }
