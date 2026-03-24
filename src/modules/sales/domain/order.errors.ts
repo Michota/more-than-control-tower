@@ -1,6 +1,10 @@
-import { Exception } from "../../../libs/exceptions";
+import {
+    BadRequestDomainException,
+    ConflictDomainException,
+    NotFoundDomainException,
+} from "../../../libs/exceptions/http-domain.exceptions.js";
 
-export class OrderIsNotEditableError extends Exception {
+export class OrderIsNotEditableError extends ConflictDomainException {
     static readonly message = "This order can't be modified.";
     public readonly code = "ORDER.EDIT.FORBIDDEN";
 
@@ -9,7 +13,7 @@ export class OrderIsNotEditableError extends Exception {
     }
 }
 
-export class OrderHasOrderLinesWithoutItems extends Exception {
+export class OrderHasOrderLinesWithoutItems extends BadRequestDomainException {
     static readonly message = "Order has order lines without items.";
     public readonly code = "ORDER.ORDERLINE.WITHOUT.ITEMS";
 
@@ -18,7 +22,7 @@ export class OrderHasOrderLinesWithoutItems extends Exception {
     }
 }
 
-export class CustomerNotFoundForOrderError extends Exception {
+export class CustomerNotFoundForOrderError extends NotFoundDomainException {
     static readonly message = "Customer not found in CRM.";
     public readonly code = "ORDER.CUSTOMER.NOT_FOUND";
 
@@ -27,7 +31,7 @@ export class CustomerNotFoundForOrderError extends Exception {
     }
 }
 
-export class PriceNotFoundForOrderLineError extends Exception {
+export class PriceNotFoundForOrderLineError extends BadRequestDomainException {
     static readonly message = "Could not resolve a price for order line.";
     public readonly code = "ORDER.ORDERLINE.PRICE.NOT_FOUND";
 
@@ -36,7 +40,7 @@ export class PriceNotFoundForOrderLineError extends Exception {
     }
 }
 
-export class CannotChangeQuantityOfPlacedOrderError extends Exception {
+export class CannotChangeQuantityOfPlacedOrderError extends ConflictDomainException {
     static readonly message: "Can't edit quantity of placed order";
     public readonly code = "ORDER.QUANTITY.EDIT.FORBIDDEN";
 

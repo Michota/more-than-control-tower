@@ -1,42 +1,22 @@
+import { HttpStatus } from "@nestjs/common";
 import { Exception } from "./exception.abstract";
 import { ExceptionCode } from "./exception.codes";
 
-/**
- * Used to indicate that an incorrect argument was provided to a method/function/class constructor
- *
- * @class ArgumentInvalidException
- * @extends {Exception}
- */
 export class ArgumentInvalidException extends Exception {
     readonly code = ExceptionCode.ARGUMENT_INVALID;
+    readonly httpStatusCode = HttpStatus.BAD_REQUEST;
 }
 
-/**
- * Used to indicate that an argument was not provided (is empty object/array, null of undefined).
- *
- * @class ArgumentNotProvidedException
- * @extends {Exception}
- */
 export class ArgumentNotProvidedException extends Exception {
     readonly code = ExceptionCode.ARGUMENT_NOT_PROVIDED;
+    readonly httpStatusCode = HttpStatus.BAD_REQUEST;
 }
 
-/**
- * Used to indicate conflicting entities (usually in the database)
- *
- * @class ConflictException
- * @extends {Exception}
- */
 export class ConflictException extends Exception {
     readonly code = ExceptionCode.CONFLICT;
+    readonly httpStatusCode = HttpStatus.CONFLICT;
 }
 
-/**
- * Used to indicate that entity is not found
- *
- * @class NotFoundException
- * @extends {Exception}
- */
 export class NotFoundException extends Exception {
     static readonly message = "Not found";
 
@@ -45,14 +25,9 @@ export class NotFoundException extends Exception {
     }
 
     readonly code = ExceptionCode.NOT_FOUND;
+    readonly httpStatusCode = HttpStatus.NOT_FOUND;
 }
 
-/**
- * Used to indicate an internal server error that does not fall under all other errors
- *
- * @class InternalServerErrorException
- * @extends {Exception}
- */
 export class InternalServerErrorException extends Exception {
     static readonly message = "Internal server error";
 
@@ -61,4 +36,5 @@ export class InternalServerErrorException extends Exception {
     }
 
     readonly code = ExceptionCode.INTERNAL_SERVER_ERROR;
+    readonly httpStatusCode = HttpStatus.INTERNAL_SERVER_ERROR;
 }

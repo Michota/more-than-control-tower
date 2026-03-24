@@ -4,11 +4,13 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import "tsconfig-paths/register"; // <-- Must be first import to work with tsconfig paths
 import { AppModule } from "./app.module";
 import { env } from "./config/env";
+import { DomainExceptionFilter } from "./libs/exceptions/domain-exception.filter";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalFilters(new DomainExceptionFilter());
 
     const config = new DocumentBuilder().setVersion("1.0").build();
     const documentFactory = () => SwaggerModule.createDocument(app, config);

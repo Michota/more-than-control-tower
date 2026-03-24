@@ -1,6 +1,8 @@
-import { Exception } from "../../../libs/exceptions/exception.abstract.js";
+import { ConflictDomainException, NotFoundDomainException } from "../../../libs/exceptions/http-domain.exceptions.js";
 
-export class GoodNotFoundError extends Exception {
+// ─── Not Found ───────────────────────────────────────────
+
+export class GoodNotFoundError extends NotFoundDomainException {
     public readonly code = "GOOD.NOT_FOUND";
 
     constructor(id: string) {
@@ -8,7 +10,7 @@ export class GoodNotFoundError extends Exception {
     }
 }
 
-export class ParentGoodNotFoundError extends Exception {
+export class ParentGoodNotFoundError extends NotFoundDomainException {
     public readonly code = "GOOD.PARENT_NOT_FOUND";
 
     constructor(id: string) {
@@ -16,7 +18,7 @@ export class ParentGoodNotFoundError extends Exception {
     }
 }
 
-export class GoodsReceiptNotFoundError extends Exception {
+export class GoodsReceiptNotFoundError extends NotFoundDomainException {
     public readonly code = "GOODS_RECEIPT.NOT_FOUND";
 
     constructor(id: string) {
@@ -24,31 +26,7 @@ export class GoodsReceiptNotFoundError extends Exception {
     }
 }
 
-export class GoodsReceiptNotDraftError extends Exception {
-    public readonly code = "GOODS_RECEIPT.NOT_DRAFT";
-
-    constructor() {
-        super("Goods receipt can only be modified while in DRAFT status");
-    }
-}
-
-export class GoodsReceiptHasNoLinesError extends Exception {
-    public readonly code = "GOODS_RECEIPT.NO_LINES";
-
-    constructor() {
-        super("Cannot confirm a goods receipt with no lines");
-    }
-}
-
-export class IncorporatedGoodCannotBeEditedError extends Exception {
-    public readonly code = "GOOD.INCORPORATED_CANNOT_EDIT";
-
-    constructor(id: string, parentId: string) {
-        super(`Good ${id} is incorporated into ${parentId} and cannot be edited while it has a parent`);
-    }
-}
-
-export class SectorNotFoundError extends Exception {
+export class SectorNotFoundError extends NotFoundDomainException {
     public readonly code = "SECTOR.NOT_FOUND";
 
     constructor(id: string) {
@@ -56,23 +34,7 @@ export class SectorNotFoundError extends Exception {
     }
 }
 
-export class SectorNotInWarehouseError extends Exception {
-    public readonly code = "SECTOR.NOT_IN_WAREHOUSE";
-
-    constructor(sectorId: string, warehouseId: string) {
-        super(`Sector ${sectorId} does not belong to warehouse ${warehouseId}`);
-    }
-}
-
-export class WarehouseHasStockError extends Exception {
-    public readonly code = "WAREHOUSE.HAS_STOCK";
-
-    constructor(id: string) {
-        super(`Cannot deactivate warehouse ${id} because it still contains stock`);
-    }
-}
-
-export class WarehouseNotFoundError extends Exception {
+export class WarehouseNotFoundError extends NotFoundDomainException {
     public readonly code = "WAREHOUSE.NOT_FOUND";
 
     constructor(id: string) {
@@ -80,23 +42,7 @@ export class WarehouseNotFoundError extends Exception {
     }
 }
 
-export class GoodHasActiveStockError extends Exception {
-    public readonly code = "GOOD.HAS_ACTIVE_STOCK";
-
-    constructor(id: string) {
-        super(`Cannot delete good ${id} because it has active stock entries (quantity > 0)`);
-    }
-}
-
-export class StockEntryNotEmptyError extends Exception {
-    public readonly code = "STOCK_ENTRY.NOT_EMPTY";
-
-    constructor(id: string, quantity: number) {
-        super(`Cannot delete stock entry ${id} because it still has quantity ${quantity}`);
-    }
-}
-
-export class StockEntryNotFoundError extends Exception {
+export class StockEntryNotFoundError extends NotFoundDomainException {
     public readonly code = "STOCK_ENTRY.NOT_FOUND";
 
     constructor(goodId: string, warehouseId: string) {
@@ -104,7 +50,65 @@ export class StockEntryNotFoundError extends Exception {
     }
 }
 
-export class InsufficientStockError extends Exception {
+// ─── Conflict ────────────────────────────────────────────
+
+export class GoodsReceiptNotDraftError extends ConflictDomainException {
+    public readonly code = "GOODS_RECEIPT.NOT_DRAFT";
+
+    constructor() {
+        super("Goods receipt can only be modified while in DRAFT status");
+    }
+}
+
+export class GoodsReceiptHasNoLinesError extends ConflictDomainException {
+    public readonly code = "GOODS_RECEIPT.NO_LINES";
+
+    constructor() {
+        super("Cannot confirm a goods receipt with no lines");
+    }
+}
+
+export class IncorporatedGoodCannotBeEditedError extends ConflictDomainException {
+    public readonly code = "GOOD.INCORPORATED_CANNOT_EDIT";
+
+    constructor(id: string, parentId: string) {
+        super(`Good ${id} is incorporated into ${parentId} and cannot be edited while it has a parent`);
+    }
+}
+
+export class SectorNotInWarehouseError extends ConflictDomainException {
+    public readonly code = "SECTOR.NOT_IN_WAREHOUSE";
+
+    constructor(sectorId: string, warehouseId: string) {
+        super(`Sector ${sectorId} does not belong to warehouse ${warehouseId}`);
+    }
+}
+
+export class WarehouseHasStockError extends ConflictDomainException {
+    public readonly code = "WAREHOUSE.HAS_STOCK";
+
+    constructor(id: string) {
+        super(`Cannot deactivate warehouse ${id} because it still contains stock`);
+    }
+}
+
+export class GoodHasActiveStockError extends ConflictDomainException {
+    public readonly code = "GOOD.HAS_ACTIVE_STOCK";
+
+    constructor(id: string) {
+        super(`Cannot delete good ${id} because it has active stock entries (quantity > 0)`);
+    }
+}
+
+export class StockEntryNotEmptyError extends ConflictDomainException {
+    public readonly code = "STOCK_ENTRY.NOT_EMPTY";
+
+    constructor(id: string, quantity: number) {
+        super(`Cannot delete stock entry ${id} because it still has quantity ${quantity}`);
+    }
+}
+
+export class InsufficientStockError extends ConflictDomainException {
     public readonly code = "STOCK_ENTRY.INSUFFICIENT";
 
     constructor(goodId: string, available: number, requested: number) {
