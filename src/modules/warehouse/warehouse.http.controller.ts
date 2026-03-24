@@ -57,6 +57,7 @@ import { MoveStockToSectorCommand } from "./commands/move-stock-to-sector/move-s
 import { MoveStockToSectorRequestDto } from "./commands/move-stock-to-sector/move-stock-to-sector.request.dto.js";
 import { ListSectorsQuery } from "./queries/list-sectors/list-sectors.query.js";
 import { GetSectorQuery } from "./queries/get-sector/get-sector.query.js";
+import { GetSectorLoadQuery } from "./queries/get-sector-load/get-sector-load.query.js";
 
 @ApiTags("Warehouse")
 @Controller("warehouse")
@@ -252,6 +253,13 @@ export class WarehouseHttpController {
         return this.queryBus.execute(new GetSectorQuery(id));
     }
 
+    @Get("sectors/:id/load")
+    @ApiOperation({ summary: "Get sector load — current weight in grams and percentage of capacity" })
+    @ApiResponse({ status: 200 })
+    async getSectorLoad(@Param("id", ParseUUIDPipe) id: UUID) {
+        return this.queryBus.execute(new GetSectorLoadQuery(id));
+    }
+
     @Post(":warehouseId/sectors")
     @ApiOperation({ summary: "Create a sector in a warehouse" })
     @ApiResponse({ status: 201 })
@@ -269,6 +277,7 @@ export class WarehouseHttpController {
                 dimensionHeight: body.dimensionHeight,
                 dimensionUnit: body.dimensionUnit,
                 capabilities: body.capabilities,
+                weightCapacityGrams: body.weightCapacityGrams,
             }),
         );
         return { sectorId };

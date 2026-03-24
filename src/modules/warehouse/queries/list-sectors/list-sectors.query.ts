@@ -7,6 +7,7 @@ export interface SectorListItem {
     warehouseId: string;
     dimensions: { length: number; width: number; height: number; unit: string };
     capabilities: string[];
+    weightCapacityGrams: number;
     status: string;
 }
 

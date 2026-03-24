@@ -25,6 +25,7 @@ export class SectorMapper implements Mapper<SectorAggregate, RequiredEntityData<
                     unit: record.dimensionUnit as DimensionUnit,
                 }),
                 capabilities: record.capabilities as SectorCapability[],
+                weightCapacityGrams: record.weightCapacityGrams,
                 status: record.status as SectorStatus,
             },
         });
@@ -41,6 +42,7 @@ export class SectorMapper implements Mapper<SectorAggregate, RequiredEntityData<
             dimensionHeight: String(domain.dimensions.height),
             dimensionUnit: domain.dimensions.unit,
             capabilities: domain.capabilities,
+            weightCapacityGrams: domain.weightCapacityGrams,
             status: domain.status,
         };
     }

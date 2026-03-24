@@ -14,6 +14,7 @@ const SectorSchema = defineEntity({
         dimensionHeight: p.decimal(),
         dimensionUnit: p.string(),
         capabilities: p.json<string[]>(),
+        weightCapacityGrams: p.integer(),
         status: p.enum(() => SectorStatus),
     },
 });

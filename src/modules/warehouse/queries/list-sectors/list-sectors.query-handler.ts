@@ -26,6 +26,7 @@ export class ListSectorsQueryHandler implements IQueryHandler<ListSectorsQuery, 
                 unit: s.dimensions.unit,
             },
             capabilities: s.capabilities,
+            weightCapacityGrams: s.weightCapacityGrams,
             status: s.status,
         }));
     }

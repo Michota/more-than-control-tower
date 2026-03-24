@@ -43,6 +43,7 @@ export class CreateSectorCommandHandler implements ICommandHandler<CreateSectorC
                 unit: cmd.dimensionUnit,
             }),
             capabilities: cmd.capabilities,
+            weightCapacityGrams: cmd.weightCapacityGrams,
         });
 
         await this.sectorRepo.save(sector);

@@ -12,6 +12,7 @@ const sectorSchema = z.object({
     warehouseId: z.uuid(),
     dimensions: z.instanceof(SectorDimensions),
     capabilities: z.array(z.enum(SectorCapability)),
+    weightCapacityGrams: z.number().int().positive(),
     status: z.enum(SectorStatus),
 });
 
@@ -23,6 +24,7 @@ export interface CreateSectorProps {
     warehouseId: string;
     dimensions: SectorDimensions;
     capabilities: SectorCapability[];
+    weightCapacityGrams: number;
 }
 
 export class SectorAggregate extends AggregateRoot<SectorProperties> {
@@ -34,6 +36,7 @@ export class SectorAggregate extends AggregateRoot<SectorProperties> {
                 warehouseId: props.warehouseId,
                 dimensions: props.dimensions,
                 capabilities: props.capabilities,
+                weightCapacityGrams: props.weightCapacityGrams,
                 status: SectorStatus.ACTIVE,
             },
         });
@@ -77,6 +80,10 @@ export class SectorAggregate extends AggregateRoot<SectorProperties> {
 
     get capabilities(): SectorCapability[] {
         return this.properties.capabilities;
+    }
+
+    get weightCapacityGrams(): number {
+        return this.properties.weightCapacityGrams;
     }
 
     get status(): SectorStatus {

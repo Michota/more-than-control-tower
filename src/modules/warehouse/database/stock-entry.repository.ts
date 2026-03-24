@@ -27,6 +27,11 @@ export class StockEntryRepository implements StockEntryRepositoryPort {
         return records.map((r) => this.mapper.toDomain(r));
     }
 
+    async findBySector(sectorId: string): Promise<StockEntryAggregate[]> {
+        const records = await this.em.find(StockEntry, { sectorId });
+        return records.map((r) => this.mapper.toDomain(r));
+    }
+
     async findAll(): Promise<StockEntryAggregate[]> {
         const records = await this.em.find(StockEntry, {});
         return records.map((r) => this.mapper.toDomain(r));

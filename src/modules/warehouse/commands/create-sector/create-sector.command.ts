@@ -11,6 +11,7 @@ export class CreateSectorCommand extends Command<string> {
     readonly dimensionHeight: number;
     readonly dimensionUnit: DimensionUnit;
     readonly capabilities: SectorCapability[];
+    readonly weightCapacityGrams: number;
 
     constructor(props: CommandProps<CreateSectorCommand>) {
         super(props);
@@ -22,5 +23,6 @@ export class CreateSectorCommand extends Command<string> {
         this.dimensionHeight = props.dimensionHeight;
         this.dimensionUnit = props.dimensionUnit;
         this.capabilities = props.capabilities;
+        this.weightCapacityGrams = props.weightCapacityGrams;
     }
 }

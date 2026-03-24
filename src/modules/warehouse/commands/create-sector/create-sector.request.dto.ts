@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from "class-validator";
+import { IsArray, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Min } from "class-validator";
 import { DimensionUnit } from "../../domain/good-dimensions.value-object.js";
 import { SectorCapability } from "../../domain/sector-capability.enum.js";
 
@@ -36,4 +36,9 @@ export class CreateSectorRequestDto {
     @IsArray()
     @IsEnum(SectorCapability, { each: true })
     capabilities!: SectorCapability[];
+
+    /** @example 500000 */
+    @IsInt()
+    @IsPositive()
+    weightCapacityGrams!: number;
 }

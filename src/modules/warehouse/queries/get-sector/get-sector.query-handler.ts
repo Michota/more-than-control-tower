@@ -30,6 +30,7 @@ export class GetSectorQueryHandler implements IQueryHandler<GetSectorQuery, Sect
                 unit: sector.dimensions.unit,
             },
             capabilities: sector.capabilities,
+            weightCapacityGrams: sector.weightCapacityGrams,
             status: sector.status,
         };
     }
