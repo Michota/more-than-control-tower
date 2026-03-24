@@ -7,6 +7,8 @@ import {
     BadRequestDomainException,
 } from "./http-domain.exceptions.js";
 import { Exception } from "./exception.abstract.js";
+import { ZodError } from "zod";
+import z from "zod";
 
 class TestNotFoundError extends NotFoundDomainException {
     readonly code = "GOOD.NOT_FOUND";
@@ -102,6 +104,31 @@ describe("DomainExceptionFilter", () => {
             code: "SOME.UNKNOWN_CODE",
             message: "Something went wrong",
         });
+    });
+
+    it("maps ZodError to 400 with structured errors", () => {
+        const { host, status, json } = mockHost();
+        const schema = z.object({ name: z.string().min(1) });
+
+        let zodError: ZodError;
+        try {
+            schema.parse({ name: "" });
+        } catch (e) {
+            zodError = e as ZodError;
+        }
+
+        filter.catch(zodError!, host);
+
+        expect(status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+        expect(json.mock.calls[0][0]).toMatchObject({
+            statusCode: HttpStatus.BAD_REQUEST,
+            code: "VALIDATION_ERROR",
+            message: "Validation failed",
+        });
+        const body = json.mock.calls[0][0] as { errors: { path: string; message: string }[] };
+        expect(body.errors).toBeInstanceOf(Array);
+        expect(body.errors[0]).toHaveProperty("path");
+        expect(body.errors[0]).toHaveProperty("message");
     });
 
     it("always returns code, message, and statusCode in the response body", () => {

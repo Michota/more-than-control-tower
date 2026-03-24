@@ -19,7 +19,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "name": {
                     "name": "name",
@@ -34,7 +35,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "description": {
                     "name": "description",
@@ -49,23 +51,23 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "customer_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "customer_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "customer_address",
@@ -84,7 +86,8 @@
                     "scale": null,
                     "default": "gen_random_uuid()",
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "label": {
                     "name": "label",
@@ -99,7 +102,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "country": {
                     "name": "country",
@@ -114,7 +118,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "state": {
                     "name": "state",
@@ -129,7 +134,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "city": {
                     "name": "city",
@@ -144,7 +150,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "postal_code": {
                     "name": "postal_code",
@@ -159,7 +166,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "street": {
                     "name": "street",
@@ -174,7 +182,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "customer_id": {
                     "name": "customer_id",
@@ -189,33 +198,31 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "customer_address_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "customer_address_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [],
             "foreignKeys": {
                 "customer_address_customer_id_foreign": {
-                    "columnNames": ["customer_id"],
                     "constraintName": "customer_address_customer_id_foreign",
+                    "columnNames": ["customer_id"],
                     "localTableName": "public.customer_address",
-                    "referencedTableName": "public.customer",
                     "referencedColumnNames": ["id"],
-                    "updateRule": "no action",
-                    "deleteRule": "no action"
+                    "referencedTableName": "public.customer"
                 }
             },
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "customer_contact",
@@ -234,7 +241,8 @@
                     "scale": null,
                     "default": "gen_random_uuid()",
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "type": {
                     "name": "type",
@@ -249,7 +257,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": ["phone", "email"]
+                    "enumItems": ["phone", "email"],
+                    "mappedType": "enum"
                 },
                 "title": {
                     "name": "title",
@@ -264,7 +273,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "description": {
                     "name": "description",
@@ -279,7 +289,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "value": {
                     "name": "value",
@@ -294,7 +305,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "customer_id": {
                     "name": "customer_id",
@@ -309,40 +321,38 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "customer_contact_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "customer_contact_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [
                 {
                     "name": "customer_contact_type_check",
-                    "columnName": "type",
+                    "expression": "\"type\" in ('phone', 'email')",
                     "definition": "check (\"type\" in ('phone', 'email'))",
-                    "expression": "\"type\" in ('phone', 'email')"
+                    "columnName": "type"
                 }
             ],
             "foreignKeys": {
                 "customer_contact_customer_id_foreign": {
-                    "columnNames": ["customer_id"],
                     "constraintName": "customer_contact_customer_id_foreign",
+                    "columnNames": ["customer_id"],
                     "localTableName": "public.customer_contact",
-                    "referencedTableName": "public.customer",
                     "referencedColumnNames": ["id"],
-                    "updateRule": "no action",
-                    "deleteRule": "no action"
+                    "referencedTableName": "public.customer"
                 }
             },
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "good",
@@ -361,7 +371,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "name": {
                     "name": "name",
@@ -376,7 +387,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "description": {
                     "name": "description",
@@ -391,7 +403,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "weight_value": {
                     "name": "weight_value",
@@ -406,7 +419,8 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "weight_unit": {
                     "name": "weight_unit",
@@ -421,7 +435,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "dimension_length": {
                     "name": "dimension_length",
@@ -436,7 +451,8 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "dimension_width": {
                     "name": "dimension_width",
@@ -451,7 +467,8 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "dimension_height": {
                     "name": "dimension_height",
@@ -466,7 +483,8 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "dimension_unit": {
                     "name": "dimension_unit",
@@ -481,7 +499,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "parent_id": {
                     "name": "parent_id",
@@ -496,23 +515,23 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "good_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "good_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "goods_receipt",
@@ -531,7 +550,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "target_warehouse_id": {
                     "name": "target_warehouse_id",
@@ -546,7 +566,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "note": {
                     "name": "note",
@@ -561,7 +582,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "status": {
                     "name": "status",
@@ -576,7 +598,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": ["DRAFT", "CONFIRMED"]
+                    "enumItems": ["DRAFT", "CONFIRMED"],
+                    "mappedType": "enum"
                 },
                 "lines": {
                     "name": "lines",
@@ -591,30 +614,30 @@
                     "scale": null,
                     "default": "'[]'",
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "json"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "goods_receipt_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "goods_receipt_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [
                 {
                     "name": "goods_receipt_status_check",
-                    "columnName": "status",
+                    "expression": "\"status\" in ('DRAFT', 'CONFIRMED')",
                     "definition": "check (\"status\" in ('DRAFT', 'CONFIRMED'))",
-                    "expression": "\"status\" in ('DRAFT', 'CONFIRMED')"
+                    "columnName": "status"
                 }
             ],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "items_category",
@@ -633,7 +656,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "name": {
                     "name": "name",
@@ -648,7 +672,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "description": {
                     "name": "description",
@@ -663,284 +688,23 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 }
             },
             "indexes": [
                 {
-                    "columnNames": ["id"],
-                    "composite": false,
-                    "constraint": false,
                     "keyName": "items_category_pkey",
-                    "unique": true,
-                    "primary": true
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
-        },
-        {
-            "name": "order",
-            "schema": "public",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "uuid",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": true,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "cost": {
-                    "name": "cost",
-                    "type": "numeric(10,0)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": true,
-                    "unique": false,
-                    "length": null,
-                    "precision": 10,
-                    "scale": 0,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "currency": {
-                    "name": "currency",
-                    "type": "varchar(3)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": 3,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "status": {
-                    "name": "status",
-                    "type": "text",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": ["DRAFTED", "PLACED", "IN_PROGRESS", "CANCELLED", "COMPLETED"]
-                },
-                "order_lines": {
-                    "name": "order_lines",
-                    "type": "jsonb",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": "'[]'",
-                    "comment": null,
-                    "enumItems": []
-                },
-                "customer_id": {
-                    "name": "customer_id",
-                    "type": "uuid",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                }
-            },
-            "indexes": [
-                {
-                    "columnNames": ["id"],
-                    "composite": false,
-                    "constraint": false,
-                    "keyName": "order_pkey",
-                    "unique": true,
-                    "primary": true
-                }
-            ],
-            "checks": [
-                {
-                    "name": "order_status_check",
-                    "columnName": "status",
-                    "definition": "check (\"status\" in ('DRAFTED', 'PLACED', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED'))",
-                    "expression": "\"status\" in ('DRAFTED', 'PLACED', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED')"
-                }
-            ],
-            "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
-        },
-        {
-            "name": "price",
-            "schema": "public",
-            "columns": {
-                "id": {
-                    "name": "id",
-                    "type": "uuid",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": true,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "amount": {
-                    "name": "amount",
-                    "type": "numeric(10,0)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": 10,
-                    "scale": 0,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "currency": {
-                    "name": "currency",
-                    "type": "varchar(3)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": 3,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "valid_from": {
-                    "name": "valid_from",
-                    "type": "timestamptz(6)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": 6,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "valid_to": {
-                    "name": "valid_to",
-                    "type": "timestamptz(6)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": true,
-                    "unique": false,
-                    "length": 6,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "product_id": {
-                    "name": "product_id",
-                    "type": "uuid",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "price_type_id": {
-                    "name": "price_type_id",
-                    "type": "uuid",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": true,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                }
-            },
-            "indexes": [
-                {
-                    "columnNames": ["id"],
-                    "composite": false,
-                    "constraint": false,
-                    "keyName": "price_pkey",
-                    "unique": true,
-                    "primary": true
-                }
-            ],
-            "checks": [],
-            "foreignKeys": {
-                "price_price_type_id_foreign": {
-                    "columnNames": ["price_type_id"],
-                    "constraintName": "price_price_type_id_foreign",
-                    "localTableName": "public.price",
-                    "referencedTableName": "public.price_type",
-                    "referencedColumnNames": ["id"],
-                    "updateRule": "no action",
-                    "deleteRule": "set null"
-                },
-                "price_product_id_foreign": {
-                    "columnNames": ["product_id"],
-                    "constraintName": "price_product_id_foreign",
-                    "localTableName": "public.price",
-                    "referencedTableName": "public.product",
-                    "referencedColumnNames": ["id"],
-                    "updateRule": "no action",
-                    "deleteRule": "no action"
-                }
-            },
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "price_type",
@@ -959,7 +723,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "name": {
                     "name": "name",
@@ -968,37 +733,37 @@
                     "autoincrement": false,
                     "primary": false,
                     "nullable": false,
-                    "unique": true,
+                    "unique": false,
                     "length": 255,
                     "precision": null,
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 }
             },
             "indexes": [
                 {
                     "columnNames": ["name"],
                     "composite": false,
-                    "constraint": true,
                     "keyName": "price_type_name_unique",
-                    "unique": true,
-                    "primary": false
+                    "constraint": true,
+                    "primary": false,
+                    "unique": true
                 },
                 {
+                    "keyName": "price_type_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "price_type_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "product",
@@ -1017,7 +782,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "name": {
                     "name": "name",
@@ -1032,7 +798,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "description": {
                     "name": "description",
@@ -1047,7 +814,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "category_id": {
                     "name": "category_id",
@@ -1062,7 +830,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "vat_rate": {
                     "name": "vat_rate",
@@ -1077,11 +846,12 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "available_from": {
                     "name": "available_from",
-                    "type": "timestamptz(6)",
+                    "type": "timestamptz",
                     "unsigned": false,
                     "autoincrement": false,
                     "primary": false,
@@ -1092,11 +862,12 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "datetime"
                 },
                 "available_to": {
                     "name": "available_to",
-                    "type": "timestamptz(6)",
+                    "type": "timestamptz",
                     "unsigned": false,
                     "autoincrement": false,
                     "primary": false,
@@ -1107,33 +878,300 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "datetime"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "product_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "product_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [],
             "foreignKeys": {
                 "product_category_id_foreign": {
-                    "columnNames": ["category_id"],
                     "constraintName": "product_category_id_foreign",
+                    "columnNames": ["category_id"],
                     "localTableName": "public.product",
-                    "referencedTableName": "public.items_category",
                     "referencedColumnNames": ["id"],
-                    "updateRule": "no action",
-                    "deleteRule": "no action"
+                    "referencedTableName": "public.items_category"
                 }
             },
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
+        },
+        {
+            "name": "price",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "amount": {
+                    "name": "amount",
+                    "type": "numeric(10,0)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": 10,
+                    "scale": 0,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "decimal"
+                },
+                "currency": {
+                    "name": "currency",
+                    "type": "varchar(3)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 3,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "valid_from": {
+                    "name": "valid_from",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 6,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "datetime"
+                },
+                "valid_to": {
+                    "name": "valid_to",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 6,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "datetime"
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "price_type_id": {
+                    "name": "price_type_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                }
+            },
+            "indexes": [
+                {
+                    "keyName": "price_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {
+                "price_product_id_foreign": {
+                    "constraintName": "price_product_id_foreign",
+                    "columnNames": ["product_id"],
+                    "localTableName": "public.price",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.product"
+                },
+                "price_price_type_id_foreign": {
+                    "constraintName": "price_price_type_id_foreign",
+                    "columnNames": ["price_type_id"],
+                    "localTableName": "public.price",
+                    "referencedColumnNames": ["id"],
+                    "referencedTableName": "public.price_type",
+                    "deleteRule": "set null"
+                }
+            },
+            "nativeEnums": {}
+        },
+        {
+            "name": "order",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "cost": {
+                    "name": "cost",
+                    "type": "numeric(10,0)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": null,
+                    "precision": 10,
+                    "scale": 0,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "decimal"
+                },
+                "currency": {
+                    "name": "currency",
+                    "type": "varchar(3)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 3,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": ["DRAFTED", "PLACED", "IN_PROGRESS", "CANCELLED", "COMPLETED"],
+                    "mappedType": "enum"
+                },
+                "order_lines": {
+                    "name": "order_lines",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": "'[]'",
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "json"
+                },
+                "customer_id": {
+                    "name": "customer_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                }
+            },
+            "indexes": [
+                {
+                    "keyName": "order_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [
+                {
+                    "name": "order_status_check",
+                    "expression": "\"status\" in ('DRAFTED', 'PLACED', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED')",
+                    "definition": "check (\"status\" in ('DRAFTED', 'PLACED', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED'))",
+                    "columnName": "status"
+                }
+            ],
+            "foreignKeys": {},
+            "nativeEnums": {}
         },
         {
             "name": "sector",
@@ -1152,7 +1190,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "name": {
                     "name": "name",
@@ -1167,7 +1206,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "description": {
                     "name": "description",
@@ -1182,7 +1222,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "warehouse_id": {
                     "name": "warehouse_id",
@@ -1197,7 +1238,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "dimension_length": {
                     "name": "dimension_length",
@@ -1212,7 +1254,8 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "dimension_width": {
                     "name": "dimension_width",
@@ -1227,7 +1270,8 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "dimension_height": {
                     "name": "dimension_height",
@@ -1242,7 +1286,8 @@
                     "scale": 0,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "decimal"
                 },
                 "dimension_unit": {
                     "name": "dimension_unit",
@@ -1257,7 +1302,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "capabilities": {
                     "name": "capabilities",
@@ -1272,7 +1318,24 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "json"
+                },
+                "weight_capacity_grams": {
+                    "name": "weight_capacity_grams",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "integer"
                 },
                 "status": {
                     "name": "status",
@@ -1287,45 +1350,30 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": ["ACTIVE", "INACTIVE"]
-                },
-                "weight_capacity_grams": {
-                    "name": "weight_capacity_grams",
-                    "type": "int4",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": 32,
-                    "scale": 0,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
+                    "enumItems": ["ACTIVE", "INACTIVE"],
+                    "mappedType": "enum"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "sector_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "sector_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [
                 {
                     "name": "sector_status_check",
-                    "columnName": "status",
+                    "expression": "\"status\" in ('ACTIVE', 'INACTIVE')",
                     "definition": "check (\"status\" in ('ACTIVE', 'INACTIVE'))",
-                    "expression": "\"status\" in ('ACTIVE', 'INACTIVE')"
+                    "columnName": "status"
                 }
             ],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "stock_entry",
@@ -1344,7 +1392,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "good_id": {
                     "name": "good_id",
@@ -1359,7 +1408,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "warehouse_id": {
                     "name": "warehouse_id",
@@ -1374,37 +1424,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
-                },
-                "quantity": {
-                    "name": "quantity",
-                    "type": "int4",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": 32,
-                    "scale": 0,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "history": {
-                    "name": "history",
-                    "type": "jsonb",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": "'[]'",
-                    "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "sector_id": {
                     "name": "sector_id",
@@ -1419,7 +1440,24 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "quantity": {
+                    "name": "quantity",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "integer"
                 },
                 "attributes": {
                     "name": "attributes",
@@ -1434,23 +1472,39 @@
                     "scale": null,
                     "default": "'[]'",
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "json"
+                },
+                "history": {
+                    "name": "history",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": "'[]'",
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "json"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "stock_entry_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "stock_entry_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         },
         {
             "name": "warehouse",
@@ -1469,7 +1523,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "uuid"
                 },
                 "name": {
                     "name": "name",
@@ -1484,7 +1539,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "address_country": {
                     "name": "address_country",
@@ -1499,7 +1555,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "address_postal_code": {
                     "name": "address_postal_code",
@@ -1514,7 +1571,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "address_state": {
                     "name": "address_state",
@@ -1529,7 +1587,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "address_city": {
                     "name": "address_city",
@@ -1544,7 +1603,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "address_street": {
                     "name": "address_street",
@@ -1559,7 +1619,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": []
+                    "enumItems": [],
+                    "mappedType": "string"
                 },
                 "status": {
                     "name": "status",
@@ -1574,7 +1635,8 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": ["ACTIVE", "INACTIVE"]
+                    "enumItems": ["ACTIVE", "INACTIVE"],
+                    "mappedType": "enum"
                 },
                 "type": {
                     "name": "type",
@@ -1587,38 +1649,38 @@
                     "length": null,
                     "precision": null,
                     "scale": null,
-                    "default": "'REGULAR'",
+                    "default": null,
                     "comment": null,
-                    "enumItems": ["REGULAR", "MOBILE"]
+                    "enumItems": ["REGULAR", "MOBILE"],
+                    "mappedType": "enum"
                 }
             },
             "indexes": [
                 {
+                    "keyName": "warehouse_pkey",
                     "columnNames": ["id"],
                     "composite": false,
-                    "constraint": false,
-                    "keyName": "warehouse_pkey",
-                    "unique": true,
-                    "primary": true
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
                 }
             ],
             "checks": [
                 {
                     "name": "warehouse_status_check",
-                    "columnName": "status",
+                    "expression": "\"status\" in ('ACTIVE', 'INACTIVE')",
                     "definition": "check (\"status\" in ('ACTIVE', 'INACTIVE'))",
-                    "expression": "\"status\" in ('ACTIVE', 'INACTIVE')"
+                    "columnName": "status"
                 },
                 {
                     "name": "warehouse_type_check",
-                    "columnName": "type",
+                    "expression": "\"type\" in ('REGULAR', 'MOBILE')",
                     "definition": "check (\"type\" in ('REGULAR', 'MOBILE'))",
-                    "expression": "\"type\" in ('REGULAR', 'MOBILE')"
+                    "columnName": "type"
                 }
             ],
             "foreignKeys": {},
-            "nativeEnums": {},
-            "comment": null
+            "nativeEnums": {}
         }
     ],
     "views": [],
