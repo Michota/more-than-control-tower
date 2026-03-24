@@ -8,7 +8,7 @@ import { OrderLines } from "./order-lines.value-object.js";
 import { OrderStatus } from "./order-status.enum.js";
 import { CannotChangeQuantityOfPlacedOrderError, OrderHasOrderLinesWithoutItems } from "./order.errors.js";
 
-interface OrderProperties {
+export interface OrderProperties {
     cost: Money;
     status: OrderStatus;
     orderLines: OrderLines;

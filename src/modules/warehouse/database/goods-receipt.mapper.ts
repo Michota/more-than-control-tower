@@ -47,7 +47,7 @@ export class GoodsReceiptMapper implements Mapper<GoodsReceiptAggregate, Require
         };
     }
 
-    toResponse(entity: GoodsReceiptAggregate): unknown {
+    toResponse(entity: GoodsReceiptAggregate) {
         return entity.toJSON();
     }
 }

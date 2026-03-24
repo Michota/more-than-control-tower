@@ -61,7 +61,7 @@ export class OrderMapper implements Mapper<OrderAggregate, RequiredEntityData<Or
         };
     }
 
-    toResponse(entity: OrderAggregate): unknown {
+    toResponse(entity: OrderAggregate) {
         return entity.toJSON();
     }
 }

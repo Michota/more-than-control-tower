@@ -59,7 +59,7 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
         };
     }
 
-    toResponse(entity: StockEntryAggregate): unknown {
+    toResponse(entity: StockEntryAggregate) {
         return entity.toJSON();
     }
 }
