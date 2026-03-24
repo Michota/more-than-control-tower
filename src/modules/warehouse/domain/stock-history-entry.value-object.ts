@@ -10,6 +10,7 @@ const stockHistoryEntrySchema = z.object({
     note: z.string().optional(),
     removalReason: z.enum(StockRemovalReason).optional(),
     relatedWarehouseId: z.uuid().optional(),
+    relatedSectorId: z.uuid().optional(),
     occurredAt: z.date(),
 });
 
@@ -42,6 +43,10 @@ export class StockHistoryEntry extends ValueObjectWithSchema<StockHistoryEntryPr
 
     get relatedWarehouseId(): string | undefined {
         return this.properties.relatedWarehouseId;
+    }
+
+    get relatedSectorId(): string | undefined {
+        return this.properties.relatedSectorId;
     }
 
     get occurredAt(): Date {

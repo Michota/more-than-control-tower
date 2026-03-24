@@ -49,6 +49,14 @@ import { ListGoodsReceiptsQuery } from "./queries/list-goods-receipts/list-goods
 import { ListGoodsReceiptsRequestDto } from "./queries/list-goods-receipts/list-goods-receipts.request.dto.js";
 import { ListWarehouseStockQuery } from "./queries/list-warehouse-stock/list-warehouse-stock.query.js";
 import { ListWarehousesQuery } from "./queries/list-warehouses/list-warehouses.query.js";
+import { CreateSectorCommand } from "./commands/create-sector/create-sector.command.js";
+import { CreateSectorRequestDto } from "./commands/create-sector/create-sector.request.dto.js";
+import { EditSectorCommand } from "./commands/edit-sector/edit-sector.command.js";
+import { EditSectorRequestDto } from "./commands/edit-sector/edit-sector.request.dto.js";
+import { MoveStockToSectorCommand } from "./commands/move-stock-to-sector/move-stock-to-sector.command.js";
+import { MoveStockToSectorRequestDto } from "./commands/move-stock-to-sector/move-stock-to-sector.request.dto.js";
+import { ListSectorsQuery } from "./queries/list-sectors/list-sectors.query.js";
+import { GetSectorQuery } from "./queries/get-sector/get-sector.query.js";
 
 @ApiTags("Warehouse")
 @Controller("warehouse")
@@ -84,6 +92,7 @@ export class WarehouseHttpController {
                 latitude: body.latitude,
                 longitude: body.longitude,
                 address: body.address,
+                type: body.type,
             }),
         );
         return { warehouseId };
@@ -227,6 +236,62 @@ export class WarehouseHttpController {
         await this.commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId: id }));
     }
 
+    // ─── Sectors ───────────────────────────────────────────────
+
+    @Get(":warehouseId/sectors")
+    @ApiOperation({ summary: "List sectors for a warehouse" })
+    @ApiResponse({ status: 200 })
+    async listSectors(@Param("warehouseId", ParseUUIDPipe) warehouseId: UUID) {
+        return this.queryBus.execute(new ListSectorsQuery(warehouseId));
+    }
+
+    @Get("sectors/:id")
+    @ApiOperation({ summary: "Get sector details" })
+    @ApiResponse({ status: 200 })
+    async getSector(@Param("id", ParseUUIDPipe) id: UUID) {
+        return this.queryBus.execute(new GetSectorQuery(id));
+    }
+
+    @Post(":warehouseId/sectors")
+    @ApiOperation({ summary: "Create a sector in a warehouse" })
+    @ApiResponse({ status: 201 })
+    async createSector(
+        @Param("warehouseId", ParseUUIDPipe) warehouseId: UUID,
+        @Body() body: CreateSectorRequestDto,
+    ): Promise<{ sectorId: string }> {
+        const sectorId = await this.commandBus.execute(
+            new CreateSectorCommand({
+                warehouseId,
+                name: body.name,
+                description: body.description,
+                dimensionLength: body.dimensionLength,
+                dimensionWidth: body.dimensionWidth,
+                dimensionHeight: body.dimensionHeight,
+                dimensionUnit: body.dimensionUnit,
+                capabilities: body.capabilities,
+            }),
+        );
+        return { sectorId };
+    }
+
+    @Patch("sectors/:id")
+    @ApiOperation({ summary: "Edit sector properties (partial update)" })
+    @ApiResponse({ status: 200 })
+    async editSector(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: EditSectorRequestDto): Promise<void> {
+        await this.commandBus.execute(
+            new EditSectorCommand({
+                sectorId: id,
+                name: body.name,
+                description: body.description,
+                dimensionLength: body.dimensionLength,
+                dimensionWidth: body.dimensionWidth,
+                dimensionHeight: body.dimensionHeight,
+                dimensionUnit: body.dimensionUnit,
+                capabilities: body.capabilities,
+            }),
+        );
+    }
+
     // ─── Stock Operations ────────────────────────────────────
 
     @Post("stock/transfer")
@@ -240,6 +305,20 @@ export class WarehouseHttpController {
                 toWarehouseId: body.toWarehouseId,
                 quantity: body.quantity,
                 locationDescription: body.locationDescription,
+                note: body.note,
+            }),
+        );
+    }
+
+    @Post("stock/move-sector")
+    @ApiOperation({ summary: "Move stock to a different sector within the same warehouse" })
+    @ApiResponse({ status: 200 })
+    async moveStockToSector(@Body() body: MoveStockToSectorRequestDto): Promise<void> {
+        await this.commandBus.execute(
+            new MoveStockToSectorCommand({
+                goodId: body.goodId,
+                warehouseId: body.warehouseId,
+                sectorId: body.sectorId,
                 note: body.note,
             }),
         );

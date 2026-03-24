@@ -6,6 +6,7 @@ export class TransferStockCommand extends Command<void> {
     readonly toWarehouseId: string;
     readonly quantity: number;
     readonly locationDescription?: string;
+    readonly sectorId?: string;
     readonly note?: string;
 
     constructor(props: CommandProps<TransferStockCommand>) {
@@ -15,6 +16,7 @@ export class TransferStockCommand extends Command<void> {
         this.toWarehouseId = props.toWarehouseId;
         this.quantity = props.quantity;
         this.locationDescription = props.locationDescription;
+        this.sectorId = props.sectorId;
         this.note = props.note;
     }
 }

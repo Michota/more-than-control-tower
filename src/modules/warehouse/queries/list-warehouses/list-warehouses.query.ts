@@ -4,6 +4,7 @@ export interface WarehouseListItem {
     id: string;
     name: string;
     status: string;
+    type: string;
     latitude: number;
     longitude: number;
     address: {

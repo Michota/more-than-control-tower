@@ -4,6 +4,7 @@ import { ValueObjectWithSchema } from "../../../shared/ddd/value-object-with-sch
 const goodsReceiptLineSchema = z.object({
     goodId: z.uuid(),
     quantity: z.number().int().positive(),
+    sectorId: z.uuid().optional(),
     locationDescription: z.string().optional(),
     note: z.string().optional(),
 });
@@ -21,6 +22,10 @@ export class GoodsReceiptLine extends ValueObjectWithSchema<GoodsReceiptLineProp
 
     get quantity(): number {
         return this.properties.quantity;
+    }
+
+    get sectorId(): string | undefined {
+        return this.properties.sectorId;
     }
 
     get locationDescription(): string | undefined {

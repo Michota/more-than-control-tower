@@ -6,6 +6,7 @@ import { Address } from "../../../shared/value-objects/address.value-object.js";
 import { GeoLocation } from "../domain/geo-location.value-object.js";
 import { WarehouseAggregate } from "../domain/warehouse.aggregate.js";
 import { WarehouseStatus } from "../domain/warehouse-status.enum.js";
+import { WarehouseType } from "../domain/warehouse-type.enum.js";
 import { Warehouse } from "./warehouse.entity.js";
 
 @Injectable()
@@ -27,6 +28,7 @@ export class WarehouseMapper implements Mapper<WarehouseAggregate, RequiredEntit
                     street: record.addressStreet,
                 }),
                 status: record.status as WarehouseStatus,
+                type: record.type as WarehouseType,
             },
         });
     }
@@ -43,6 +45,7 @@ export class WarehouseMapper implements Mapper<WarehouseAggregate, RequiredEntit
             addressCity: domain.address.city,
             addressStreet: domain.address.street,
             status: domain.status,
+            type: domain.type,
         };
     }
 

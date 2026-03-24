@@ -10,6 +10,7 @@ const StockHistoryEntrySchema = defineEntity({
         note: p.string().nullable(),
         removalReason: p.string().nullable(),
         relatedWarehouseId: p.string().nullable(),
+        relatedSectorId: p.string().nullable(),
         occurredAt: p.datetime(),
     },
 });

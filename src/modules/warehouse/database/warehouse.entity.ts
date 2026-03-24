@@ -1,5 +1,6 @@
 import { defineEntity, p } from "@mikro-orm/core";
 import { WarehouseStatus } from "../domain/warehouse-status.enum.js";
+import { WarehouseType } from "../domain/warehouse-type.enum.js";
 
 const WarehouseSchema = defineEntity({
     name: "Warehouse",
@@ -15,6 +16,7 @@ const WarehouseSchema = defineEntity({
         addressCity: p.string(),
         addressStreet: p.string(),
         status: p.enum(() => WarehouseStatus),
+        type: p.enum(() => WarehouseType),
     },
 });
 

@@ -4,6 +4,7 @@ import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js"
 import { Address } from "../../../shared/value-objects/address.value-object.js";
 import { GeoLocation } from "./geo-location.value-object.js";
 import { WarehouseStatus } from "./warehouse-status.enum.js";
+import { WarehouseType } from "./warehouse-type.enum.js";
 import { WarehouseCreatedDomainEvent } from "./events/warehouse-created.domain-event.js";
 
 const warehouseSchema = z.object({
@@ -11,6 +12,7 @@ const warehouseSchema = z.object({
     location: z.instanceof(GeoLocation),
     address: z.instanceof(Address),
     status: z.enum(WarehouseStatus),
+    type: z.enum(WarehouseType),
 });
 
 export type WarehouseProperties = z.infer<typeof warehouseSchema>;
@@ -19,6 +21,7 @@ export interface CreateWarehouseProps {
     name: string;
     location: GeoLocation;
     address: Address;
+    type?: WarehouseType;
 }
 
 export class WarehouseAggregate extends AggregateRoot<WarehouseProperties> {
@@ -29,6 +32,7 @@ export class WarehouseAggregate extends AggregateRoot<WarehouseProperties> {
                 location: props.location,
                 address: props.address,
                 status: WarehouseStatus.ACTIVE,
+                type: props.type ?? WarehouseType.REGULAR,
             },
         });
 
@@ -66,6 +70,10 @@ export class WarehouseAggregate extends AggregateRoot<WarehouseProperties> {
 
     get status(): WarehouseStatus {
         return this.properties.status;
+    }
+
+    get type(): WarehouseType {
+        return this.properties.type;
     }
 
     update(props: Partial<Omit<WarehouseProperties, "status">>): void {

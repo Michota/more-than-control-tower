@@ -33,6 +33,7 @@ export class CreateWarehouseCommandHandler implements ICommandHandler<CreateWare
                 city: cmd.address.city,
                 street: cmd.address.street,
             }),
+            type: cmd.type,
         });
 
         await this.warehouseRepo.save(warehouse);

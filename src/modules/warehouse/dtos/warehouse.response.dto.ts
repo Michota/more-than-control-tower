@@ -20,6 +20,8 @@ export class WarehouseResponseDto {
     name!: string;
     /** @example "ACTIVE" */
     status!: string;
+    /** @example "REGULAR" */
+    type!: string;
     /** @example 52.2297 */
     latitude!: number;
     /** @example 21.0122 */

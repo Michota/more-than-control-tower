@@ -13,6 +13,7 @@ import { StockTransferredDomainEvent } from "./events/stock-transferred.domain-e
 const stockEntrySchema = z.object({
     goodId: z.uuid(),
     warehouseId: z.uuid(),
+    sectorId: z.uuid().optional(),
     locationInWarehouse: z.instanceof(WarehouseLocation).optional(),
     quantity: z.number().int().min(0),
     history: z.array(z.instanceof(StockHistoryEntry)),
@@ -25,6 +26,7 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         goodId: string;
         warehouseId: string;
         quantity: number;
+        sectorId?: string;
         locationDescription?: string;
         note?: string;
     }): StockEntryAggregate {
@@ -36,6 +38,7 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
             properties: {
                 goodId: props.goodId,
                 warehouseId: props.warehouseId,
+                sectorId: props.sectorId,
                 locationInWarehouse: location,
                 quantity: props.quantity,
                 history: [
@@ -80,6 +83,10 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         return this.properties.warehouseId;
     }
 
+    get sectorId(): string | undefined {
+        return this.properties.sectorId;
+    }
+
     get locationInWarehouse(): WarehouseLocation | undefined {
         return this.properties.locationInWarehouse;
     }
@@ -92,9 +99,12 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         return this.properties.history;
     }
 
-    receive(quantity: number, note?: string, locationDescription?: string): void {
-        if (locationDescription) {
-            this.properties.locationInWarehouse = new WarehouseLocation({ description: locationDescription });
+    receive(quantity: number, opts?: { note?: string; locationDescription?: string; sectorId?: string }): void {
+        if (opts?.locationDescription) {
+            this.properties.locationInWarehouse = new WarehouseLocation({ description: opts.locationDescription });
+        }
+        if (opts?.sectorId !== undefined) {
+            this.properties.sectorId = opts.sectorId;
         }
 
         const quantityAfter = this.properties.quantity + quantity;
@@ -105,7 +115,7 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
                 eventType: StockEventType.RECEIVED,
                 quantityDelta: quantity,
                 quantityAfter,
-                note,
+                note: opts?.note,
                 occurredAt: new Date(),
             }),
         ];
@@ -180,9 +190,16 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         );
     }
 
-    transferIn(quantity: number, fromWarehouseId: string, note?: string, locationDescription?: string): void {
-        if (locationDescription) {
-            this.properties.locationInWarehouse = new WarehouseLocation({ description: locationDescription });
+    transferIn(
+        quantity: number,
+        fromWarehouseId: string,
+        opts?: { note?: string; locationDescription?: string; sectorId?: string },
+    ): void {
+        if (opts?.locationDescription) {
+            this.properties.locationInWarehouse = new WarehouseLocation({ description: opts.locationDescription });
+        }
+        if (opts?.sectorId !== undefined) {
+            this.properties.sectorId = opts.sectorId;
         }
 
         const quantityAfter = this.properties.quantity + quantity;
@@ -194,6 +211,22 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
                 quantityDelta: quantity,
                 quantityAfter,
                 relatedWarehouseId: fromWarehouseId,
+                note: opts?.note,
+                occurredAt: new Date(),
+            }),
+        ];
+    }
+
+    moveToSector(sectorId?: string, note?: string): void {
+        const previousSectorId = this.properties.sectorId;
+        this.properties.sectorId = sectorId;
+        this.properties.history = [
+            ...this.properties.history,
+            new StockHistoryEntry({
+                eventType: StockEventType.MOVED_SECTOR,
+                quantityDelta: 0,
+                quantityAfter: this.properties.quantity,
+                relatedSectorId: sectorId ?? previousSectorId,
                 note,
                 occurredAt: new Date(),
             }),

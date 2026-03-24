@@ -37,7 +37,11 @@ export class ConfirmGoodsReceiptCommandHandler implements ICommandHandler<Confir
             const existing = await this.stockRepo.findByGoodAndWarehouse(line.goodId, receipt.targetWarehouseId);
 
             if (existing) {
-                existing.receive(line.quantity, line.note, line.locationDescription);
+                existing.receive(line.quantity, {
+                    note: line.note,
+                    locationDescription: line.locationDescription,
+                    sectorId: line.sectorId,
+                });
                 stockEntries.push(existing);
             } else {
                 stockEntries.push(
@@ -45,6 +49,7 @@ export class ConfirmGoodsReceiptCommandHandler implements ICommandHandler<Confir
                         goodId: line.goodId,
                         warehouseId: receipt.targetWarehouseId,
                         quantity: line.quantity,
+                        sectorId: line.sectorId,
                         locationDescription: line.locationDescription,
                         note: line.note,
                     }),

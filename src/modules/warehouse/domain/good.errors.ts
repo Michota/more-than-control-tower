@@ -48,6 +48,22 @@ export class IncorporatedGoodCannotBeEditedError extends Exception {
     }
 }
 
+export class SectorNotFoundError extends Exception {
+    public readonly code = "SECTOR.NOT_FOUND";
+
+    constructor(id: string) {
+        super(`Sector with id ${id} not found`);
+    }
+}
+
+export class SectorNotInWarehouseError extends Exception {
+    public readonly code = "SECTOR.NOT_IN_WAREHOUSE";
+
+    constructor(sectorId: string, warehouseId: string) {
+        super(`Sector ${sectorId} does not belong to warehouse ${warehouseId}`);
+    }
+}
+
 export class WarehouseNotFoundError extends Exception {
     public readonly code = "WAREHOUSE.NOT_FOUND";
 

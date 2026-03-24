@@ -18,6 +18,7 @@ export class ListWarehousesQueryHandler implements IQueryHandler<ListWarehousesQ
             id: w.id as string,
             name: w.name,
             status: w.status,
+            type: w.type,
             latitude: w.location.latitude,
             longitude: w.location.longitude,
             address: {

@@ -22,6 +22,7 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
                     note: h.note ?? undefined,
                     removalReason: h.removalReason ? (h.removalReason as StockRemovalReason) : undefined,
                     relatedWarehouseId: h.relatedWarehouseId ?? undefined,
+                    relatedSectorId: h.relatedSectorId ?? undefined,
                     occurredAt: new Date(h.occurredAt),
                 }),
         );
@@ -31,6 +32,7 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
             properties: {
                 goodId: record.goodId,
                 warehouseId: record.warehouseId,
+                sectorId: record.sectorId ?? undefined,
                 locationInWarehouse: record.locationInWarehouse
                     ? new WarehouseLocation({ description: record.locationInWarehouse })
                     : undefined,
@@ -45,6 +47,7 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
             id: domain.id as string,
             goodId: domain.goodId,
             warehouseId: domain.warehouseId,
+            sectorId: domain.sectorId ?? null,
             locationInWarehouse: domain.locationInWarehouse?.description ?? null,
             quantity: domain.quantity,
             history: domain.history.map((h) => ({
@@ -54,6 +57,7 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
                 note: h.note ?? null,
                 removalReason: h.removalReason ?? null,
                 relatedWarehouseId: h.relatedWarehouseId ?? null,
+                relatedSectorId: h.relatedSectorId ?? null,
                 occurredAt: h.occurredAt,
             })) as unknown as RequiredEntityData<StockEntry>["history"],
         };
