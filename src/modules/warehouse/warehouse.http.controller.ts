@@ -8,12 +8,13 @@ import {
     ParseUUIDPipe,
     Patch,
     Post,
+    Put,
     Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import type { UUID } from "crypto";
-import { AddLineToGoodsReceiptCommand } from "./commands/add-line-to-goods-receipt/add-line-to-goods-receipt.command.js";
-import { AddLineToGoodsReceiptRequestDto } from "./commands/add-line-to-goods-receipt/add-line-to-goods-receipt.request.dto.js";
+import { SetGoodsReceiptLinesCommand } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command.js";
+import { SetGoodsReceiptLinesRequestDto } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.request.dto.js";
 import { ConfirmGoodsReceiptCommand } from "./commands/confirm-goods-receipt/confirm-goods-receipt.command.js";
 import { CreateGoodCommand } from "./commands/create-good/create-good.command.js";
 import { CreateGoodRequestDto } from "./commands/create-good/create-good.request.dto.js";
@@ -26,11 +27,22 @@ import { RemoveStockRequestDto } from "./commands/remove-stock/remove-stock.requ
 import { TransferStockCommand } from "./commands/transfer-stock/transfer-stock.command.js";
 import { TransferStockRequestDto } from "./commands/transfer-stock/transfer-stock.request.dto.js";
 import { DeleteGoodsCommand } from "./commands/delete-goods/delete-goods.command.js";
+import { DeleteGoodsReceiptCommand } from "./commands/delete-goods-receipt/delete-goods-receipt.command.js";
 import { EditGoodCommand } from "./commands/edit-good/edit-good.command.js";
 import { EditGoodRequestDto } from "./commands/edit-good/edit-good.request.dto.js";
 import { GetGoodQuery, GoodResponse } from "./queries/get-good/get-good.query.js";
+import { GetGoodsReceiptQuery, GoodsReceiptResponse } from "./queries/get-goods-receipt/get-goods-receipt.query.js";
 import { ListGoodsQuery, ListGoodsResponse } from "./queries/list-goods/list-goods.query.js";
 import { ListGoodsRequestDto } from "./queries/list-goods/list-goods.request.dto.js";
+import {
+    ListGoodsReceiptsQuery,
+    ListGoodsReceiptsResponse,
+} from "./queries/list-goods-receipts/list-goods-receipts.query.js";
+import { ListGoodsReceiptsRequestDto } from "./queries/list-goods-receipts/list-goods-receipts.request.dto.js";
+import {
+    ListWarehouseStockQuery,
+    ListWarehouseStockResponse,
+} from "./queries/list-warehouse-stock/list-warehouse-stock.query.js";
 import { ListWarehousesQuery, ListWarehousesResponse } from "./queries/list-warehouses/list-warehouses.query.js";
 
 @Controller("warehouse")
@@ -43,6 +55,11 @@ export class WarehouseHttpController {
     @Get()
     async listWarehouses(): Promise<ListWarehousesResponse> {
         return this.queryBus.execute(new ListWarehousesQuery());
+    }
+
+    @Get(":id/stock")
+    async listWarehouseStock(@Param("id", ParseUUIDPipe) id: UUID): Promise<ListWarehouseStockResponse> {
+        return this.queryBus.execute(new ListWarehouseStockQuery(id));
     }
 
     @Post()
@@ -110,6 +127,21 @@ export class WarehouseHttpController {
         return { goodId };
     }
 
+    @Get("receipts")
+    async listGoodsReceipts(@Query() query: ListGoodsReceiptsRequestDto): Promise<ListGoodsReceiptsResponse> {
+        return this.queryBus.execute(new ListGoodsReceiptsQuery(query.page ?? 1, query.limit ?? 20));
+    }
+
+    @Get("receipts/:id")
+    async getGoodsReceipt(@Param("id", ParseUUIDPipe) id: UUID): Promise<GoodsReceiptResponse> {
+        return this.queryBus.execute(new GetGoodsReceiptQuery(id));
+    }
+
+    @Delete("receipts/:id")
+    async deleteGoodsReceipt(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new DeleteGoodsReceiptCommand({ receiptId: id }));
+    }
+
     @Post("receipts")
     async openGoodsReceipt(@Body() body: OpenGoodsReceiptRequestDto): Promise<{ receiptId: string }> {
         const receiptId = await this.commandBus.execute(
@@ -121,18 +153,15 @@ export class WarehouseHttpController {
         return { receiptId };
     }
 
-    @Post("receipts/:id/lines")
-    async addLineToGoodsReceipt(
+    @Put("receipts/:id/lines")
+    async setGoodsReceiptLines(
         @Param("id", ParseUUIDPipe) id: UUID,
-        @Body() body: AddLineToGoodsReceiptRequestDto,
+        @Body() body: SetGoodsReceiptLinesRequestDto,
     ): Promise<void> {
         await this.commandBus.execute(
-            new AddLineToGoodsReceiptCommand({
+            new SetGoodsReceiptLinesCommand({
                 receiptId: id,
-                goodId: body.goodId,
-                quantity: body.quantity,
-                locationDescription: body.locationDescription,
-                note: body.note,
+                lines: body.lines,
             }),
         );
     }

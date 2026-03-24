@@ -1,13 +1,14 @@
-import { Inject, NotFoundException } from "@nestjs/common";
+import { Inject } from "@nestjs/common";
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
 import type { GoodsReceiptRepositoryPort } from "../../database/goods-receipt.repository.port.js";
+import { GoodsReceiptNotFoundError } from "../../domain/good.errors.js";
 import { GOODS_RECEIPT_REPOSITORY_PORT } from "../../warehouse.di-tokens.js";
-import { AddLineToGoodsReceiptCommand } from "./add-line-to-goods-receipt.command.js";
+import { SetGoodsReceiptLinesCommand } from "./set-goods-receipt-lines.command.js";
 
-@CommandHandler(AddLineToGoodsReceiptCommand)
-export class AddLineToGoodsReceiptCommandHandler implements ICommandHandler<AddLineToGoodsReceiptCommand> {
+@CommandHandler(SetGoodsReceiptLinesCommand)
+export class SetGoodsReceiptLinesCommandHandler implements ICommandHandler<SetGoodsReceiptLinesCommand> {
     constructor(
         @Inject(GOODS_RECEIPT_REPOSITORY_PORT)
         private readonly receiptRepo: GoodsReceiptRepositoryPort,
@@ -16,13 +17,13 @@ export class AddLineToGoodsReceiptCommandHandler implements ICommandHandler<AddL
         private readonly uow: UnitOfWorkPort,
     ) {}
 
-    async execute(cmd: AddLineToGoodsReceiptCommand): Promise<void> {
+    async execute(cmd: SetGoodsReceiptLinesCommand): Promise<void> {
         const receipt = await this.receiptRepo.findOneById(cmd.receiptId);
         if (!receipt) {
-            throw new NotFoundException(`Goods receipt ${cmd.receiptId} not found`);
+            throw new GoodsReceiptNotFoundError(cmd.receiptId);
         }
 
-        receipt.addLine(cmd.goodId, cmd.quantity, cmd.note, cmd.locationDescription);
+        receipt.setLines(cmd.lines);
 
         await this.receiptRepo.save(receipt);
         await this.uow.commit();

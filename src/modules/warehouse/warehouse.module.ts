@@ -3,17 +3,21 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
-import { AddLineToGoodsReceiptCommandHandler } from "./commands/add-line-to-goods-receipt/add-line-to-goods-receipt.command-handler.js";
+import { SetGoodsReceiptLinesCommandHandler } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command-handler.js";
 import { ConfirmGoodsReceiptCommandHandler } from "./commands/confirm-goods-receipt/confirm-goods-receipt.command-handler.js";
 import { CreateGoodCommandHandler } from "./commands/create-good/create-good.command-handler.js";
 import { DeleteGoodsCommandHandler } from "./commands/delete-goods/delete-goods.command-handler.js";
+import { DeleteGoodsReceiptCommandHandler } from "./commands/delete-goods-receipt/delete-goods-receipt.command-handler.js";
 import { EditGoodCommandHandler } from "./commands/edit-good/edit-good.command-handler.js";
 import { CreateWarehouseCommandHandler } from "./commands/create-warehouse/create-warehouse.command-handler.js";
 import { OpenGoodsReceiptCommandHandler } from "./commands/open-goods-receipt/open-goods-receipt.command-handler.js";
 import { RemoveStockCommandHandler } from "./commands/remove-stock/remove-stock.command-handler.js";
 import { TransferStockCommandHandler } from "./commands/transfer-stock/transfer-stock.command-handler.js";
 import { GetGoodQueryHandler } from "./queries/get-good/get-good.query-handler.js";
+import { GetGoodsReceiptQueryHandler } from "./queries/get-goods-receipt/get-goods-receipt.query-handler.js";
+import { ListGoodsReceiptsQueryHandler } from "./queries/list-goods-receipts/list-goods-receipts.query-handler.js";
 import { ListGoodsQueryHandler } from "./queries/list-goods/list-goods.query-handler.js";
+import { ListWarehouseStockQueryHandler } from "./queries/list-warehouse-stock/list-warehouse-stock.query-handler.js";
 import { ListWarehousesQueryHandler } from "./queries/list-warehouses/list-warehouses.query-handler.js";
 import { Good } from "./database/good.entity.js";
 import { GoodRepository } from "./database/good.repository.js";
@@ -37,15 +41,19 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
     providers: [
         CreateGoodCommandHandler,
         DeleteGoodsCommandHandler,
+        DeleteGoodsReceiptCommandHandler,
         EditGoodCommandHandler,
         CreateWarehouseCommandHandler,
         OpenGoodsReceiptCommandHandler,
-        AddLineToGoodsReceiptCommandHandler,
+        SetGoodsReceiptLinesCommandHandler,
         ConfirmGoodsReceiptCommandHandler,
         TransferStockCommandHandler,
         RemoveStockCommandHandler,
         GetGoodQueryHandler,
+        GetGoodsReceiptQueryHandler,
+        ListGoodsReceiptsQueryHandler,
         ListGoodsQueryHandler,
+        ListWarehouseStockQueryHandler,
         ListWarehousesQueryHandler,
         {
             provide: GOOD_REPOSITORY_PORT,
