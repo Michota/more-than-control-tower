@@ -10,6 +10,7 @@ const StockEntrySchema = defineEntity({
         warehouseId: p.uuid(),
         sectorId: p.uuid().nullable(),
         quantity: p.integer(),
+        attributes: p.json<{ name: string; type: string; value: string }[]>().default([]),
         history: p.embedded(StockHistoryEntry).array().default([]),
     },
 });

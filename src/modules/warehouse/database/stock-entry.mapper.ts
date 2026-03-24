@@ -3,6 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { Mapper } from "../../../libs/ddd/mapper.interface.js";
 import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { StockEntryAggregate } from "../domain/stock-entry.aggregate.js";
+import { StockEntryAttribute, StockAttributeType } from "../domain/stock-entry-attribute.value-object.js";
 import { StockHistoryEntry as DomainHistoryEntry } from "../domain/stock-history-entry.value-object.js";
 import { StockEventType } from "../domain/stock-event-type.enum.js";
 import { StockRemovalReason } from "../domain/stock-removal-reason.enum.js";
@@ -33,6 +34,10 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
                 warehouseId: record.warehouseId,
                 sectorId: record.sectorId ?? undefined,
                 quantity: record.quantity,
+                attributes: (record.attributes ?? []).map(
+                    (a) =>
+                        new StockEntryAttribute({ name: a.name, type: a.type as StockAttributeType, value: a.value }),
+                ),
                 history,
             },
         });
@@ -45,6 +50,7 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
             warehouseId: domain.warehouseId,
             sectorId: domain.sectorId ?? null,
             quantity: domain.quantity,
+            attributes: domain.attributes.map((a) => ({ name: a.name, type: a.type, value: a.value })),
             history: domain.history.map((h) => ({
                 eventType: h.eventType,
                 quantityDelta: h.quantityDelta,

@@ -2,6 +2,7 @@ import z from "zod";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import { StockHistoryEntry } from "./stock-history-entry.value-object.js";
+import { StockEntryAttribute } from "./stock-entry-attribute.value-object.js";
 import { StockEventType } from "./stock-event-type.enum.js";
 import { StockRemovalReason } from "./stock-removal-reason.enum.js";
 import { InsufficientStockError } from "./good.errors.js";
@@ -14,6 +15,7 @@ const stockEntrySchema = z.object({
     warehouseId: z.uuid(),
     sectorId: z.uuid().optional(),
     quantity: z.number().int().min(0),
+    attributes: z.array(z.instanceof(StockEntryAttribute)),
     history: z.array(z.instanceof(StockHistoryEntry)),
 });
 
@@ -25,6 +27,7 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
         warehouseId: string;
         quantity: number;
         sectorId?: string;
+        attributes?: StockEntryAttribute[];
         note?: string;
     }): StockEntryAggregate {
         const entry = new StockEntryAggregate({
@@ -33,6 +36,7 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
                 warehouseId: props.warehouseId,
                 sectorId: props.sectorId,
                 quantity: props.quantity,
+                attributes: props.attributes ?? [],
                 history: [
                     new StockHistoryEntry({
                         eventType: StockEventType.RECEIVED,
@@ -81,6 +85,10 @@ export class StockEntryAggregate extends AggregateRoot<StockEntryProperties> {
 
     get quantity(): number {
         return this.properties.quantity;
+    }
+
+    get attributes(): StockEntryAttribute[] {
+        return this.properties.attributes;
     }
 
     get history(): StockHistoryEntry[] {

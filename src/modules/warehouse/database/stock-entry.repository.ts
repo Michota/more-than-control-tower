@@ -1,6 +1,7 @@
 import { EntityManager } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
+import { StockEntryNotEmptyError } from "../domain/good.errors.js";
 import { StockEntryAggregate } from "../domain/stock-entry.aggregate.js";
 import { StockEntryRepositoryPort } from "./stock-entry.repository.port.js";
 import { StockEntry } from "./stock-entry.entity.js";
@@ -29,6 +30,16 @@ export class StockEntryRepository implements StockEntryRepositoryPort {
 
     async findBySector(sectorId: string): Promise<StockEntryAggregate[]> {
         const records = await this.em.find(StockEntry, { sectorId });
+        return records.map((r) => this.mapper.toDomain(r));
+    }
+
+    async findByGood(goodId: string): Promise<StockEntryAggregate[]> {
+        const records = await this.em.find(StockEntry, { goodId });
+        return records.map((r) => this.mapper.toDomain(r));
+    }
+
+    async findActiveByGoodId(goodId: string): Promise<StockEntryAggregate[]> {
+        const records = await this.em.find(StockEntry, { goodId, quantity: { $gt: 0 } });
         return records.map((r) => this.mapper.toDomain(r));
     }
 
@@ -63,6 +74,9 @@ export class StockEntryRepository implements StockEntryRepositoryPort {
     }
 
     async delete(entity: StockEntryAggregate): Promise<boolean> {
+        if (entity.quantity > 0) {
+            throw new StockEntryNotEmptyError(entity.id as string, entity.quantity);
+        }
         const record = await this.em.findOne(StockEntry, { id: entity.id as string });
         if (!record) return false;
         this.em.remove(record);

@@ -17,6 +17,14 @@ import { TransferStockCommandHandler } from "./commands/transfer-stock/transfer-
 import { CreateSectorCommandHandler } from "./commands/create-sector/create-sector.command-handler.js";
 import { EditSectorCommandHandler } from "./commands/edit-sector/edit-sector.command-handler.js";
 import { MoveStockToSectorCommandHandler } from "./commands/move-stock-to-sector/move-stock-to-sector.command-handler.js";
+import {
+    ActivateWarehouseCommandHandler,
+    DeactivateWarehouseCommandHandler,
+} from "./commands/change-warehouse-status/change-warehouse-status.command-handler.js";
+import {
+    ActivateSectorCommandHandler,
+    DeactivateSectorCommandHandler,
+} from "./commands/change-sector-status/change-sector-status.command-handler.js";
 import { GetGoodQueryHandler } from "./queries/get-good/get-good.query-handler.js";
 import { GetGoodsReceiptQueryHandler } from "./queries/get-goods-receipt/get-goods-receipt.query-handler.js";
 import { ListGoodsReceiptsQueryHandler } from "./queries/list-goods-receipts/list-goods-receipts.query-handler.js";
@@ -63,6 +71,10 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         CreateSectorCommandHandler,
         EditSectorCommandHandler,
         MoveStockToSectorCommandHandler,
+        ActivateWarehouseCommandHandler,
+        DeactivateWarehouseCommandHandler,
+        ActivateSectorCommandHandler,
+        DeactivateSectorCommandHandler,
         GetGoodQueryHandler,
         GetGoodsReceiptQueryHandler,
         ListGoodsReceiptsQueryHandler,

@@ -18,6 +18,8 @@ export class GetGoodQueryHandler implements IQueryHandler<GetGoodQuery, GoodResp
             throw new GoodNotFoundError(query.goodId);
         }
 
+        const children = await this.goodRepo.findByParentId(good.id as string);
+
         return {
             id: good.id as string,
             name: good.name,
@@ -30,6 +32,11 @@ export class GetGoodQueryHandler implements IQueryHandler<GetGoodQuery, GoodResp
                 unit: good.dimensions.unit,
             },
             parentId: good.parentId,
+            children: children.map((c) => ({
+                id: c.id as string,
+                name: c.name,
+                description: c.description,
+            })),
         };
     }
 }

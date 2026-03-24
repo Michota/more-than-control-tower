@@ -39,7 +39,6 @@ import {
     PaginatedGoodsReceiptsResponseDto,
     ReceiptIdResponseDto,
 } from "./dtos/goods-receipt.response.dto.js";
-import { WarehouseStockItemResponseDto } from "./dtos/stock.response.dto.js";
 import { WarehouseIdResponseDto, WarehouseResponseDto } from "./dtos/warehouse.response.dto.js";
 import { GetGoodQuery } from "./queries/get-good/get-good.query.js";
 import { GetGoodsReceiptQuery } from "./queries/get-goods-receipt/get-goods-receipt.query.js";
@@ -58,6 +57,14 @@ import { MoveStockToSectorRequestDto } from "./commands/move-stock-to-sector/mov
 import { ListSectorsQuery } from "./queries/list-sectors/list-sectors.query.js";
 import { GetSectorQuery } from "./queries/get-sector/get-sector.query.js";
 import { GetSectorLoadQuery } from "./queries/get-sector-load/get-sector-load.query.js";
+import {
+    ActivateWarehouseCommand,
+    DeactivateWarehouseCommand,
+} from "./commands/change-warehouse-status/change-warehouse-status.command.js";
+import {
+    ActivateSectorCommand,
+    DeactivateSectorCommand,
+} from "./commands/change-sector-status/change-sector-status.command.js";
 
 @ApiTags("Warehouse")
 @Controller("warehouse")
@@ -77,10 +84,34 @@ export class WarehouseHttpController {
     }
 
     @Get(":id/stock")
-    @ApiOperation({ summary: "List stock entries for a warehouse" })
-    @ApiResponse({ status: 200, type: [WarehouseStockItemResponseDto] })
-    async listWarehouseStock(@Param("id", ParseUUIDPipe) id: UUID): Promise<WarehouseStockItemResponseDto[]> {
-        return this.queryBus.execute(new ListWarehouseStockQuery(id));
+    @ApiOperation({ summary: "List stock entries for a warehouse (with filtering, sorting, history toggle)" })
+    @ApiResponse({ status: 200 })
+    async listWarehouseStock(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Query("includeHistory") includeHistory?: string,
+        @Query("sectorId") sectorId?: string,
+        @Query("goodName") goodName?: string,
+        @Query("goodDescription") goodDescription?: string,
+        @Query("sortBy") sortBy?: "name" | "receivedAt",
+        @Query("sortDirection") sortDirection?: "asc" | "desc",
+        @Query("attributeName") attributeName?: string,
+        @Query("attributeValue") attributeValue?: string,
+        @Query("attributeDateBefore") attributeDateBefore?: string,
+    ) {
+        return this.queryBus.execute(
+            new ListWarehouseStockQuery({
+                warehouseId: id,
+                includeHistory: includeHistory === "true",
+                sectorId,
+                goodName,
+                goodDescription,
+                sortBy,
+                sortDirection,
+                attributeName,
+                attributeValue,
+                attributeDateBefore,
+            }),
+        );
     }
 
     @Post()
@@ -108,6 +139,20 @@ export class WarehouseHttpController {
                 address: body.address,
             }),
         );
+    }
+
+    @Post(":id/activate")
+    @ApiOperation({ summary: "Activate a warehouse" })
+    @ApiResponse({ status: 200 })
+    async activateWarehouse(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new ActivateWarehouseCommand({ warehouseId: id }));
+    }
+
+    @Post(":id/deactivate")
+    @ApiOperation({ summary: "Deactivate a warehouse (only if it has no stock)" })
+    @ApiResponse({ status: 200 })
+    async deactivateWarehouse(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new DeactivateWarehouseCommand({ warehouseId: id }));
     }
 
     // ─── Goods ───────────────────────────────────────────────
@@ -295,6 +340,20 @@ export class WarehouseHttpController {
                 capabilities: body.capabilities,
             }),
         );
+    }
+
+    @Post("sectors/:id/activate")
+    @ApiOperation({ summary: "Activate a sector" })
+    @ApiResponse({ status: 200 })
+    async activateSector(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new ActivateSectorCommand({ sectorId: id }));
+    }
+
+    @Post("sectors/:id/deactivate")
+    @ApiOperation({ summary: "Deactivate a sector" })
+    @ApiResponse({ status: 200 })
+    async deactivateSector(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new DeactivateSectorCommand({ sectorId: id }));
     }
 
     // ─── Stock Operations ────────────────────────────────────

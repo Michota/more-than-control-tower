@@ -5,4 +5,6 @@ export interface StockEntryRepositoryPort extends RepositoryPort<StockEntryAggre
     findByGoodAndWarehouse(goodId: string, warehouseId: string): Promise<StockEntryAggregate | null>;
     findByWarehouse(warehouseId: string): Promise<StockEntryAggregate[]>;
     findBySector(sectorId: string): Promise<StockEntryAggregate[]>;
+    findByGood(goodId: string): Promise<StockEntryAggregate[]>;
+    findActiveByGoodId(goodId: string): Promise<StockEntryAggregate[]>;
 }

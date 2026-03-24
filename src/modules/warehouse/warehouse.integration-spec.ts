@@ -126,7 +126,7 @@ describe("Warehouse Module — Integration Tests", () => {
     }
 
     async function getWarehouseStock(warehouseId: string) {
-        return queryBus.execute(new ListWarehouseStockQuery(warehouseId));
+        return queryBus.execute(new ListWarehouseStockQuery({ warehouseId }));
     }
 
     async function createSector(warehouseId: string, name = "Sector A"): Promise<string> {

@@ -64,11 +64,35 @@ export class SectorNotInWarehouseError extends Exception {
     }
 }
 
+export class WarehouseHasStockError extends Exception {
+    public readonly code = "WAREHOUSE.HAS_STOCK";
+
+    constructor(id: string) {
+        super(`Cannot deactivate warehouse ${id} because it still contains stock`);
+    }
+}
+
 export class WarehouseNotFoundError extends Exception {
     public readonly code = "WAREHOUSE.NOT_FOUND";
 
     constructor(id: string) {
         super(`Warehouse with id ${id} not found`);
+    }
+}
+
+export class GoodHasActiveStockError extends Exception {
+    public readonly code = "GOOD.HAS_ACTIVE_STOCK";
+
+    constructor(id: string) {
+        super(`Cannot delete good ${id} because it has active stock entries (quantity > 0)`);
+    }
+}
+
+export class StockEntryNotEmptyError extends Exception {
+    public readonly code = "STOCK_ENTRY.NOT_EMPTY";
+
+    constructor(id: string, quantity: number) {
+        super(`Cannot delete stock entry ${id} because it still has quantity ${quantity}`);
     }
 }
 
