@@ -235,7 +235,7 @@ A concrete VO is written that exposes a mutation bug, or the team decides to aud
 
 The codebase uses hexagonal architecture with CQRS. Tests need to cover domain invariants, use case behavior, infrastructure correctness, and full HTTP stack — each at a different level of isolation and speed.
 
-The team evaluated BDD-style tests (Given/When/Then) vs traditional unit tests, and Jest vs Cucumber for the test runner.
+The team evaluated BDD-style tests (Given/When/Then) vs traditional unit tests, and Vitest vs Cucumber for the test runner.
 
 ## Decision
 
@@ -243,44 +243,48 @@ The team evaluated BDD-style tests (Given/When/Then) vs traditional unit tests, 
 
 **Level 1 — Domain unit tests**
 Target: aggregate methods, value object validation, domain service logic.
-Tools: Jest, no infrastructure, no mocks.
+Tools: Vitest, no infrastructure, no mocks.
 Goal: verify that domain invariants are enforced in isolation.
 
 **Level 2 — Handler BDD tests (primary level)**
 Target: command and query handlers — the entry point for each use case.
-Tools: Jest, in-memory repository implementations, `NoOpUnitOfWork`, `FakeEventBus`.
+Tools: Vitest, in-memory repository implementations, `NoOpUnitOfWork`, `FakeEventBus`.
 Goal: describe and verify business behavior end-to-end through the use case, without hitting a real database.
 This is the primary testing level. Most behavioral coverage lives here.
 
 **Level 3 — Repository and E2E tests**
 Target: MikroORM repository adapters and full HTTP stack.
-Tools: Jest + Testcontainers (`@testcontainers/postgresql`) — a real PostgreSQL container started programmatically per test run.
+Tools: Vitest + Testcontainers (`@testcontainers/postgresql`) — a real PostgreSQL container started programmatically per test run.
 Goal: verify ORM mappings, database constraints, and full request/response HTTP behavior.
 
-### 2. BDD style with Jest, not Cucumber
+### 2. BDD style with Vitest, not Cucumber
 
-Tests are written using Jest's nested `describe` / `it` blocks following Given/When/Then structure. Cucumber (Gherkin) is not used.
+Tests are written using Vitest's nested `describe` / `it` blocks following Given/When/Then structure. Cucumber (Gherkin) is not used.
 
-Rationale: Cucumber adds value when non-technical stakeholders write or read scenarios. In this project all specs are developer-owned. The indirection of `.feature` files, step definitions, and a Gherkin runner adds friction with no payoff. Jest with descriptive `describe` nesting is readable enough for the audience.
+Rationale: Cucumber adds value when non-technical stakeholders write or read scenarios. In this project all specs are developer-owned. The indirection of `.feature` files, step definitions, and a Gherkin runner adds friction with no payoff. Vitest with descriptive `describe` nesting is readable enough for the audience.
 
 ### 3. In-memory repositories for handler tests
 
 Handler BDD tests use hand-written in-memory implementations of each repository port (e.g. `InMemoryOrderRepository implements OrderRepositoryPort`). These store domain objects in a `Map` and expose a `seed()` helper for test setup.
 
-Mocking individual methods with `jest.fn()` is not used at the repository level — it tests call signatures, not behavior. In-memory repos test that data actually persists and is retrievable.
+Mocking individual methods with `vi.fn()` is not used at the repository level — it tests call signatures, not behavior. In-memory repos test that data actually persists and is retrievable.
 
 ### 4. Testcontainers for repository and E2E tests
 
-A real PostgreSQL container is started in Jest's `globalSetup` via `@testcontainers/postgresql`. The container URI is injected into `process.env.DATABASE_URL` before any test file runs. MikroORM picks it up via the standard config. The container is stopped in `globalTeardown`.
+A real PostgreSQL container is started in Vitest's `globalSetup` via `@testcontainers/postgresql`. The container URI is injected into `process.env.DATABASE_URL` before any test file runs. MikroORM picks it up via the standard config. The container is stopped in `globalTeardown`.
 
 This eliminates the need for a separately managed test database or Docker Compose step before running tests.
+
+### 5. Test runner: Vitest (see ADR-011)
+
+The project originally used Jest. It was replaced by Vitest due to Jest's inability to load ESM-only packages (MikroORM v7) without fragile workarounds. See ADR-011 for full rationale.
 
 ## Consequences
 
 ### Positive
 - Handler BDD tests run fast (no I/O) and cover the majority of behavioral scenarios.
 - Real database in repository/E2E tests catches ORM mapping bugs and constraint violations that in-memory repos cannot.
-- Jest throughout — no context switching between two test frameworks.
+- Vitest throughout — no context switching between two test frameworks.
 - BDD structure (`describe` nesting) makes test intent readable without Gherkin ceremony.
 
 ### Negative
@@ -394,44 +398,60 @@ Integration tests (`*.integration-spec.ts`) use a separate Jest configuration wi
 - `allowGlobalContext: true` hides bugs where production code accidentally uses the global EntityManager.
 
 
-# ADR-011: Integration tests use Vitest instead of Jest
+# ADR-011: Vitest replaces Jest as the sole test runner
 
 **Status:** Accepted (supersedes ADR-010)
 **Date:** 2026-03-24
 
 ## Context
 
-ADR-010 documented the workarounds needed to run integration tests with Jest and MikroORM v7 (ESM-only). The approach required `--experimental-vm-modules`, a separate `tsconfig.integration.json`, and `extensionsToTreatAsEsm` — all fragile and divergent from the unit test configuration.
+Jest could not load MikroORM v7, which ships as `"type": "module"` (pure ESM) and uses `import.meta.resolve` internally. Three workaround paths were attempted:
 
-Vitest uses Vite's native ESM module resolution and TypeScript handling, eliminating all three workarounds.
+1. **CJS mode with `transformIgnorePatterns`** — ts-jest converted ESM exports to CJS but could not transpile `import.meta`, which has no CJS equivalent.
+2. **Full ESM mode** (`extensionsToTreatAsEsm` + `useESM: true` + `--experimental-vm-modules`) — test files compiled as ESM, but CJS packages like `@nestjs/testing` broke with `exports is not defined` because they expect a CJS module scope.
+3. **Hybrid** (ESM test files + native ESM loading for node_modules) — worked, but required a separate `tsconfig.integration.json`, an unstable `--experimental-vm-modules` Node flag, and different compilation settings for integration vs unit tests.
+
+Option 3 was shipped initially (ADR-010) but created ongoing friction: two tsconfigs to maintain, an experimental flag that could break across Node versions, and divergent module resolution between test levels.
+
+Vitest uses Vite's native ESM module resolution and TypeScript handling, eliminating all three workarounds. After successfully migrating integration tests, the unit tests were migrated as well — the test API (`describe`, `it`, `expect`, `beforeAll`, `afterAll`) is identical, no test code changes were required, and having a single test runner is simpler than maintaining two.
 
 ## Decision
 
-Integration tests (`*.integration-spec.ts`) use Vitest with `vitest.integration.config.ts`. Unit tests (`*.spec.ts`) remain on Jest.
+Vitest is the sole test runner. Jest, ts-jest, and eslint-plugin-jest are fully removed.
 
 Configuration:
-- **`vitest.integration.config.ts`** — `fileParallelism: false` (sequential execution, required for shared database state).
-- **`globals: true`** — `describe`, `it`, `expect` available without imports (Jest API compatibility).
+- **`vitest.config.ts`** — unit tests (`*.spec.ts`). Default parallel execution.
+- **`vitest.integration.config.ts`** — integration tests (`*.integration-spec.ts`). `fileParallelism: false` (sequential, required for shared database state).
+- **`globals: true`** in both configs — `describe`, `it`, `expect` available without imports.
 - **`resolve.alias`** — maps `src/` to the source directory (replaces Jest's `moduleNameMapper`).
-- **`pnpm test:integration`** — runs `vitest run --config vitest.integration.config.ts`.
+- **`vitest/globals`** added to `tsconfig.json` `types` — provides type definitions for global test functions.
+- **`@vitest/eslint-plugin`** replaces `eslint-plugin-jest` — same rule names, `vitest/` prefix instead of `jest/`.
 
-Removed:
-- `tsconfig.integration.json` — no longer needed; Vitest uses the project's main `tsconfig.json`.
-- `extensionsToTreatAsEsm`, `useESM`, `--experimental-vm-modules` in Jest config — all unnecessary with Vitest.
+Scripts:
+- `pnpm test` — `vitest run` (unit tests)
+- `pnpm test:watch` — `vitest watch`
+- `pnpm test:cov` — `vitest run --coverage`
+- `pnpm test:integration` — `vitest run --config vitest.integration.config.ts`
 
 Retained from ADR-010:
 - `allowGlobalContext: true` in `TestMikroOrmDatabaseModule` — still needed since tests run outside HTTP request scope.
 - `orm.schema.ensureDatabase()` + `drop()` + `create()` pattern in `beforeAll`.
 
+Removed:
+- `jest.spec.json`, `jest.integration.json`, `test/jest-e2e.json` — all Jest config files.
+- `tsconfig.integration.json` — Vitest uses the project's main `tsconfig.json`.
+- `ts-jest`, `eslint-plugin-jest` — no longer dependencies.
+- `--experimental-vm-modules` — not needed.
+
 ## Consequences
 
 ### Positive
-- No experimental Node.js flags.
-- No separate tsconfig — one compiler configuration for the whole project.
-- Native ESM support — MikroORM v7, `es-toolkit`, and other ESM-only packages work without transformation workarounds.
-- Faster execution (~2s vs ~6s for the same 24 tests).
-- Test API is backward-compatible with Jest — `describe`, `it`, `expect`, `beforeAll`, `afterAll` all work identically.
+- One test runner for the entire project — simpler toolchain, one set of conventions.
+- Native ESM support — MikroORM v7, `es-toolkit`, `zod`, and any future ESM-only packages work without transformation workarounds.
+- No experimental Node.js flags or separate tsconfig.
+- Faster execution — unit tests ~0.6s (vs ~1.4s with Jest), integration tests ~2.2s (vs ~6s with Jest ESM mode).
+- Near-zero migration cost — existing test files required no code changes (no `jest.fn()` or `jest.mock()` usage in the codebase).
 
 ### Negative
-- Two test runners in the project (Jest for unit tests, Vitest for integration tests). Acceptable because unit tests have no ESM dependency issues and don't need migration.
-- Developers need both `jest` and `vitest` knowledge. Mitigated by near-identical test APIs.
+- NestJS documentation and examples default to Jest. Developers copy-pasting from NestJS docs need to be aware that `jest.fn()` → `vi.fn()` and `jest.mock()` → `vi.mock()` if they introduce mocking in the future.
+- Vitest watch mode uses Vite's HMR, which occasionally behaves differently from Jest's `--watch` on file rename or deletion. Minor nuisance, not a correctness issue.
