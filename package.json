@@ -21,7 +21,7 @@
         "test:watch": "jest --config ./jest.spec.json --watch",
         "test:cov": "jest --config ./jest.spec.json --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config ./jest.spec.json --runInBand",
-        "test:integration": "jest --config ./jest.integration.json --runInBand",
+        "test:integration": "NODE_OPTIONS='--experimental-vm-modules' jest --config ./jest.integration.json --runInBand",
         "test:e2e": "jest --config ./test/jest-e2e.json",
         "prepare": "husky",
         "type-check": "tsc --noEmit"

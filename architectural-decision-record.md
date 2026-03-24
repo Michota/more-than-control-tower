@@ -358,3 +358,37 @@ When the first real client deployment requires an external adapter:
 - Consider splitting the codebase into Turborepo packages.
 
 Until then, treat any proposal to write an external adapter as premature.
+
+
+# ADR-010: Integration tests use Jest ESM mode with a dedicated tsconfig
+
+**Status:** Accepted (superseded — migrating to Vitest, see ADR-011)
+**Date:** 2026-03-24
+
+## Context
+
+MikroORM v7 ships as `"type": "module"` (pure ESM) and uses `import.meta.resolve` internally. Jest's default CJS module system cannot load ESM-only packages:
+
+- Default CJS mode fails on `export` keyword in ESM packages.
+- Transforming ESM packages via `transformIgnorePatterns` fails on `import.meta` syntax.
+- Full ESM mode (`extensionsToTreatAsEsm` + `useESM`) breaks CJS packages like `@nestjs/testing` (`exports is not defined`).
+
+Integration tests need the full NestJS application context with MikroORM, unlike unit tests which avoid ESM-only imports entirely.
+
+## Decision
+
+Integration tests (`*.integration-spec.ts`) use a separate Jest configuration with:
+
+1. **`extensionsToTreatAsEsm: [".ts"]`** + **`ts-jest` with `useESM: true`** — test files compile as ESM.
+2. **`tsconfig.integration.json`** — a dedicated tsconfig with `module: "ESNext"`, `moduleResolution: "bundler"` (differs from the project's `module: "nodenext"`).
+3. **`NODE_OPTIONS='--experimental-vm-modules'`** — required for Jest's ESM support.
+4. **`allowGlobalContext: true`** in `TestMikroOrmDatabaseModule` — bypasses MikroORM's request-scoped EntityManager safety, since tests run outside HTTP request context.
+5. **`orm.schema.ensureDatabase()` + `drop()` + `create()`** in `beforeAll` — sets up a clean schema per test suite.
+
+## Consequences
+
+### Negative (motivating migration to Vitest)
+- `--experimental-vm-modules` is an unstable Node.js flag that may break across versions.
+- A second `tsconfig.integration.json` must be maintained in sync with the main one.
+- Integration and unit tests compile differently (ESM vs CJS), risking subtle module resolution differences.
+- `allowGlobalContext: true` hides bugs where production code accidentally uses the global EntityManager.

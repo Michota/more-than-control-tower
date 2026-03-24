@@ -14,5 +14,6 @@ export function TestMikroOrmDatabaseModule() {
             password: DB_PASSWORD,
             dbName: TEST_DB_NAME,
         }),
+        allowGlobalContext: true,
     });
 }
