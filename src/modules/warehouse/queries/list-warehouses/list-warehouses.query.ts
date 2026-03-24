@@ -5,8 +5,6 @@ export interface WarehouseListItem {
     name: string;
     status: string;
     type: string;
-    latitude: number;
-    longitude: number;
     address: {
         country: string;
         postalCode: string;

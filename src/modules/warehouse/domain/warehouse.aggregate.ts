@@ -2,14 +2,12 @@ import z from "zod";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import { Address } from "../../../shared/value-objects/address.value-object.js";
-import { GeoLocation } from "./geo-location.value-object.js";
 import { WarehouseStatus } from "./warehouse-status.enum.js";
 import { WarehouseType } from "./warehouse-type.enum.js";
 import { WarehouseCreatedDomainEvent } from "./events/warehouse-created.domain-event.js";
 
 const warehouseSchema = z.object({
     name: z.string().min(1),
-    location: z.instanceof(GeoLocation),
     address: z.instanceof(Address),
     status: z.enum(WarehouseStatus),
     type: z.enum(WarehouseType),
@@ -19,7 +17,6 @@ export type WarehouseProperties = z.infer<typeof warehouseSchema>;
 
 export interface CreateWarehouseProps {
     name: string;
-    location: GeoLocation;
     address: Address;
     type?: WarehouseType;
 }
@@ -29,7 +26,6 @@ export class WarehouseAggregate extends AggregateRoot<WarehouseProperties> {
         const warehouse = new WarehouseAggregate({
             properties: {
                 name: props.name,
-                location: props.location,
                 address: props.address,
                 status: WarehouseStatus.ACTIVE,
                 type: props.type ?? WarehouseType.REGULAR,
@@ -60,10 +56,6 @@ export class WarehouseAggregate extends AggregateRoot<WarehouseProperties> {
         return this.properties.name;
     }
 
-    get location(): GeoLocation {
-        return this.properties.location;
-    }
-
     get address(): Address {
         return this.properties.address;
     }
@@ -76,7 +68,7 @@ export class WarehouseAggregate extends AggregateRoot<WarehouseProperties> {
         return this.properties.type;
     }
 
-    update(props: Partial<Omit<WarehouseProperties, "status">>): void {
+    update(props: Partial<Omit<WarehouseProperties, "status" | "type">>): void {
         Object.assign(this.properties, props);
         this.validate();
     }

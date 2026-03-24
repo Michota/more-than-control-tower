@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import { IsOptional, IsString, ValidateNested } from "class-validator";
 
 export class EditWarehouseAddressDto {
     /** @example "PL" */
@@ -33,20 +33,6 @@ export class EditWarehouseRequestDto {
     @IsString()
     @IsOptional()
     name?: string;
-
-    /** @example 52.2297 */
-    @IsNumber()
-    @IsOptional()
-    @Min(-90)
-    @Max(90)
-    latitude?: number;
-
-    /** @example 21.0122 */
-    @IsNumber()
-    @IsOptional()
-    @Min(-180)
-    @Max(180)
-    longitude?: number;
 
     @ValidateNested()
     @IsOptional()

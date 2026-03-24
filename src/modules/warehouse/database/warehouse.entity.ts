@@ -8,8 +8,6 @@ const WarehouseSchema = defineEntity({
     properties: {
         id: p.uuid().primary(),
         name: p.string(),
-        latitude: p.decimal(),
-        longitude: p.decimal(),
         addressCountry: p.string(),
         addressPostalCode: p.string(),
         addressState: p.string(),

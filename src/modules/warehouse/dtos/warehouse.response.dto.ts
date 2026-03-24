@@ -22,10 +22,6 @@ export class WarehouseResponseDto {
     status!: string;
     /** @example "REGULAR" */
     type!: string;
-    /** @example 52.2297 */
-    latitude!: number;
-    /** @example 21.0122 */
-    longitude!: number;
 
     @ApiProperty({ type: AddressResponseDto })
     address!: AddressResponseDto;

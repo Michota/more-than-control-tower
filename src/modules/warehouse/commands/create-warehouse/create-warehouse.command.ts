@@ -11,16 +11,12 @@ export interface CreateWarehouseAddressProps {
 
 export class CreateWarehouseCommand extends Command<string> {
     readonly name: string;
-    readonly latitude: number;
-    readonly longitude: number;
     readonly address: CreateWarehouseAddressProps;
     readonly type?: WarehouseType;
 
     constructor(props: CommandProps<CreateWarehouseCommand>) {
         super(props);
         this.name = props.name;
-        this.latitude = props.latitude;
-        this.longitude = props.longitude;
         this.address = props.address;
         this.type = props.type;
     }

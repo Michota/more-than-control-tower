@@ -90,8 +90,6 @@ export class WarehouseHttpController {
         const warehouseId = await this.commandBus.execute(
             new CreateWarehouseCommand({
                 name: body.name,
-                latitude: body.latitude,
-                longitude: body.longitude,
                 address: body.address,
                 type: body.type,
             }),
@@ -107,8 +105,6 @@ export class WarehouseHttpController {
             new EditWarehouseCommand({
                 warehouseId: id,
                 name: body.name,
-                latitude: body.latitude,
-                longitude: body.longitude,
                 address: body.address,
             }),
         );

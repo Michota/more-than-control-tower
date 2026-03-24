@@ -4,7 +4,6 @@ import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
 import type { WarehouseRepositoryPort } from "../../database/warehouse.repository.port.js";
 import { Address } from "../../../../shared/value-objects/address.value-object.js";
-import { GeoLocation } from "../../domain/geo-location.value-object.js";
 import { WarehouseNotFoundError } from "../../domain/good.errors.js";
 import { WAREHOUSE_REPOSITORY_PORT } from "../../warehouse.di-tokens.js";
 import { EditWarehouseCommand } from "./edit-warehouse.command.js";
@@ -29,12 +28,6 @@ export class EditWarehouseCommandHandler implements ICommandHandler<EditWarehous
 
         if (cmd.name !== undefined) {
             updates.name = cmd.name;
-        }
-        if (cmd.latitude !== undefined || cmd.longitude !== undefined) {
-            updates.location = new GeoLocation({
-                latitude: cmd.latitude ?? warehouse.location.latitude,
-                longitude: cmd.longitude ?? warehouse.location.longitude,
-            });
         }
         if (cmd.address !== undefined) {
             updates.address = new Address({

@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
+import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from "class-validator";
 import { WarehouseType } from "../../domain/warehouse-type.enum.js";
 
 export class CreateWarehouseAddressDto {
@@ -34,18 +34,6 @@ export class CreateWarehouseRequestDto {
     @IsString()
     @IsNotEmpty()
     name!: string;
-
-    /** @example 52.2297 */
-    @IsNumber()
-    @Min(-90)
-    @Max(90)
-    latitude!: number;
-
-    /** @example 21.0122 */
-    @IsNumber()
-    @Min(-180)
-    @Max(180)
-    longitude!: number;
 
     @ValidateNested()
     @Type(() => CreateWarehouseAddressDto)
