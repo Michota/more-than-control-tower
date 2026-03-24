@@ -36,10 +36,7 @@ describe("Warehouse Module — Integration Tests", () => {
         queryBus = moduleRef.get(QueryBus);
         orm = moduleRef.get(MikroORM);
 
-        // Ensure schema is up-to-date for tests
-        await orm.schema.ensureDatabase();
-        await orm.schema.drop();
-        await orm.schema.create();
+        await orm.schema.refresh();
     });
 
     afterAll(async () => {
