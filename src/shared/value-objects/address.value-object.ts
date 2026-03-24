@@ -32,4 +32,8 @@ export class Address extends ValueObjectWithSchema<AddressProperties> {
     get postalCode(): string {
         return this.properties.postalCode;
     }
+
+    get street(): string {
+        return this.properties.street;
+    }
 }
