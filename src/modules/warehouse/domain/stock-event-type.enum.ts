@@ -1,0 +1,6 @@
+export enum StockEventType {
+    RECEIVED = "RECEIVED",
+    REMOVED = "REMOVED",
+    TRANSFERRED_OUT = "TRANSFERRED_OUT",
+    TRANSFERRED_IN = "TRANSFERRED_IN",
+}

@@ -2,7 +2,7 @@ import { EntityManager } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
 import { GoodAggregate } from "../domain/good.aggregate.js";
-import { GoodRepositoryPort } from "./good.repository.port.js";
+import { FindGoodsParams, GoodRepositoryPort } from "./good.repository.port.js";
 import { Good } from "./good.entity.js";
 import { GoodMapper } from "./good.mapper.js";
 
@@ -40,9 +40,19 @@ export class GoodRepository implements GoodRepositoryPort {
         });
     }
 
-    async findByWarehouseId(warehouseId: string): Promise<GoodAggregate[]> {
-        const records = await this.em.find(Good, { warehouseId });
-        return records.map((r) => this.mapper.toDomain(r));
+    async findPaginated(params: FindGoodsParams): Promise<Paginated<GoodAggregate>> {
+        const where = params.name ? { name: { $ilike: `%${params.name}%` } } : {};
+        const [records, count] = await this.em.findAndCount(Good, where, {
+            limit: params.limit,
+            offset: (params.page - 1) * params.limit,
+            orderBy: { name: "asc" },
+        });
+        return new Paginated({
+            data: records.map((r) => this.mapper.toDomain(r)),
+            count,
+            limit: params.limit,
+            page: params.page,
+        });
     }
 
     async save(entity: GoodAggregate | GoodAggregate[]): Promise<void> {

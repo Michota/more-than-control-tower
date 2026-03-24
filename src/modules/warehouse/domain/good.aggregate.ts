@@ -58,4 +58,9 @@ export class GoodAggregate extends AggregateRoot<GoodProperties> {
     get parentId(): string | undefined {
         return this.properties.parentId;
     }
+
+    update(props: Partial<GoodProperties>): void {
+        Object.assign(this.properties, props);
+        this.validate();
+    }
 }

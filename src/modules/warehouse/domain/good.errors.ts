@@ -8,18 +8,50 @@ export class GoodNotFoundError extends Exception {
     }
 }
 
-export class GoodNotInWarehouseError extends Exception {
-    public readonly code = "GOOD.NOT_IN_WAREHOUSE";
+export class ParentGoodNotFoundError extends Exception {
+    public readonly code = "GOOD.PARENT_NOT_FOUND";
 
-    constructor() {
-        super("Good is not located in any warehouse");
+    constructor(id: string) {
+        super(`Parent good with id ${id} not found`);
     }
 }
 
-export class IncorporatedGoodCannotBeManipulatedError extends Exception {
-    public readonly code = "GOOD.INCORPORATED.CANNOT_BE_MANIPULATED";
+export class GoodsReceiptNotFoundError extends Exception {
+    public readonly code = "GOODS_RECEIPT.NOT_FOUND";
+
+    constructor(id: string) {
+        super(`Goods receipt with id ${id} not found`);
+    }
+}
+
+export class GoodsReceiptNotDraftError extends Exception {
+    public readonly code = "GOODS_RECEIPT.NOT_DRAFT";
 
     constructor() {
-        super("Incorporated good cannot be transferred or removed directly while it has a parent");
+        super("Goods receipt can only be modified while in DRAFT status");
+    }
+}
+
+export class GoodsReceiptHasNoLinesError extends Exception {
+    public readonly code = "GOODS_RECEIPT.NO_LINES";
+
+    constructor() {
+        super("Cannot confirm a goods receipt with no lines");
+    }
+}
+
+export class StockEntryNotFoundError extends Exception {
+    public readonly code = "STOCK_ENTRY.NOT_FOUND";
+
+    constructor(goodId: string, warehouseId: string) {
+        super(`No stock entry found for good ${goodId} in warehouse ${warehouseId}`);
+    }
+}
+
+export class InsufficientStockError extends Exception {
+    public readonly code = "STOCK_ENTRY.INSUFFICIENT";
+
+    constructor(goodId: string, available: number, requested: number) {
+        super(`Insufficient stock for good ${goodId}: requested ${requested}, available ${available}`);
     }
 }

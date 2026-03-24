@@ -33,6 +33,11 @@ export default tseslint.config(
         },
     },
     {
+        rules:{
+            "@typescript-eslint/no-empty-object-type": "warn",
+        }
+    },
+    {
         files: ["**/*.ts", "**/*.js"],
         ignores: ["**/*.spec.ts", "**/*.spec.js"],
         rules: {
