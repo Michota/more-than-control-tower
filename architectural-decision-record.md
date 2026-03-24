@@ -410,7 +410,7 @@ Vitest uses Vite's native ESM module resolution and TypeScript handling, elimina
 Integration tests (`*.integration-spec.ts`) use Vitest with `vitest.integration.config.ts`. Unit tests (`*.spec.ts`) remain on Jest.
 
 Configuration:
-- **`vitest.integration.config.ts`** — `pool: "forks"` with `singleFork: true` (sequential execution, required for shared database state).
+- **`vitest.integration.config.ts`** — `fileParallelism: false` (sequential execution, required for shared database state).
 - **`globals: true`** — `describe`, `it`, `expect` available without imports (Jest API compatibility).
 - **`resolve.alias`** — maps `src/` to the source directory (replaces Jest's `moduleNameMapper`).
 - **`pnpm test:integration`** — runs `vitest run --config vitest.integration.config.ts`.
