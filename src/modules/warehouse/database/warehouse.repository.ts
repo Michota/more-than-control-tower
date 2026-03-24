@@ -40,11 +40,10 @@ export class WarehouseRepository implements WarehouseRepositoryPort {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     async save(entity: WarehouseAggregate | WarehouseAggregate[]): Promise<void> {
         const warehouses = Array.isArray(entity) ? entity : [entity];
         for (const warehouse of warehouses) {
-            this.em.persist(this.em.create(Warehouse, this.mapper.toPersistence(warehouse)));
+            await this.em.upsert(Warehouse, this.mapper.toPersistence(warehouse));
         }
     }
 

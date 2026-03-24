@@ -23,6 +23,15 @@ import { GetGoodQuery } from "./queries/get-good/get-good.query";
 import { GetGoodsReceiptQuery } from "./queries/get-goods-receipt/get-goods-receipt.query";
 import { ListWarehouseStockQuery } from "./queries/list-warehouse-stock/list-warehouse-stock.query";
 import { WarehouseModule } from "./warehouse.module";
+import { CreateSectorCommand } from "./commands/create-sector/create-sector.command";
+import { MoveStockToSectorCommand } from "./commands/move-stock-to-sector/move-stock-to-sector.command";
+import { EditWarehouseCommand } from "./commands/edit-warehouse/edit-warehouse.command";
+import { DeleteGoodsCommand } from "./commands/delete-goods/delete-goods.command";
+import { SectorCapability } from "./domain/sector-capability.enum";
+import { SectorNotInWarehouseError } from "./domain/good.errors";
+import { ListSectorsQuery } from "./queries/list-sectors/list-sectors.query";
+import { GetSectorLoadQuery } from "./queries/get-sector-load/get-sector-load.query";
+import { ListWarehousesQuery } from "./queries/list-warehouses/list-warehouses.query";
 
 describe("Warehouse Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -68,8 +77,6 @@ describe("Warehouse Module — Integration Tests", () => {
     function createWarehouseCmd(name = "Warehouse A") {
         return new CreateWarehouseCommand({
             name,
-            latitude: 52.2297,
-            longitude: 21.0122,
             address: {
                 country: "PL",
                 postalCode: "00-001",
@@ -120,6 +127,21 @@ describe("Warehouse Module — Integration Tests", () => {
 
     async function getWarehouseStock(warehouseId: string) {
         return queryBus.execute(new ListWarehouseStockQuery(warehouseId));
+    }
+
+    async function createSector(warehouseId: string, name = "Sector A"): Promise<string> {
+        return commandBus.execute(
+            new CreateSectorCommand({
+                warehouseId,
+                name,
+                dimensionLength: 10,
+                dimensionWidth: 8,
+                dimensionHeight: 4,
+                dimensionUnit: DimensionUnit.M,
+                capabilities: [SectorCapability.GENERAL],
+                weightCapacityGrams: 500_000,
+            }),
+        );
     }
 
     async function getStockEntry(warehouseId: string, goodId: string) {
@@ -653,6 +675,303 @@ describe("Warehouse Module — Integration Tests", () => {
 
             expect((await getStockEntry(mainWh, goodId)).quantity).toEqual(145);
             expect((await getStockEntry(mobileWh, goodId)).quantity).toEqual(0);
+        });
+    });
+
+    // ─── 8. Sectors ─────────────────────────────────────────────
+
+    describe("Sectors", () => {
+        it("lists sectors of a warehouse", async () => {
+            const warehouseId = await createWarehouse("Sector List WH");
+            await createSector(warehouseId, "Zone A");
+            await createSector(warehouseId, "Zone B");
+
+            const sectors = await queryBus.execute(new ListSectorsQuery(warehouseId));
+
+            expect(sectors).toHaveLength(2);
+            expect(sectors.map((s) => s.name).sort()).toEqual(["Zone A", "Zone B"]);
+        });
+
+        it("creates a sector in a warehouse", async () => {
+            const warehouseId = await createWarehouse("Sector Create WH");
+            const sectorId = await createSector(warehouseId, "Cold Storage");
+
+            expect(sectorId).toBeDefined();
+
+            const sectors = await queryBus.execute(new ListSectorsQuery(warehouseId));
+            expect(sectors).toHaveLength(1);
+            expect(sectors[0].name).toEqual("Cold Storage");
+            expect(sectors[0].warehouseId).toEqual(warehouseId);
+            expect(sectors[0].weightCapacityGrams).toEqual(500_000);
+        });
+
+        it("receives stock into a sector via goods receipt", async () => {
+            const warehouseId = await createWarehouse("Sector Receipt WH");
+            const sectorId = await createSector(warehouseId, "Shelf Zone");
+            const goodId = await createGood({ name: "Sectored item" });
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+            await commandBus.execute(
+                new SetGoodsReceiptLinesCommand({
+                    receiptId,
+                    lines: [{ goodId, quantity: 30, sectorId }],
+                }),
+            );
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+
+            const entry = await getStockEntry(warehouseId, goodId);
+            expect(entry.quantity).toEqual(30);
+            expect(entry.sectorId).toEqual(sectorId);
+        });
+
+        it("removes stock from warehouse even when it is in a sector", async () => {
+            const warehouseId = await createWarehouse("Sector Removal WH");
+            const sectorId = await createSector(warehouseId, "Removal Zone");
+            const goodId = await createGood({ name: "Sector removal item" });
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+            await commandBus.execute(
+                new SetGoodsReceiptLinesCommand({
+                    receiptId,
+                    lines: [{ goodId, quantity: 50, sectorId }],
+                }),
+            );
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+
+            await commandBus.execute(
+                new RemoveStockCommand({
+                    goodId,
+                    warehouseId,
+                    quantity: 20,
+                    reason: StockRemovalReason.SALE,
+                }),
+            );
+
+            expect((await getStockEntry(warehouseId, goodId)).quantity).toEqual(30);
+        });
+
+        it("moves stock between sectors within the same warehouse", async () => {
+            const warehouseId = await createWarehouse("Sector Move WH");
+            const sectorA = await createSector(warehouseId, "Sector A");
+            const sectorB = await createSector(warehouseId, "Sector B");
+            const goodId = await createGood({ name: "Movable item" });
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+            await commandBus.execute(
+                new SetGoodsReceiptLinesCommand({
+                    receiptId,
+                    lines: [{ goodId, quantity: 40, sectorId: sectorA }],
+                }),
+            );
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+
+            expect((await getStockEntry(warehouseId, goodId)).sectorId).toEqual(sectorA);
+
+            await commandBus.execute(
+                new MoveStockToSectorCommand({
+                    goodId,
+                    warehouseId,
+                    sectorId: sectorB,
+                }),
+            );
+
+            expect((await getStockEntry(warehouseId, goodId)).sectorId).toEqual(sectorB);
+        });
+
+        it("rejects moving stock to a sector from a different warehouse", async () => {
+            const wh1 = await createWarehouse("Move WH 1");
+            const wh2 = await createWarehouse("Move WH 2");
+            const sectorInWh2 = await createSector(wh2, "Foreign Sector");
+            const goodId = await createGood({ name: "Cross-wh item" });
+
+            await receiveGoodsToWarehouse({ goodId, warehouseId: wh1, quantity: 10 });
+
+            await expect(
+                commandBus.execute(
+                    new MoveStockToSectorCommand({
+                        goodId,
+                        warehouseId: wh1,
+                        sectorId: sectorInWh2,
+                    }),
+                ),
+            ).rejects.toThrow(SectorNotInWarehouseError);
+        });
+
+        it("transfers stock between warehouses preserving sector assignment", async () => {
+            const sourceWh = await createWarehouse("Sector Transfer Source");
+            const destWh = await createWarehouse("Sector Transfer Dest");
+            const destSector = await createSector(destWh, "Dest Sector");
+            const goodId = await createGood({ name: "Transfer to sector" });
+
+            await receiveGoodsToWarehouse({ goodId, warehouseId: sourceWh, quantity: 100 });
+
+            await commandBus.execute(
+                new TransferStockCommand({
+                    goodId,
+                    fromWarehouseId: sourceWh,
+                    toWarehouseId: destWh,
+                    quantity: 30,
+                    sectorId: destSector,
+                }),
+            );
+
+            expect((await getStockEntry(sourceWh, goodId)).quantity).toEqual(70);
+            const destEntry = await getStockEntry(destWh, goodId);
+            expect(destEntry.quantity).toEqual(30);
+            expect(destEntry.sectorId).toEqual(destSector);
+        });
+
+        it("sector load reflects stock weight", async () => {
+            const warehouseId = await createWarehouse("Load WH");
+            const sectorId = await createSector(warehouseId, "Load Sector");
+            const goodId = await createGood({
+                name: "Heavy item",
+                weightValue: 2,
+                weightUnit: WeightUnit.KG,
+            });
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+            await commandBus.execute(
+                new SetGoodsReceiptLinesCommand({
+                    receiptId,
+                    lines: [{ goodId, quantity: 10, sectorId }],
+                }),
+            );
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+
+            const load = await queryBus.execute(new GetSectorLoadQuery(sectorId));
+            expect(load.currentLoadGrams).toEqual(20_000);
+            expect(load.weightCapacityGrams).toEqual(500_000);
+            expect(load.loadPercentage).toEqual(4);
+        });
+    });
+
+    // ─── 9. Warehouse type immutability ─────────────────────────
+
+    describe("Warehouse type cannot be changed", () => {
+        it("editing a warehouse changes name but type remains unchanged", async () => {
+            const warehouseId = await createWarehouse("Immutable Type WH");
+
+            await commandBus.execute(new EditWarehouseCommand({ warehouseId, name: "Renamed WH" }));
+
+            const warehouses = await queryBus.execute(new ListWarehousesQuery());
+            const wh = warehouses.find((w) => w.id === warehouseId);
+            expect(wh).toBeDefined();
+            expect(wh!.name).toEqual("Renamed WH");
+            expect(wh!.type).toEqual("REGULAR");
+        });
+
+        it("EditWarehouseCommand does not expose a type property", () => {
+            const cmd = new EditWarehouseCommand({ warehouseId: "00000000-0000-0000-0000-000000000000", name: "Test" });
+            expect("type" in cmd).toBe(false);
+        });
+    });
+
+    // ─── 10. Validation: negative dimensions and weight ─────────
+
+    describe("Validation: negative dimensions and weight are rejected", () => {
+        it("rejects creating a good with negative weight", async () => {
+            await expect(createGood({ name: "Bad weight", weightValue: -1 })).rejects.toThrow();
+        });
+
+        it("rejects creating a good with zero weight", async () => {
+            await expect(createGood({ name: "Zero weight", weightValue: 0 })).rejects.toThrow();
+        });
+
+        it("rejects creating a good with negative dimensions", async () => {
+            await expect(
+                createGood({
+                    name: "Bad dimensions",
+                    dimensionLength: -5,
+                    dimensionWidth: 10,
+                    dimensionHeight: 10,
+                }),
+            ).rejects.toThrow();
+        });
+
+        it("rejects creating a good with zero dimension", async () => {
+            await expect(
+                createGood({
+                    name: "Zero dimension",
+                    dimensionLength: 0,
+                    dimensionWidth: 10,
+                    dimensionHeight: 10,
+                }),
+            ).rejects.toThrow();
+        });
+
+        it("rejects creating a sector with negative dimensions", async () => {
+            const warehouseId = await createWarehouse("Bad Sector WH");
+
+            await expect(
+                commandBus.execute(
+                    new CreateSectorCommand({
+                        warehouseId,
+                        name: "Bad Sector",
+                        dimensionLength: -1,
+                        dimensionWidth: 5,
+                        dimensionHeight: 3,
+                        dimensionUnit: DimensionUnit.M,
+                        capabilities: [SectorCapability.GENERAL],
+                        weightCapacityGrams: 100_000,
+                    }),
+                ),
+            ).rejects.toThrow();
+        });
+
+        it("rejects creating a sector with zero weight capacity", async () => {
+            const warehouseId = await createWarehouse("Zero Cap WH");
+
+            await expect(
+                commandBus.execute(
+                    new CreateSectorCommand({
+                        warehouseId,
+                        name: "Zero Cap Sector",
+                        dimensionLength: 5,
+                        dimensionWidth: 5,
+                        dimensionHeight: 3,
+                        dimensionUnit: DimensionUnit.M,
+                        capabilities: [SectorCapability.GENERAL],
+                        weightCapacityGrams: 0,
+                    }),
+                ),
+            ).rejects.toThrow();
+        });
+
+        it("rejects receiving goods with negative quantity", async () => {
+            const goodId = await createGood({ name: "Neg qty item" });
+            const warehouseId = await createWarehouse("Neg Qty WH");
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+
+            await expect(
+                commandBus.execute(
+                    new SetGoodsReceiptLinesCommand({
+                        receiptId,
+                        lines: [{ goodId, quantity: -5 }],
+                    }),
+                ),
+            ).rejects.toThrow();
+        });
+    });
+
+    // ─── 11. Deleting goods with stock entries ──────────────────
+
+    describe("Deleting goods", () => {
+        it("can delete a good that has no stock entries", async () => {
+            const goodId = await createGood({ name: "Deletable" });
+
+            await expect(commandBus.execute(new DeleteGoodsCommand({ goodIds: [goodId] }))).resolves.not.toThrow();
         });
     });
 });
