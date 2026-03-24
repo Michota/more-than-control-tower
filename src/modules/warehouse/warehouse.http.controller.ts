@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    ParseArrayPipe,
+    ParseUUIDPipe,
+    Patch,
+    Post,
+    Query,
+} from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import type { UUID } from "crypto";
 import { AddLineToGoodsReceiptCommand } from "./commands/add-line-to-goods-receipt/add-line-to-goods-receipt.command.js";
@@ -14,8 +25,10 @@ import { RemoveStockCommand } from "./commands/remove-stock/remove-stock.command
 import { RemoveStockRequestDto } from "./commands/remove-stock/remove-stock.request.dto.js";
 import { TransferStockCommand } from "./commands/transfer-stock/transfer-stock.command.js";
 import { TransferStockRequestDto } from "./commands/transfer-stock/transfer-stock.request.dto.js";
+import { DeleteGoodsCommand } from "./commands/delete-goods/delete-goods.command.js";
 import { EditGoodCommand } from "./commands/edit-good/edit-good.command.js";
 import { EditGoodRequestDto } from "./commands/edit-good/edit-good.request.dto.js";
+import { GetGoodQuery, GoodResponse } from "./queries/get-good/get-good.query.js";
 import { ListGoodsQuery, ListGoodsResponse } from "./queries/list-goods/list-goods.query.js";
 import { ListGoodsRequestDto } from "./queries/list-goods/list-goods.request.dto.js";
 import { ListWarehousesQuery, ListWarehousesResponse } from "./queries/list-warehouses/list-warehouses.query.js";
@@ -48,6 +61,18 @@ export class WarehouseHttpController {
     @Get("goods")
     async listGoods(@Query() query: ListGoodsRequestDto): Promise<ListGoodsResponse> {
         return this.queryBus.execute(new ListGoodsQuery(query.name, query.page ?? 1, query.limit ?? 20));
+    }
+
+    @Get("goods/:id")
+    async getGood(@Param("id", ParseUUIDPipe) id: UUID): Promise<GoodResponse> {
+        return this.queryBus.execute(new GetGoodQuery(id));
+    }
+
+    @Delete("goods")
+    async deleteGoods(
+        @Query("ids", new ParseArrayPipe({ items: String, separator: "," })) ids: string[],
+    ): Promise<void> {
+        await this.commandBus.execute(new DeleteGoodsCommand({ goodIds: ids }));
     }
 
     @Patch("goods/:id")
