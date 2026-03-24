@@ -40,7 +40,7 @@ export class GoodsReceiptListItemResponseDto {
 
 export class PaginatedGoodsReceiptsResponseDto {
     @ApiProperty({ type: [GoodsReceiptListItemResponseDto] })
-    data!: GoodsReceiptListItemResponseDto[];
+    data!: readonly GoodsReceiptListItemResponseDto[];
     /** @example 10 */
     count!: number;
     /** @example 1 */

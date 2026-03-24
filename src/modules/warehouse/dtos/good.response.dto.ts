@@ -43,7 +43,7 @@ export class GoodIdResponseDto {
 
 export class PaginatedGoodsResponseDto {
     @ApiProperty({ type: [GoodResponseDto] })
-    data!: GoodResponseDto[];
+    data!: readonly GoodResponseDto[];
     /** @example 42 */
     count!: number;
     /** @example 1 */

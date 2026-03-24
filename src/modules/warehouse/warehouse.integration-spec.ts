@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule, QueryBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
@@ -126,6 +122,15 @@ describe("Warehouse Module — Integration Tests", () => {
         return queryBus.execute(new ListWarehouseStockQuery(warehouseId));
     }
 
+    async function getStockEntry(warehouseId: string, goodId: string) {
+        const stock = await getWarehouseStock(warehouseId);
+        const entry = stock.find((s) => s.goodId === goodId);
+        if (!entry) {
+            throw new Error(`Stock entry not found for good ${goodId} in warehouse ${warehouseId}`);
+        }
+        return entry;
+    }
+
     // ─── 1. Composite goods (parent–child / "incorporated goods") ─
 
     describe("Composite goods (parent–child relationship)", () => {
@@ -189,9 +194,7 @@ describe("Warehouse Module — Integration Tests", () => {
             expect(receipt.lines[0].quantity).toEqual(50);
 
             // Verify stock in warehouse
-            const stock = await getWarehouseStock(warehouseId);
-            const entry = stock.find((s: any) => s.goodId === goodId);
-            expect(entry).toBeDefined();
+            const entry = await getStockEntry(warehouseId, goodId);
             expect(entry.quantity).toEqual(50);
         });
 
@@ -237,8 +240,7 @@ describe("Warehouse Module — Integration Tests", () => {
             await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 20 });
             await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 30 });
 
-            const stock = await getWarehouseStock(warehouseId);
-            const entry = stock.find((s: any) => s.goodId === goodId);
+            const entry = await getStockEntry(warehouseId, goodId);
             expect(entry.quantity).toEqual(50);
         });
 
@@ -263,9 +265,8 @@ describe("Warehouse Module — Integration Tests", () => {
 
             await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
 
-            const stock = await getWarehouseStock(warehouseId);
-            expect(stock.find((s: any) => s.goodId === good1Id).quantity).toEqual(15);
-            expect(stock.find((s: any) => s.goodId === good2Id).quantity).toEqual(25);
+            expect((await getStockEntry(warehouseId, good1Id)).quantity).toEqual(15);
+            expect((await getStockEntry(warehouseId, good2Id)).quantity).toEqual(25);
         });
 
         it("creates an initial history entry when stock is received", async () => {
@@ -274,9 +275,7 @@ describe("Warehouse Module — Integration Tests", () => {
 
             await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 100, locationDescription: "Bay 3" });
 
-            const stock = await getWarehouseStock(warehouseId);
-            const entry = stock.find((s: any) => s.goodId === goodId);
-            expect(entry).toBeDefined();
+            const entry = await getStockEntry(warehouseId, goodId);
             expect(entry.quantity).toEqual(100);
         });
     });
@@ -302,11 +301,8 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            const sourceStock = await getWarehouseStock(sourceId);
-            const destStock = await getWarehouseStock(destId);
-
-            expect(sourceStock.find((s: any) => s.goodId === goodId).quantity).toEqual(60);
-            expect(destStock.find((s: any) => s.goodId === goodId).quantity).toEqual(40);
+            expect((await getStockEntry(sourceId, goodId)).quantity).toEqual(60);
+            expect((await getStockEntry(destId, goodId)).quantity).toEqual(40);
         });
 
         it("rejects transfer when insufficient stock", async () => {
@@ -363,8 +359,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            const destStock = await getWarehouseStock(destId);
-            const entry = destStock.find((s: any) => s.goodId === goodId);
+            const entry = await getStockEntry(destId, goodId);
             expect(entry.quantity).toEqual(20);
             expect(entry.locationDescription).toEqual("Aisle 5, Shelf 2");
         });
@@ -388,8 +383,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            const stock = await getWarehouseStock(warehouseId);
-            expect(stock.find((s: any) => s.goodId === goodId).quantity).toEqual(70);
+            expect((await getStockEntry(warehouseId, goodId)).quantity).toEqual(70);
         });
 
         it("removes stock with reason DAMAGE", async () => {
@@ -408,8 +402,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            const stock = await getWarehouseStock(warehouseId);
-            expect(stock.find((s: any) => s.goodId === goodId).quantity).toEqual(35);
+            expect((await getStockEntry(warehouseId, goodId)).quantity).toEqual(35);
         });
 
         it("removes stock with reason OTHER and a note", async () => {
@@ -428,8 +421,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            const stock = await getWarehouseStock(warehouseId);
-            expect(stock.find((s: any) => s.goodId === goodId).quantity).toEqual(50);
+            expect((await getStockEntry(warehouseId, goodId)).quantity).toEqual(50);
         });
 
         it("rejects removal when insufficient stock", async () => {
@@ -518,8 +510,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 locationDescription: "Zone C, Shelf 12",
             });
 
-            const stock = await getWarehouseStock(warehouseId);
-            const entry = stock.find((s: any) => s.goodId === goodId);
+            const entry = await getStockEntry(warehouseId, goodId);
             expect(entry.locationDescription).toEqual("Zone C, Shelf 12");
         });
 
@@ -545,8 +536,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            const destStock = await getWarehouseStock(destId);
-            const destEntry = destStock.find((s: any) => s.goodId === goodId);
+            const destEntry = await getStockEntry(destId, goodId);
             expect(destEntry.locationDescription).toEqual("New location in dest");
         });
     });
@@ -568,8 +558,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 note: "Purchase order #123",
             });
 
-            let mainStock = await getWarehouseStock(mainWh);
-            expect(mainStock.find((s: any) => s.goodId === goodId).quantity).toEqual(200);
+            expect((await getStockEntry(mainWh, goodId)).quantity).toEqual(200);
 
             // Step 2: Transfer 80 to mobile warehouse (vehicle loading)
             await commandBus.execute(
@@ -583,10 +572,8 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            mainStock = await getWarehouseStock(mainWh);
-            let mobileStock = await getWarehouseStock(mobileWh);
-            expect(mainStock.find((s: any) => s.goodId === goodId).quantity).toEqual(120);
-            expect(mobileStock.find((s: any) => s.goodId === goodId).quantity).toEqual(80);
+            expect((await getStockEntry(mainWh, goodId)).quantity).toEqual(120);
+            expect((await getStockEntry(mobileWh, goodId)).quantity).toEqual(80);
 
             // Step 3: Sell 50 from mobile warehouse (field delivery)
             await commandBus.execute(
@@ -599,8 +586,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            mobileStock = await getWarehouseStock(mobileWh);
-            expect(mobileStock.find((s: any) => s.goodId === goodId).quantity).toEqual(30);
+            expect((await getStockEntry(mobileWh, goodId)).quantity).toEqual(30);
 
             // Step 4: 5 units damaged during transport
             await commandBus.execute(
@@ -613,8 +599,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            mobileStock = await getWarehouseStock(mobileWh);
-            expect(mobileStock.find((s: any) => s.goodId === goodId).quantity).toEqual(25);
+            expect((await getStockEntry(mobileWh, goodId)).quantity).toEqual(25);
 
             // Step 5: Return remaining stock to main warehouse
             await commandBus.execute(
@@ -628,10 +613,8 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            mainStock = await getWarehouseStock(mainWh);
-            mobileStock = await getWarehouseStock(mobileWh);
-            expect(mainStock.find((s: any) => s.goodId === goodId).quantity).toEqual(145);
-            expect(mobileStock.find((s: any) => s.goodId === goodId).quantity).toEqual(0);
+            expect((await getStockEntry(mainWh, goodId)).quantity).toEqual(145);
+            expect((await getStockEntry(mobileWh, goodId)).quantity).toEqual(0);
         });
     });
 });

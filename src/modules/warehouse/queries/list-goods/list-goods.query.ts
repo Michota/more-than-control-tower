@@ -1,3 +1,4 @@
+import { Query } from "@nestjs/cqrs";
 import { Paginated } from "../../../../libs/ports/repository.port.js";
 
 export interface GoodListItem {
@@ -9,12 +10,14 @@ export interface GoodListItem {
     parentId?: string;
 }
 
-export class ListGoodsQuery {
+export type ListGoodsResponse = Paginated<GoodListItem>;
+
+export class ListGoodsQuery extends Query<ListGoodsResponse> {
     constructor(
         public readonly name: string | undefined,
         public readonly page: number,
         public readonly limit: number,
-    ) {}
+    ) {
+        super();
+    }
 }
-
-export type ListGoodsResponse = Paginated<GoodListItem>;

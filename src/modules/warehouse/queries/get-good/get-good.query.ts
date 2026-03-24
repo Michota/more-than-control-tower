@@ -1,3 +1,5 @@
+import { Query } from "@nestjs/cqrs";
+
 export interface GoodResponse {
     id: string;
     name: string;
@@ -7,6 +9,8 @@ export interface GoodResponse {
     parentId?: string;
 }
 
-export class GetGoodQuery {
-    constructor(public readonly goodId: string) {}
+export class GetGoodQuery extends Query<GoodResponse> {
+    constructor(public readonly goodId: string) {
+        super();
+    }
 }

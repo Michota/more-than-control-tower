@@ -1,3 +1,5 @@
+import { Query } from "@nestjs/cqrs";
+
 export interface GoodsReceiptLineResponse {
     goodId: string;
     quantity: number;
@@ -13,6 +15,8 @@ export interface GoodsReceiptResponse {
     lines: GoodsReceiptLineResponse[];
 }
 
-export class GetGoodsReceiptQuery {
-    constructor(public readonly receiptId: string) {}
+export class GetGoodsReceiptQuery extends Query<GoodsReceiptResponse> {
+    constructor(public readonly receiptId: string) {
+        super();
+    }
 }

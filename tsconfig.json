@@ -21,7 +21,8 @@
         "forceConsistentCasingInFileNames": true,
         "noImplicitAny": true,
         "strictBindCallApply": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
+        "types": ["vitest/globals"]
 
         // "paths": {
         //  Do not use absolute paths.

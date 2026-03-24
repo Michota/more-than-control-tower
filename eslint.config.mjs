@@ -3,7 +3,7 @@ import eslint from "@eslint/js";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import pluginJest from "eslint-plugin-jest";
+import pluginVitest from "@vitest/eslint-plugin";
 
 export default tseslint.config(
     {
@@ -26,10 +26,10 @@ export default tseslint.config(
         },
     },
     {
-        ...pluginJest.configs["flat/recommended"],
+        ...pluginVitest.configs.recommended,
         rules: {
-            ...pluginJest.configs["flat/recommended"].rules,
-            "jest/no-export": "off",
+            ...pluginVitest.configs.recommended.rules,
+            "vitest/no-export": "off",
         },
     },
     {

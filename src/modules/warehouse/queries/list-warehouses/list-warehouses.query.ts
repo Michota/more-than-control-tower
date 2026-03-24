@@ -1,3 +1,5 @@
+import { Query } from "@nestjs/cqrs";
+
 export interface WarehouseListItem {
     id: string;
     name: string;
@@ -13,6 +15,10 @@ export interface WarehouseListItem {
     };
 }
 
-export class ListWarehousesQuery {}
-
 export type ListWarehousesResponse = WarehouseListItem[];
+
+export class ListWarehousesQuery extends Query<ListWarehousesResponse> {
+    constructor() {
+        super();
+    }
+}
