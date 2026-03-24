@@ -12,6 +12,7 @@ import {
     Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import type { UUID } from "crypto";
 import { SetGoodsReceiptLinesCommand } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command.js";
 import { SetGoodsReceiptLinesRequestDto } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.request.dto.js";
@@ -30,21 +31,24 @@ import { DeleteGoodsCommand } from "./commands/delete-goods/delete-goods.command
 import { DeleteGoodsReceiptCommand } from "./commands/delete-goods-receipt/delete-goods-receipt.command.js";
 import { EditGoodCommand } from "./commands/edit-good/edit-good.command.js";
 import { EditGoodRequestDto } from "./commands/edit-good/edit-good.request.dto.js";
-import { GetGoodQuery, GoodResponse } from "./queries/get-good/get-good.query.js";
-import { GetGoodsReceiptQuery, GoodsReceiptResponse } from "./queries/get-goods-receipt/get-goods-receipt.query.js";
-import { ListGoodsQuery, ListGoodsResponse } from "./queries/list-goods/list-goods.query.js";
+import { GoodIdResponseDto, GoodResponseDto, PaginatedGoodsResponseDto } from "./dtos/good.response.dto.js";
+import {
+    GoodsReceiptResponseDto,
+    PaginatedGoodsReceiptsResponseDto,
+    ReceiptIdResponseDto,
+} from "./dtos/goods-receipt.response.dto.js";
+import { WarehouseStockItemResponseDto } from "./dtos/stock.response.dto.js";
+import { WarehouseIdResponseDto, WarehouseResponseDto } from "./dtos/warehouse.response.dto.js";
+import { GetGoodQuery } from "./queries/get-good/get-good.query.js";
+import { GetGoodsReceiptQuery } from "./queries/get-goods-receipt/get-goods-receipt.query.js";
+import { ListGoodsQuery } from "./queries/list-goods/list-goods.query.js";
 import { ListGoodsRequestDto } from "./queries/list-goods/list-goods.request.dto.js";
-import {
-    ListGoodsReceiptsQuery,
-    ListGoodsReceiptsResponse,
-} from "./queries/list-goods-receipts/list-goods-receipts.query.js";
+import { ListGoodsReceiptsQuery } from "./queries/list-goods-receipts/list-goods-receipts.query.js";
 import { ListGoodsReceiptsRequestDto } from "./queries/list-goods-receipts/list-goods-receipts.request.dto.js";
-import {
-    ListWarehouseStockQuery,
-    ListWarehouseStockResponse,
-} from "./queries/list-warehouse-stock/list-warehouse-stock.query.js";
-import { ListWarehousesQuery, ListWarehousesResponse } from "./queries/list-warehouses/list-warehouses.query.js";
+import { ListWarehouseStockQuery } from "./queries/list-warehouse-stock/list-warehouse-stock.query.js";
+import { ListWarehousesQuery } from "./queries/list-warehouses/list-warehouses.query.js";
 
+@ApiTags("Warehouse")
 @Controller("warehouse")
 export class WarehouseHttpController {
     constructor(
@@ -52,18 +56,26 @@ export class WarehouseHttpController {
         private readonly queryBus: QueryBus,
     ) {}
 
+    // ─── Warehouses ──────────────────────────────────────────
+
     @Get()
-    async listWarehouses(): Promise<ListWarehousesResponse> {
+    @ApiOperation({ summary: "List all warehouses" })
+    @ApiResponse({ status: 200, type: [WarehouseResponseDto] })
+    async listWarehouses(): Promise<WarehouseResponseDto[]> {
         return this.queryBus.execute(new ListWarehousesQuery());
     }
 
     @Get(":id/stock")
-    async listWarehouseStock(@Param("id", ParseUUIDPipe) id: UUID): Promise<ListWarehouseStockResponse> {
+    @ApiOperation({ summary: "List stock entries for a warehouse" })
+    @ApiResponse({ status: 200, type: [WarehouseStockItemResponseDto] })
+    async listWarehouseStock(@Param("id", ParseUUIDPipe) id: UUID): Promise<WarehouseStockItemResponseDto[]> {
         return this.queryBus.execute(new ListWarehouseStockQuery(id));
     }
 
     @Post()
-    async createWarehouse(@Body() body: CreateWarehouseRequestDto): Promise<{ warehouseId: string }> {
+    @ApiOperation({ summary: "Create a new warehouse" })
+    @ApiResponse({ status: 201, type: WarehouseIdResponseDto })
+    async createWarehouse(@Body() body: CreateWarehouseRequestDto): Promise<WarehouseIdResponseDto> {
         const warehouseId = await this.commandBus.execute(
             new CreateWarehouseCommand({
                 name: body.name,
@@ -75,17 +87,26 @@ export class WarehouseHttpController {
         return { warehouseId };
     }
 
+    // ─── Goods ───────────────────────────────────────────────
+
     @Get("goods")
-    async listGoods(@Query() query: ListGoodsRequestDto): Promise<ListGoodsResponse> {
+    @ApiOperation({ summary: "List goods (paginated, with optional name search)" })
+    @ApiResponse({ status: 200, type: PaginatedGoodsResponseDto })
+    async listGoods(@Query() query: ListGoodsRequestDto): Promise<PaginatedGoodsResponseDto> {
         return this.queryBus.execute(new ListGoodsQuery(query.name, query.page ?? 1, query.limit ?? 20));
     }
 
     @Get("goods/:id")
-    async getGood(@Param("id", ParseUUIDPipe) id: UUID): Promise<GoodResponse> {
+    @ApiOperation({ summary: "Get good details by ID" })
+    @ApiResponse({ status: 200, type: GoodResponseDto })
+    async getGood(@Param("id", ParseUUIDPipe) id: UUID): Promise<GoodResponseDto> {
         return this.queryBus.execute(new GetGoodQuery(id));
     }
 
     @Delete("goods")
+    @ApiOperation({ summary: "Delete goods by IDs" })
+    @ApiQuery({ name: "ids", description: "Comma-separated UUIDs", example: "uuid1,uuid2" })
+    @ApiResponse({ status: 200 })
     async deleteGoods(
         @Query("ids", new ParseArrayPipe({ items: String, separator: "," })) ids: string[],
     ): Promise<void> {
@@ -93,6 +114,8 @@ export class WarehouseHttpController {
     }
 
     @Patch("goods/:id")
+    @ApiOperation({ summary: "Edit good properties (partial update)" })
+    @ApiResponse({ status: 200 })
     async editGood(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: EditGoodRequestDto): Promise<void> {
         await this.commandBus.execute(
             new EditGoodCommand({
@@ -110,7 +133,9 @@ export class WarehouseHttpController {
     }
 
     @Post("goods")
-    async createGood(@Body() body: CreateGoodRequestDto): Promise<{ goodId: string }> {
+    @ApiOperation({ summary: "Create a new good (type catalog entry)" })
+    @ApiResponse({ status: 201, type: GoodIdResponseDto })
+    async createGood(@Body() body: CreateGoodRequestDto): Promise<GoodIdResponseDto> {
         const goodId = await this.commandBus.execute(
             new CreateGoodCommand({
                 name: body.name,
@@ -127,23 +152,33 @@ export class WarehouseHttpController {
         return { goodId };
     }
 
+    // ─── Goods Receipts ──────────────────────────────────────
+
     @Get("receipts")
-    async listGoodsReceipts(@Query() query: ListGoodsReceiptsRequestDto): Promise<ListGoodsReceiptsResponse> {
+    @ApiOperation({ summary: "List goods receipts (paginated)" })
+    @ApiResponse({ status: 200, type: PaginatedGoodsReceiptsResponseDto })
+    async listGoodsReceipts(@Query() query: ListGoodsReceiptsRequestDto): Promise<PaginatedGoodsReceiptsResponseDto> {
         return this.queryBus.execute(new ListGoodsReceiptsQuery(query.page ?? 1, query.limit ?? 20));
     }
 
     @Get("receipts/:id")
-    async getGoodsReceipt(@Param("id", ParseUUIDPipe) id: UUID): Promise<GoodsReceiptResponse> {
+    @ApiOperation({ summary: "Get goods receipt details with lines" })
+    @ApiResponse({ status: 200, type: GoodsReceiptResponseDto })
+    async getGoodsReceipt(@Param("id", ParseUUIDPipe) id: UUID): Promise<GoodsReceiptResponseDto> {
         return this.queryBus.execute(new GetGoodsReceiptQuery(id));
     }
 
     @Delete("receipts/:id")
+    @ApiOperation({ summary: "Delete a goods receipt" })
+    @ApiResponse({ status: 200 })
     async deleteGoodsReceipt(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new DeleteGoodsReceiptCommand({ receiptId: id }));
     }
 
     @Post("receipts")
-    async openGoodsReceipt(@Body() body: OpenGoodsReceiptRequestDto): Promise<{ receiptId: string }> {
+    @ApiOperation({ summary: "Open a new goods receipt (DRAFT status)" })
+    @ApiResponse({ status: 201, type: ReceiptIdResponseDto })
+    async openGoodsReceipt(@Body() body: OpenGoodsReceiptRequestDto): Promise<ReceiptIdResponseDto> {
         const receiptId = await this.commandBus.execute(
             new OpenGoodsReceiptCommand({
                 targetWarehouseId: body.targetWarehouseId,
@@ -154,6 +189,8 @@ export class WarehouseHttpController {
     }
 
     @Put("receipts/:id/lines")
+    @ApiOperation({ summary: "Replace all lines on a receipt (only while DRAFT)" })
+    @ApiResponse({ status: 200 })
     async setGoodsReceiptLines(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Body() body: SetGoodsReceiptLinesRequestDto,
@@ -167,11 +204,17 @@ export class WarehouseHttpController {
     }
 
     @Post("receipts/:id/confirm")
+    @ApiOperation({ summary: "Confirm a receipt (DRAFT → CONFIRMED, creates stock entries)" })
+    @ApiResponse({ status: 200 })
     async confirmGoodsReceipt(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId: id }));
     }
 
+    // ─── Stock Operations ────────────────────────────────────
+
     @Post("stock/transfer")
+    @ApiOperation({ summary: "Transfer stock between warehouses" })
+    @ApiResponse({ status: 200 })
     async transferStock(@Body() body: TransferStockRequestDto): Promise<void> {
         await this.commandBus.execute(
             new TransferStockCommand({
@@ -186,6 +229,8 @@ export class WarehouseHttpController {
     }
 
     @Post("stock/remove")
+    @ApiOperation({ summary: "Remove stock from a warehouse (sale, damage, etc.)" })
+    @ApiResponse({ status: 200 })
     async removeStock(@Body() body: RemoveStockRequestDto): Promise<void> {
         await this.commandBus.execute(
             new RemoveStockCommand({
