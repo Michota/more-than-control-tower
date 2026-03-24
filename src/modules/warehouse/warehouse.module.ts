@@ -1,8 +1,10 @@
 import { EntityManager } from "@mikro-orm/core";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
+import type { LoggerPort } from "../../libs/ports/logger.port.js";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
-import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
+import { NestJsLoggerAdapter } from "../../shared/infrastructure/nestjs-logger.adapter.js";
+import { LOGGER_PORT, UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
 import { SetGoodsReceiptLinesCommandHandler } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command-handler.js";
 import { ConfirmGoodsReceiptCommandHandler } from "./commands/confirm-goods-receipt/confirm-goods-receipt.command-handler.js";
 import { CreateGoodCommandHandler } from "./commands/create-good/create-good.command-handler.js";
@@ -101,8 +103,8 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         },
         {
             provide: STOCK_ENTRY_REPOSITORY_PORT,
-            useFactory: (em: EntityManager) => new StockEntryRepository(em),
-            inject: [EntityManager],
+            useFactory: (em: EntityManager, logger: LoggerPort) => new StockEntryRepository(em, logger),
+            inject: [EntityManager, LOGGER_PORT],
         },
         {
             provide: SECTOR_REPOSITORY_PORT,
@@ -113,6 +115,10 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
             provide: UNIT_OF_WORK_PORT,
             useFactory: (em: EntityManager) => new MikroOrmUnitOfWork(em),
             inject: [EntityManager],
+        },
+        {
+            provide: LOGGER_PORT,
+            useClass: NestJsLoggerAdapter,
         },
     ],
 })

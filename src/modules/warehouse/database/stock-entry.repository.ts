@@ -1,5 +1,6 @@
 import { EntityManager } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
+import type { LoggerPort } from "../../../libs/ports/logger.port.js";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
 import { StockEntryNotEmptyError } from "../domain/good.errors.js";
 import { StockEntryAggregate } from "../domain/stock-entry.aggregate.js";
@@ -11,7 +12,10 @@ import { StockEntryMapper } from "./stock-entry.mapper.js";
 export class StockEntryRepository implements StockEntryRepositoryPort {
     private readonly mapper = new StockEntryMapper();
 
-    constructor(private readonly em: EntityManager) {}
+    constructor(
+        private readonly em: EntityManager,
+        private readonly logger: LoggerPort,
+    ) {}
 
     async findOneById(id: string): Promise<StockEntryAggregate | null> {
         const record = await this.em.findOne(StockEntry, { id });
@@ -69,16 +73,21 @@ export class StockEntryRepository implements StockEntryRepositoryPort {
     async save(entity: StockEntryAggregate | StockEntryAggregate[]): Promise<void> {
         const entries = Array.isArray(entity) ? entity : [entity];
         for (const entry of entries) {
+            this.logger.debug(
+                `saving stock entry ${entry.id} (good=${entry.goodId}, warehouse=${entry.warehouseId}, qty=${entry.quantity})`,
+            );
             await this.em.upsert(StockEntry, this.mapper.toPersistence(entry));
         }
     }
 
     async delete(entity: StockEntryAggregate): Promise<boolean> {
         if (entity.quantity > 0) {
+            this.logger.warn(`rejected delete of stock entry ${entity.id} — quantity is ${entity.quantity}`);
             throw new StockEntryNotEmptyError(entity.id as string, entity.quantity);
         }
         const record = await this.em.findOne(StockEntry, { id: entity.id as string });
         if (!record) return false;
+        this.logger.debug(`deleting stock entry ${entity.id} (quantity=0, archived)`);
         this.em.remove(record);
         return true;
     }
