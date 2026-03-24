@@ -17,6 +17,7 @@ export class GoodsReceiptMapper implements Mapper<GoodsReceiptAggregate, Require
                     goodId: l.goodId,
                     quantity: l.quantity,
                     sectorId: l.sectorId ?? undefined,
+                    attributes: l.attributes ?? [],
                     note: l.note ?? undefined,
                 }),
         );
@@ -42,6 +43,7 @@ export class GoodsReceiptMapper implements Mapper<GoodsReceiptAggregate, Require
                 goodId: l.goodId,
                 quantity: l.quantity,
                 sectorId: l.sectorId ?? null,
+                attributes: l.attributes ?? [],
                 note: l.note ?? null,
             })) as unknown as RequiredEntityData<GoodsReceipt>["lines"],
         };

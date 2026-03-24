@@ -989,6 +989,25 @@ describe("Warehouse Module — Integration Tests", () => {
                 GoodHasActiveStockError,
             );
         });
+
+        it("allows deleting a good when all stock entries have quantity 0", async () => {
+            const goodId = await createGood({ name: "Fully sold" });
+            const warehouseId = await createWarehouse("Zero Stock WH");
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 10 });
+
+            // Remove all stock so quantity reaches 0
+            await commandBus.execute(
+                new RemoveStockCommand({
+                    goodId,
+                    warehouseId,
+                    quantity: 10,
+                    reason: StockRemovalReason.SALE,
+                }),
+            );
+
+            // Should succeed — only archived (qty 0) entries remain
+            await expect(commandBus.execute(new DeleteGoodsCommand({ goodIds: [goodId] }))).resolves.not.toThrow();
+        });
     });
 
     // ─── 12. Warehouse deactivation with stock guard ────────────
@@ -1151,37 +1170,117 @@ describe("Warehouse Module — Integration Tests", () => {
     // ─── 17. Stock entry attributes ─────────────────────────────
 
     describe("Stock entry attributes", () => {
-        it("receives stock with attributes and returns them in query", async () => {
-            const goodId = await createGood({ name: "Perishable item" });
-            const warehouseId = await createWarehouse("Attr WH");
-
+        async function receiveWithAttributes(
+            goodId: string,
+            warehouseId: string,
+            quantity: number,
+            attributes: { name: string; type: string; value: string }[],
+        ) {
             const receiptId: string = await commandBus.execute(
                 new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
             );
             await commandBus.execute(
                 new SetGoodsReceiptLinesCommand({
                     receiptId,
-                    lines: [{ goodId, quantity: 100 }],
+                    lines: [{ goodId, quantity, attributes }],
                 }),
             );
             await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+        }
 
-            // Stock entries don't have attributes yet via receipt lines,
-            // but we can verify the attributes field exists as empty
+        it("receives stock with DATE attribute and returns it in query", async () => {
+            const goodId = await createGood({ name: "Perishable" });
+            const warehouseId = await createWarehouse("Date Attr WH");
+
+            await receiveWithAttributes(goodId, warehouseId, 50, [
+                { name: "expiration_date", type: "DATE", value: "2026-06-01" },
+            ]);
+
+            const stock = await queryBus.execute(new ListWarehouseStockQuery({ warehouseId }));
+            expect(stock[0].attributes).toHaveLength(1);
+            expect(stock[0].attributes[0].name).toEqual("expiration_date");
+            expect(stock[0].attributes[0].type).toEqual("DATE");
+            expect(stock[0].attributes[0].value).toEqual("2026-06-01");
+        });
+
+        it("receives stock with STRING and NUMBER attributes", async () => {
+            const goodId = await createGood({ name: "Multi attr" });
+            const warehouseId = await createWarehouse("Multi Attr WH");
+
+            await receiveWithAttributes(goodId, warehouseId, 20, [
+                { name: "batch", type: "STRING", value: "LOT-2026-A" },
+                { name: "temperature", type: "NUMBER", value: "-18" },
+            ]);
+
+            const stock = await queryBus.execute(new ListWarehouseStockQuery({ warehouseId }));
+            expect(stock[0].attributes).toHaveLength(2);
+            expect(stock[0].attributes.find((a) => a.name === "batch")!.value).toEqual("LOT-2026-A");
+            expect(stock[0].attributes.find((a) => a.name === "temperature")!.value).toEqual("-18");
+        });
+
+        it("filters stock by attribute name and value", async () => {
+            const warehouseId = await createWarehouse("Attr Val Filter WH");
+            const goodA = await createGood({ name: "Batch A" });
+            const goodB = await createGood({ name: "Batch B" });
+
+            await receiveWithAttributes(goodA, warehouseId, 10, [{ name: "batch", type: "STRING", value: "LOT-001" }]);
+            await receiveWithAttributes(goodB, warehouseId, 10, [{ name: "batch", type: "STRING", value: "LOT-002" }]);
+
+            const result = await queryBus.execute(
+                new ListWarehouseStockQuery({
+                    warehouseId,
+                    attributeName: "batch",
+                    attributeValue: "LOT-001",
+                }),
+            );
+
+            expect(result).toHaveLength(1);
+            expect(result[0].goodName).toEqual("Batch A");
+        });
+
+        it("filters stock by DATE attribute before a given date", async () => {
+            const warehouseId = await createWarehouse("Date Filter WH");
+            const soonGood = await createGood({ name: "Expires soon" });
+            const laterGood = await createGood({ name: "Expires later" });
+
+            await receiveWithAttributes(soonGood, warehouseId, 10, [
+                { name: "expiration_date", type: "DATE", value: "2026-04-15" },
+            ]);
+            await receiveWithAttributes(laterGood, warehouseId, 10, [
+                { name: "expiration_date", type: "DATE", value: "2026-12-01" },
+            ]);
+
+            // Find stock expiring before June 2026 (within ~90 days from March 24)
+            const result = await queryBus.execute(
+                new ListWarehouseStockQuery({
+                    warehouseId,
+                    attributeName: "expiration_date",
+                    attributeDateBefore: "2026-06-01",
+                }),
+            );
+
+            expect(result).toHaveLength(1);
+            expect(result[0].goodName).toEqual("Expires soon");
+        });
+
+        it("returns empty attributes when none are set", async () => {
+            const goodId = await createGood({ name: "No attr" });
+            const warehouseId = await createWarehouse("No Attr WH");
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 10 });
+
             const stock = await queryBus.execute(new ListWarehouseStockQuery({ warehouseId }));
             expect(stock[0].attributes).toEqual([]);
         });
 
-        it("filters stock by attribute name", async () => {
-            // This test verifies the filtering path works even with no attributes
-            const goodId = await createGood({ name: "No attr item" });
-            const warehouseId = await createWarehouse("Attr Filter WH");
+        it("filters out stock with no matching attribute name", async () => {
+            const goodId = await createGood({ name: "Plain item" });
+            const warehouseId = await createWarehouse("No Match WH");
             await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 10 });
 
             const result = await queryBus.execute(
                 new ListWarehouseStockQuery({
                     warehouseId,
-                    attributeName: "expiration_date",
+                    attributeName: "nonexistent",
                 }),
             );
 

@@ -1,9 +1,16 @@
 import { Command, CommandProps } from "../../../../libs/cqrs/command.js";
 
+export interface GoodsReceiptLineAttributeInput {
+    name: string;
+    type: string;
+    value: string;
+}
+
 export interface GoodsReceiptLineInput {
     goodId: string;
     quantity: number;
     sectorId?: string;
+    attributes?: GoodsReceiptLineAttributeInput[];
     note?: string;
 }
 

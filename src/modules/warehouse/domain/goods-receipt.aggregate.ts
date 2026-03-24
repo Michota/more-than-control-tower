@@ -55,7 +55,15 @@ export class GoodsReceiptAggregate extends AggregateRoot<GoodsReceiptProperties>
         return this.properties.status;
     }
 
-    setLines(lines: { goodId: string; quantity: number; sectorId?: string; note?: string }[]): void {
+    setLines(
+        lines: {
+            goodId: string;
+            quantity: number;
+            sectorId?: string;
+            attributes?: { name: string; type: string; value: string }[];
+            note?: string;
+        }[],
+    ): void {
         if (this.properties.status !== GoodsReceiptStatus.DRAFT) {
             throw new GoodsReceiptNotDraftError();
         }
@@ -66,6 +74,7 @@ export class GoodsReceiptAggregate extends AggregateRoot<GoodsReceiptProperties>
                     goodId: l.goodId,
                     quantity: l.quantity,
                     sectorId: l.sectorId,
+                    attributes: l.attributes,
                     note: l.note,
                 }),
         );

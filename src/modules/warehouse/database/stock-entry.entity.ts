@@ -1,4 +1,5 @@
 import { defineEntity, p } from "@mikro-orm/core";
+import { StockEntryAttribute } from "./stock-entry-attribute.embeddable.js";
 import { StockHistoryEntry } from "./stock-history.embeddable.js";
 
 const StockEntrySchema = defineEntity({
@@ -10,7 +11,7 @@ const StockEntrySchema = defineEntity({
         warehouseId: p.uuid(),
         sectorId: p.uuid().nullable(),
         quantity: p.integer(),
-        attributes: p.json<{ name: string; type: string; value: string }[]>().default([]),
+        attributes: p.embedded(StockEntryAttribute).array().default([]),
         history: p.embedded(StockHistoryEntry).array().default([]),
     },
 });

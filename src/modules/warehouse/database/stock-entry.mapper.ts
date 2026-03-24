@@ -8,6 +8,7 @@ import { StockHistoryEntry as DomainHistoryEntry } from "../domain/stock-history
 import { StockEventType } from "../domain/stock-event-type.enum.js";
 import { StockRemovalReason } from "../domain/stock-removal-reason.enum.js";
 import { StockEntry } from "./stock-entry.entity.js";
+import { StockEntryAttribute as OrmAttribute } from "./stock-entry-attribute.embeddable.js";
 import { StockHistoryEntry as OrmHistoryEntry } from "./stock-history.embeddable.js";
 
 @Injectable()
@@ -35,7 +36,7 @@ export class StockEntryMapper implements Mapper<StockEntryAggregate, RequiredEnt
                 sectorId: record.sectorId ?? undefined,
                 quantity: record.quantity,
                 attributes: (record.attributes ?? []).map(
-                    (a) =>
+                    (a: OrmAttribute) =>
                         new StockEntryAttribute({ name: a.name, type: a.type as StockAttributeType, value: a.value }),
                 ),
                 history,

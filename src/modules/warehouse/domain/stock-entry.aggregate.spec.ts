@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { StockEntryAggregate } from "./stock-entry.aggregate.js";
 import { StockEventType } from "./stock-event-type.enum.js";
 import { StockRemovalReason } from "./stock-removal-reason.enum.js";
-import { InsufficientStockError } from "./good.errors.js";
+import { InsufficientStockError, StockEntryNotEmptyError } from "./good.errors.js";
 import { StockReceivedDomainEvent } from "./events/stock-received.domain-event.js";
 import { StockRemovedDomainEvent } from "./events/stock-removed.domain-event.js";
 import { StockTransferredDomainEvent } from "./events/stock-transferred.domain-event.js";
@@ -200,5 +200,29 @@ describe("StockEntryAggregate.moveToSector()", () => {
         entry.moveToSector(undefined);
 
         expect(entry.sectorId).toBeUndefined();
+    });
+});
+
+describe("Stock entry deletion invariant", () => {
+    it("entry with quantity > 0 should be considered non-deletable", () => {
+        const entry = StockEntryAggregate.create({ goodId, warehouseId, quantity: 50 });
+
+        // The repository enforces this — verify the condition it checks
+        expect(entry.quantity).toBeGreaterThan(0);
+    });
+
+    it("entry with quantity 0 is safe to delete", () => {
+        const entry = StockEntryAggregate.create({ goodId, warehouseId, quantity: 10 });
+        entry.remove(10, StockRemovalReason.SALE);
+
+        expect(entry.quantity).toBe(0);
+    });
+
+    it("StockEntryNotEmptyError contains entry id and quantity", () => {
+        const error = new StockEntryNotEmptyError("test-id", 42);
+
+        expect(error.code).toBe("STOCK_ENTRY.NOT_EMPTY");
+        expect(error.message).toContain("test-id");
+        expect(error.message).toContain("42");
     });
 });

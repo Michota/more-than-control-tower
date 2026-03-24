@@ -4,6 +4,7 @@ import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
 import type { GoodsReceiptRepositoryPort } from "../../database/goods-receipt.repository.port.js";
 import type { StockEntryRepositoryPort } from "../../database/stock-entry.repository.port.js";
+import { StockEntryAttribute, StockAttributeType } from "../../domain/stock-entry-attribute.value-object.js";
 import { StockEntryAggregate } from "../../domain/stock-entry.aggregate.js";
 import { GOODS_RECEIPT_REPOSITORY_PORT, STOCK_ENTRY_REPOSITORY_PORT } from "../../warehouse.di-tokens.js";
 import { ConfirmGoodsReceiptCommand } from "./confirm-goods-receipt.command.js";
@@ -43,12 +44,17 @@ export class ConfirmGoodsReceiptCommandHandler implements ICommandHandler<Confir
                 });
                 stockEntries.push(existing);
             } else {
+                const attributes = line.attributes.map(
+                    (a) =>
+                        new StockEntryAttribute({ name: a.name, type: a.type as StockAttributeType, value: a.value }),
+                );
                 stockEntries.push(
                     StockEntryAggregate.create({
                         goodId: line.goodId,
                         warehouseId: receipt.targetWarehouseId,
                         quantity: line.quantity,
                         sectorId: line.sectorId,
+                        attributes,
                         note: line.note,
                     }),
                 );
