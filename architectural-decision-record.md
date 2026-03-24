@@ -320,3 +320,41 @@ The project already has `src/config/env.ts`, which uses Zod to validate and type
 ## Decision
 
 Not yet made.
+
+
+# ADR-009: Standalone-first development strategy — external adapters deferred until real clients exist
+
+**Status:** Accepted
+**Date:** 2026-03-22
+
+## Context
+
+The platform is designed as a multi-tenant SaaS with swappable adapters per bounded context (see CLAUDE.md). Each module's repository port has two potential implementations: an internal PostgreSQL adapter and an external API adapter for tenants who bring their own systems.
+
+However, at this stage no real client deployments exist. Writing external adapters, customer-specific DI bindings, and their corresponding tests would be speculative — we don't know which external systems real clients will bring, what their APIs look like, or even which modules they'll need to replace.
+
+## Decision
+
+Develop the platform in **standalone mode only** until at least two real client instances are running in production.
+
+Concretely:
+- Every module is wired to its internal database adapter. This is the only implementation that exists and the only one that is tested.
+- Port interfaces (`*RepositoryPort`, `UnitOfWorkPort`, etc.) are defined and kept stable — they are the extension point for future adapters.
+- The shared behavioral test contracts (e.g. `describeCreateCustomerHandlerBehavior`) are written alongside the internal adapter tests, establishing the spec that any future adapter must satisfy.
+- No external adapter classes, no customer-specific DI modules, no adapter tests for hypothetical external systems are written until a real client with a concrete external system requirement exists.
+
+## Rationale
+
+External adapters can only be written correctly when the target external API is known. Speculative adapters would be based on guesses, would need to be thrown away or heavily rewritten when real requirements arrive, and would add maintenance burden with zero current value.
+
+The port interfaces and behavioral test contracts are the right preparation — they are stable, useful immediately (they define the domain contract), and make adding a real adapter straightforward when the time comes.
+
+## When to revisit
+
+When the first real client deployment requires an external adapter:
+- Implement the adapter in a customer-specific package (see future Turborepo monorepo structure)
+- Use the existing `describe*HandlerBehavior` shared test suite to verify it satisfies the behavioral contract
+- At two or more real client instances, evaluate whether the monorepo split (core + customer packages) is warranted
+- Consider splitting the codebase into Turborepo packages.
+
+Until then, treat any proposal to write an external adapter as premature.
