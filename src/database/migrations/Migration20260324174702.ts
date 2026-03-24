@@ -12,7 +12,7 @@ export class Migration20260324174702 extends Migration {
 
         this.addSql(`alter table "stock_entry" add "sector_id" uuid null;`);
 
-        this.addSql(`alter table "warehouse" add "type" text not null;`);
+        this.addSql(`alter table "warehouse" add "type" text not null default 'REGULAR';`);
         this.addSql(
             `alter table "warehouse" add constraint "warehouse_type_check" check ("type" in ('REGULAR', 'MOBILE'));`,
         );

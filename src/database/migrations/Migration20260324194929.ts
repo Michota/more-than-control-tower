@@ -1,6 +1,6 @@
 import { Migration } from "@mikro-orm/migrations";
 
-export class Migration20260324195050 extends Migration {
+export class Migration20260324194929 extends Migration {
     override async up(): Promise<void> {
         this.addSql(`alter table "stock_entry" add "attributes" jsonb not null default '[]';`);
 
