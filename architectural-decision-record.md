@@ -639,3 +639,87 @@ The cost of accepting any string as an ID is near zero — string comparison, in
 ## Implementation status
 
 **Not yet implemented.** The codebase still uses UUIDs everywhere. This ADR documents the intended direction for when the first external system integration requires non-UUID identifiers.
+
+
+# ADR-015: Authorization as a port — role baseline with per-user overrides
+
+**Status:** Accepted
+**Date:** 2026-03-25
+
+## Context
+
+The platform serves four operational roles (dispatcher, warehouse worker, RSR, accountant) with distinct access needs. Authorization must eventually support:
+
+1. **Fixed roles** — a static, non-changeable set of roles with predefined permission baselines. Managed by a future HR module (assigned by someone with a Head of HR position).
+2. **Per-user permission overrides** — an IT administrator can toggle individual permissions for specific users, independent of their role. This means users with the same role can have different effective permissions.
+3. **Three-state resolution** — each per-user override is `allowed`, `denied`, or `unspecified`. When `unspecified`, the system falls back to the role's baseline permission.
+
+This model does not exist yet. The HR module, IT administrator role, and override storage are future work. However, the authorization interface must be designed now so that modules do not hardcode assumptions about how permissions are resolved.
+
+## Decision
+
+### 1. Authorization is an output port, not inline logic
+
+Each module that needs authorization depends on a shared `AuthorizationPort` interface. Modules ask "can this user perform this action?" and receive a boolean. They never inspect roles, check override tables, or contain resolution logic.
+
+```typescript
+// src/shared/auth/authorization.port.ts
+export interface AuthorizationPort {
+    canPerform(userId: string, action: string): Promise<boolean>;
+}
+```
+
+This is the same pattern used for repository ports — the module depends on an interface, the DI container binds the implementation.
+
+### 2. Each module defines its own permission keys
+
+Permission actions are string constants namespaced by module (e.g. `warehouse:create-receipt`, `delivery:close-visit`). Each module owns its permission keys in a local `*.permissions.ts` file.
+
+### 3. Initial adapter: static role-to-permission map
+
+The first `AuthorizationPort` implementation is a `RoleBasedAuthorizationAdapter` with a hardcoded map of role → permitted actions. No database, no configuration, no HR module dependency. This is sufficient for early development.
+
+### 4. Future adapter: three-state override resolution
+
+When the HR module and IT administrator functionality are built, a new `OverrideAuthorizationAdapter` replaces the initial adapter. Resolution order:
+
+1. Check per-user override for the action. If `allowed` → permit. If `denied` → deny.
+2. If `unspecified` → fall back to the role's baseline permission set.
+
+The swap is a DI binding change. No module code changes.
+
+### 5. Where authorization checks live
+
+Authorization checks are placed according to what data they require:
+
+- **Role-based and static permission checks → guards/decorators on controllers.** These checks are stateless — they need only the user's role and permissions, already available from the JWT/session on the request. A NestJS guard resolves them before the handler runs. This covers ~80% of cases.
+- **Resource-based, ownership, or state-dependent checks → application layer (handlers/services).** These checks require loading the resource from the database to determine access (e.g. "does this user own this order?", "is this order in a state that allows this action?"). They naturally live where the data is already loaded.
+
+Guards on controllers are the default. Application-layer checks are the exception, used only when the authorization decision depends on persisted state.
+
+System-initiated operations (domain event handlers, background workers, cron jobs) do not carry a user context and do not go through authorization.
+
+### 6. Domain layer does not participate in authorization
+
+Authorization checks happen in the infrastructure layer (guards) or application layer (handlers), not in domain entities or aggregates. The domain layer has no dependency on `AuthorizationPort`.
+
+### 7. `ForbiddenDomainException` for authorization failures
+
+`src/libs/exceptions/http-domain.exceptions.ts` provides a `ForbiddenDomainException` base class (HTTP 403) for authorization-related domain errors, following the same pattern as `NotFoundDomainException`, `ConflictDomainException`, and `BadRequestDomainException`.
+
+## Consequences
+
+### Positive
+- Modules are decoupled from the authorization implementation — same pattern as repository ports.
+- The three-state override model can be added without touching any module's controllers or handlers.
+- Role definitions remain non-changeable (static baseline), while per-user flexibility is layered on top.
+- Guards fail fast on stateless checks — unauthorized requests are rejected before any business logic or database access.
+- Testable — in-memory `AuthorizationPort` implementations for handler BDD tests.
+
+### Negative
+- Guard-based checks require role/permission data to be present on the request (e.g. in JWT claims). The authentication layer must populate this.
+- The static role-to-permission map in the initial adapter must be manually maintained as modules add new permission keys. Acceptable for early development; may be automated when the HR module provides a UI for permission management.
+
+### Future considerations
+- The HR module will be the source of truth for role assignments (position → role mapping) and the IT administrator will manage per-user overrides through it.
+- Permission keys may eventually be discoverable at runtime (e.g. each module registers its keys at startup) to support a UI that shows all available permissions.
