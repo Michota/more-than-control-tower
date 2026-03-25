@@ -4,7 +4,8 @@ import { IdOfEntity } from "../../../../libs/ddd/aggregate-root.abstract.js";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
 import { CustomerAddress } from "../../domain/customer-address.value-object.js";
-import { CustomerContact } from "../../domain/customer-contact.value-object.js";
+import { CustomerContact, CustomerContactProperties } from "../../domain/customer-contact.value-object.js";
+import { ContactType } from "../../domain/customer-contact-type.enum.js";
 import { CustomerAggregate } from "../../domain/customer.aggregate.js";
 import type { CustomerRepositoryPort } from "../../database/customer.repository.port.js";
 import { CUSTOMER_REPOSITORY_PORT } from "../../crm.di-tokens.js";
@@ -27,6 +28,7 @@ export class CreateCustomerCommandHandler implements ICommandHandler<CreateCusto
             (a) =>
                 new CustomerAddress({
                     label: a.label,
+                    note: a.note,
                     country: a.country,
                     state: a.state,
                     city: a.city,
@@ -35,19 +37,36 @@ export class CreateCustomerCommandHandler implements ICommandHandler<CreateCusto
                 }),
         );
 
-        const contacts = cmd.contacts.map(
-            (c) =>
-                new CustomerContact({
-                    type: c.type,
-                    title: c.title,
-                    description: c.description,
-                    value: c.value,
-                }),
-        );
+        const contacts = cmd.contacts.map((c) => {
+            const base = {
+                type: c.type,
+                title: c.title,
+                description: c.description,
+                note: c.note,
+                value: c.value,
+                history: [],
+            };
+
+            if (c.type === ContactType.CUSTOM) {
+                return new CustomerContact({
+                    ...base,
+                    type: ContactType.CUSTOM,
+                    customLabel: c.customLabel!,
+                });
+            }
+
+            return new CustomerContact(base as CustomerContactProperties);
+        });
 
         const customer = CustomerAggregate.create({
             name: cmd.name,
+            customerType: cmd.customerType,
             description: cmd.description,
+            note: cmd.note,
+            firstName: cmd.firstName,
+            lastName: cmd.lastName,
+            companyName: cmd.companyName,
+            nip: cmd.nip,
             addresses,
             contacts,
         });
