@@ -1,23 +1,24 @@
-import { HttpStatus } from "@nestjs/common";
-import { Exception } from "./exception.abstract";
 import { ExceptionCode } from "./exception.codes";
+import {
+    BadRequestDomainException,
+    ConflictDomainException,
+    InternalDomainException,
+    NotFoundDomainException,
+} from "./http-domain.exceptions";
 
-export class ArgumentInvalidException extends Exception {
+export class ArgumentInvalidException extends BadRequestDomainException {
     readonly code = ExceptionCode.ARGUMENT_INVALID;
-    readonly httpStatusCode = HttpStatus.BAD_REQUEST;
 }
 
-export class ArgumentNotProvidedException extends Exception {
+export class ArgumentNotProvidedException extends BadRequestDomainException {
     readonly code = ExceptionCode.ARGUMENT_NOT_PROVIDED;
-    readonly httpStatusCode = HttpStatus.BAD_REQUEST;
 }
 
-export class ConflictException extends Exception {
+export class ConflictException extends ConflictDomainException {
     readonly code = ExceptionCode.CONFLICT;
-    readonly httpStatusCode = HttpStatus.CONFLICT;
 }
 
-export class NotFoundException extends Exception {
+export class NotFoundException extends NotFoundDomainException {
     static readonly message = "Not found";
 
     constructor(message = NotFoundException.message) {
@@ -25,10 +26,9 @@ export class NotFoundException extends Exception {
     }
 
     readonly code = ExceptionCode.NOT_FOUND;
-    readonly httpStatusCode = HttpStatus.NOT_FOUND;
 }
 
-export class InternalServerErrorException extends Exception {
+export class InternalServerErrorException extends InternalDomainException {
     static readonly message = "Internal server error";
 
     constructor(message = InternalServerErrorException.message) {
@@ -36,5 +36,4 @@ export class InternalServerErrorException extends Exception {
     }
 
     readonly code = ExceptionCode.INTERNAL_SERVER_ERROR;
-    readonly httpStatusCode = HttpStatus.INTERNAL_SERVER_ERROR;
 }

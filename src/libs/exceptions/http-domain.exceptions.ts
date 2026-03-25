@@ -12,3 +12,11 @@ export abstract class ConflictDomainException extends Exception {
 export abstract class BadRequestDomainException extends Exception {
     readonly httpStatusCode = HttpStatus.BAD_REQUEST;
 }
+
+export abstract class ForbiddenDomainException extends Exception {
+    readonly httpStatusCode = HttpStatus.FORBIDDEN;
+}
+
+export abstract class InternalDomainException extends Exception {
+    readonly httpStatusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+}
