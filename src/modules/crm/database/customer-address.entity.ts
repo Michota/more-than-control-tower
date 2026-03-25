@@ -7,6 +7,7 @@ const CustomerAddressSchema = defineEntity({
     properties: {
         id: p.uuid().primary().defaultRaw("gen_random_uuid()"),
         label: p.string().nullable(),
+        note: p.string().nullable(),
         country: p.string(),
         state: p.string(),
         city: p.string(),

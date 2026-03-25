@@ -1,6 +1,7 @@
 import { defineEntity, p } from "@mikro-orm/core";
 import { Customer } from "./customer.entity.js";
 import { ContactType } from "../domain/customer-contact-type.enum.js";
+import { ContactHistoryEntry } from "./contact-history-entry.embeddable.js";
 
 const CustomerContactSchema = defineEntity({
     name: "CustomerContact",
@@ -10,7 +11,10 @@ const CustomerContactSchema = defineEntity({
         type: p.enum(() => ContactType),
         title: p.string(),
         description: p.string().nullable(),
+        note: p.string().nullable(),
+        customLabel: p.string().nullable(),
         value: p.string(),
+        history: p.embedded(ContactHistoryEntry).array().default([]),
         customer: () => p.manyToOne(Customer).inversedBy("contacts"),
     },
 });
