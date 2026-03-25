@@ -28,6 +28,15 @@ describe("CustomerAddress", () => {
 
         expect(address.label).toBe("Headquarters");
     });
+
+    it("accepts an optional note", () => {
+        const address = new CustomerAddress({
+            ...validAddress().unpack(),
+            note: "Use back entrance",
+        });
+
+        expect(address.note).toBe("Use back entrance");
+    });
 });
 
 export { validAddress };
