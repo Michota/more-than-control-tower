@@ -4,6 +4,7 @@ import { addressPropertiesSchema } from "../../../shared/value-objects/address.v
 
 const customerAddressSchema = addressPropertiesSchema.extend({
     label: z.string().optional(),
+    note: z.string().optional(),
 });
 
 export type CustomerAddressProperties = z.infer<typeof customerAddressSchema>;
@@ -35,5 +36,9 @@ export class CustomerAddress extends ValueObjectWithSchema<CustomerAddressProper
 
     get street(): string {
         return this.properties.street;
+    }
+
+    get note(): string | undefined {
+        return this.properties.note;
     }
 }
