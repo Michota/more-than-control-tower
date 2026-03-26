@@ -1,4 +1,4 @@
-import { Inject, Logger } from "@nestjs/common";
+import { Inject } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
 import { ListEmployeesQuery } from "../queries/list-employees/list-employees.query.js";
@@ -14,8 +14,6 @@ interface ListEmployeesOptions {
     description: "List employees (paginated)",
 })
 export class ListEmployeesCliCommand extends CommandRunner {
-    private readonly logger = new Logger(ListEmployeesCliCommand.name);
-
     constructor(@Inject(QueryBus) private readonly queryBus: QueryBus) {
         super();
     }
@@ -28,17 +26,17 @@ export class ListEmployeesCliCommand extends CommandRunner {
             new ListEmployeesQuery(page, limit),
         );
 
-        this.logger.log(`Employees (page ${result.page}, ${result.count} total):`);
+        console.log(`Employees (page ${result.page}, ${result.count} total):`);
 
         for (const emp of result.data) {
             const positions = emp.positionAssignments.map((p) => p.positionKey).join(", ") || "none";
-            this.logger.log(
+            console.log(
                 `  ${emp.id}  ${emp.firstName} ${emp.lastName}  status=${emp.status}  positions=[${positions}]`,
             );
         }
 
         if (result.data.length === 0) {
-            this.logger.log("  (no employees found)");
+            console.log("  (no employees found)");
         }
     }
 

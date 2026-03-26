@@ -1,4 +1,4 @@
-import { Inject, Logger } from "@nestjs/common";
+import { Inject } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
 import { SearchCustomersQuery, SearchCustomersResponse } from "../queries/search-customers/search-customers.query.js";
@@ -14,15 +14,13 @@ interface SearchCustomersOptions {
     description: "Search customers by name, email, phone, or address",
 })
 export class SearchCustomersCliCommand extends CommandRunner {
-    private readonly logger = new Logger(SearchCustomersCliCommand.name);
-
     constructor(@Inject(QueryBus) private readonly queryBus: QueryBus) {
         super();
     }
 
     async run(_passedParams: string[], options: SearchCustomersOptions): Promise<void> {
         if (!options.term) {
-            this.logger.error("--term is required");
+            console.error("--term is required");
             return;
         }
 
@@ -43,14 +41,14 @@ export class SearchCustomersCliCommand extends CommandRunner {
             ),
         );
 
-        this.logger.log(`Customers matching "${options.term}" (page ${result.page}, ${result.count} total):`);
+        console.log(`Customers matching "${options.term}" (page ${result.page}, ${result.count} total):`);
 
         for (const customer of result.data) {
-            this.logger.log(`  ${customer.id}  ${customer.name}  type=${customer.customerType}`);
+            console.log(`  ${customer.id}  ${customer.name}  type=${customer.customerType}`);
         }
 
         if (result.data.length === 0) {
-            this.logger.log("  (no customers found)");
+            console.log("  (no customers found)");
         }
     }
 

@@ -1,4 +1,4 @@
-import { Inject, Logger } from "@nestjs/common";
+import { Inject } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
 import { UpdateSystemUserCommand } from "../commands/update-system-user/update-system-user.command.js";
@@ -15,24 +15,22 @@ interface UpdateAdminOptions {
     description: "Update an administrator account's data (email, name)",
 })
 export class UpdateAdminCliCommand extends CommandRunner {
-    private readonly logger = new Logger(UpdateAdminCliCommand.name);
-
     constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {
         super();
     }
 
     async run(_passedParams: string[], options: UpdateAdminOptions): Promise<void> {
         if (!options.id) {
-            this.logger.error("--id is required");
+            console.error("--id is required");
             return;
         }
 
         if (!options.email && !options.firstName && !options.lastName) {
-            this.logger.error("At least one of --email, --first-name, or --last-name must be provided");
+            console.error("At least one of --email, --first-name, or --last-name must be provided");
             return;
         }
 
-        this.logger.log(`Updating administrator ${options.id}...`);
+        console.log(`Updating administrator ${options.id}...`);
 
         await this.commandBus.execute(
             new UpdateSystemUserCommand({
@@ -43,7 +41,7 @@ export class UpdateAdminCliCommand extends CommandRunner {
             }),
         );
 
-        this.logger.log(`Administrator ${options.id} updated successfully`);
+        console.log(`Administrator ${options.id} updated successfully`);
     }
 
     @Option({

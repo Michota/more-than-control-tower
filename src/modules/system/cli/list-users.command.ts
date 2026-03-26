@@ -1,4 +1,4 @@
-import { Inject, Logger } from "@nestjs/common";
+import { Inject } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
 import { ListSystemUsersQuery } from "../queries/list-system-users/list-system-users.query.js";
@@ -14,8 +14,6 @@ interface ListUsersOptions {
     description: "List system users (paginated)",
 })
 export class ListUsersCliCommand extends CommandRunner {
-    private readonly logger = new Logger(ListUsersCliCommand.name);
-
     constructor(@Inject(QueryBus) private readonly queryBus: QueryBus) {
         super();
     }
@@ -28,16 +26,16 @@ export class ListUsersCliCommand extends CommandRunner {
             new ListSystemUsersQuery(undefined, page, limit),
         );
 
-        this.logger.log(`Users (page ${result.page}, ${result.count} total):`);
+        console.log(`Users (page ${result.page}, ${result.count} total):`);
 
         for (const user of result.data) {
-            this.logger.log(
+            console.log(
                 `  ${user.id}  ${user.email}  ${user.firstName} ${user.lastName}  roles=[${user.roles.join(",")}]  status=${user.status}`,
             );
         }
 
         if (result.data.length === 0) {
-            this.logger.log("  (no users found)");
+            console.log("  (no users found)");
         }
     }
 
