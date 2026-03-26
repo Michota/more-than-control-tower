@@ -5,6 +5,8 @@ import { ConfigModule, ConfigType } from "@nestjs/config";
 import { CrmModule } from "./modules/crm/crm.module.js";
 import { SalesModule } from "./modules/sales/sales.module.js";
 import { WarehouseModule } from "./modules/warehouse/warehouse.module.js";
+import { HrModule } from "./modules/hr/hr.module.js";
+import { SystemModule } from "./modules/system/system.module.js";
 import { CqrsModule } from "@nestjs/cqrs";
 
 @Module({
@@ -21,6 +23,8 @@ import { CqrsModule } from "@nestjs/cqrs";
         CrmModule,
         SalesModule,
         WarehouseModule,
+        HrModule,
+        SystemModule,
     ],
     controllers: [],
     providers: [],
