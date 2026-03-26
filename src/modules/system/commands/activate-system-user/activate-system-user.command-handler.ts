@@ -1,0 +1,31 @@
+import { Inject } from "@nestjs/common";
+import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
+import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
+import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
+import { SystemUserNotFoundError } from "../../domain/system-user.errors.js";
+import type { SystemUserRepositoryPort } from "../../database/system-user.repository.port.js";
+import { SYSTEM_USER_REPOSITORY_PORT } from "../../system.di-tokens.js";
+import { ActivateSystemUserCommand } from "./activate-system-user.command.js";
+
+@CommandHandler(ActivateSystemUserCommand)
+export class ActivateSystemUserCommandHandler implements ICommandHandler<ActivateSystemUserCommand> {
+    constructor(
+        @Inject(SYSTEM_USER_REPOSITORY_PORT)
+        private readonly userRepo: SystemUserRepositoryPort,
+
+        @Inject(UNIT_OF_WORK_PORT)
+        private readonly uow: UnitOfWorkPort,
+    ) {}
+
+    async execute(cmd: ActivateSystemUserCommand): Promise<void> {
+        const user = await this.userRepo.findOneById(cmd.userId);
+        if (!user) {
+            throw new SystemUserNotFoundError(cmd.userId);
+        }
+
+        user.activate();
+
+        await this.userRepo.save(user);
+        await this.uow.commit();
+    }
+}
