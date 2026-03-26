@@ -723,3 +723,58 @@ Authorization checks happen in the infrastructure layer (guards) or application 
 ### Future considerations
 - The HR module will be the source of truth for role assignments (position → role mapping) and the IT administrator will manage per-user overrides through it.
 - Permission keys may eventually be discoverable at runtime (e.g. each module registers its keys at startup) to support a UI that shows all available permissions.
+
+
+# ADR-016: Self-service profile changes require email confirmation — auth module responsibility
+
+**Status:** Proposed (not yet implemented)
+**Date:** 2026-03-26
+
+## Context
+
+The System module allows updating user profile data (email, name) via `UpdateSystemUserCommand`. Two distinct actors can trigger this:
+
+1. **Administrator or Moderator** editing another user's data — should apply immediately, no confirmation needed.
+2. **User editing their own data** — should require email confirmation before the change is applied, to prevent unauthorized account takeover (e.g. someone accessing an unlocked device).
+
+The System module currently applies all updates immediately regardless of who triggered them. It has no concept of "pending changes" or "who is the current actor" beyond what the command carries.
+
+## Decision
+
+### 1. The System module stays simple — it applies updates immediately
+
+`UpdateSystemUserCommand` remains a direct, synchronous write. It does not know whether the caller is an admin or the user themselves. It does not hold pending state or confirmation tokens. It is a trusted internal command.
+
+### 2. The Auth module gates self-service changes
+
+When a user requests a profile change through an HTTP endpoint:
+
+- If the authenticated user is an **Administrator or Moderator** updating another user → the Auth module dispatches `UpdateSystemUserCommand` directly.
+- If the authenticated user is updating **their own data** → the Auth module:
+  1. Stores a pending change record with a confirmation token.
+  2. Emits a `ProfileChangeRequestedEvent` (consumed by a future email/notification service).
+  3. Does **not** dispatch `UpdateSystemUserCommand` yet.
+  4. When the user confirms via token → the Auth module dispatches `UpdateSystemUserCommand` with the pending values.
+  5. If the token expires → the pending change is discarded.
+
+### 3. No changes needed in System module now
+
+The System module's `UpdateSystemUserCommand` is already the right primitive. The confirmation flow is purely an Auth module concern — it decides *when* to call the command, not *how* the command works.
+
+### 4. CLI bypasses confirmation
+
+CLI commands (`update-admin`) dispatch `UpdateSystemUserCommand` directly, bypassing Auth module gatekeeping entirely. CLI access implies server-level trust.
+
+## Consequences
+
+### Positive
+- System module remains a clean, trusted write path — no pending state, no token management, no email dependencies.
+- The confirmation flow is fully owned by Auth, which already owns authentication context (who is the current user, what role do they have).
+- Adding confirmation later requires zero changes to System module code.
+
+### Negative
+- Until the Auth module is implemented, there is no self-service confirmation — all HTTP updates apply immediately. Acceptable for the current development phase where only administrators use the system.
+
+## Implementation status
+
+**Not yet implemented.** The Auth module does not exist yet. This ADR documents the intended design so that the System module is not polluted with confirmation logic when the Auth module is built.
