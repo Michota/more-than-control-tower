@@ -2,7 +2,8 @@ import { Inject } from "@nestjs/common";
 import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
-import { SystemUserNotFoundError } from "../../domain/system-user.errors.js";
+import { SystemUserRole } from "../../domain/system-user-role.enum.js";
+import { LastActiveAdminError, SystemUserNotFoundError } from "../../domain/system-user.errors.js";
 import type { SystemUserRepositoryPort } from "../../database/system-user.repository.port.js";
 import { SYSTEM_USER_REPOSITORY_PORT } from "../../system.di-tokens.js";
 import { SuspendSystemUserCommand } from "./suspend-system-user.command.js";
@@ -23,6 +24,13 @@ export class SuspendSystemUserCommandHandler implements ICommandHandler<SuspendS
         const user = await this.userRepo.findOneById(cmd.userId);
         if (!user) {
             throw new SystemUserNotFoundError(cmd.userId);
+        }
+
+        if (user.roles.includes(SystemUserRole.ADMINISTRATOR)) {
+            const activeAdminCount = await this.userRepo.countActiveAdmins();
+            if (activeAdminCount <= 1) {
+                throw new LastActiveAdminError();
+            }
         }
 
         user.suspend();

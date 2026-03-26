@@ -2,6 +2,7 @@ import { EntityManager } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
 import { PaginationParameters } from "src/libs/types/pagination.js";
+import { SystemUserStatus } from "../domain/system-user-status.enum.js";
 import { SystemUserAggregate } from "../domain/system-user.aggregate.js";
 import { SystemUserRepositoryPort } from "./system-user.repository.port.js";
 import { SystemUser } from "./system-user.entity.js";
@@ -84,6 +85,13 @@ export class SystemUserRepository implements SystemUserRepositoryPort {
                 this.em.persist(this.em.create(SystemUser, data));
             }
         }
+    }
+
+    async countActiveAdmins(): Promise<number> {
+        return this.em.count(SystemUser, {
+            roles: { $contains: ["administrator"] },
+            status: { $ne: SystemUserStatus.SUSPENDED },
+        });
     }
 
     async delete(entity: SystemUserAggregate): Promise<boolean> {

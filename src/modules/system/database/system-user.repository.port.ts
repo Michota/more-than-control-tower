@@ -6,4 +6,6 @@ export interface SystemUserRepositoryPort extends RepositoryPort<SystemUserAggre
     findByEmail(email: string): Promise<SystemUserAggregate | null>;
 
     search(term: string, pagination?: PaginationParameters): Promise<{ data: SystemUserAggregate[]; count: number }>;
+
+    countActiveAdmins(): Promise<number>;
 }

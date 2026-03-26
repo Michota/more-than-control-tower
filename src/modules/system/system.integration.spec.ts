@@ -10,8 +10,13 @@ import { SuspendSystemUserCommand } from "./commands/suspend-system-user/suspend
 import { ActivateSystemUserCommand } from "./commands/activate-system-user/activate-system-user.command";
 import { SystemUserRole } from "./domain/system-user-role.enum";
 import { SystemUserStatus } from "./domain/system-user-status.enum";
-import { SystemUserNotFoundError, CannotRemoveOwnAdminRoleError } from "./domain/system-user.errors";
+import {
+    SystemUserNotFoundError,
+    CannotRemoveOwnAdminRoleError,
+    LastActiveAdminError,
+} from "./domain/system-user.errors";
 import { ListSystemUsersQuery, ListSystemUsersResponse } from "./queries/list-system-users/list-system-users.query";
+import { SystemUser } from "./database/system-user.entity";
 import { SystemModule } from "./system.module";
 
 describe("System Module — Integration Tests", () => {
@@ -164,6 +169,9 @@ describe("System Module — Integration Tests", () => {
         });
 
         it("replaces all existing roles (not appending)", async () => {
+            // Ensure another admin exists so this one can lose admin role
+            await createUser({ roles: [SystemUserRole.ADMINISTRATOR] });
+
             const id = await createUser({
                 roles: [SystemUserRole.ADMINISTRATOR, SystemUserRole.MODERATOR, SystemUserRole.USER],
             });
@@ -178,6 +186,45 @@ describe("System Module — Integration Tests", () => {
 
             const user = await getUser(id);
             expect(user!.roles).toEqual([SystemUserRole.USER]);
+        });
+
+        describe("last active admin protection", () => {
+            beforeEach(async () => {
+                await orm.em.nativeDelete(SystemUser, {});
+            });
+
+            it("prevents removing admin role from the last active admin", async () => {
+                const id = await createUser({ roles: [SystemUserRole.ADMINISTRATOR] });
+
+                await expect(
+                    commandBus.execute(
+                        new AssignRolesCommand({
+                            userId: id,
+                            roles: [SystemUserRole.USER],
+                            actorId: "different-actor",
+                        }),
+                    ),
+                ).rejects.toThrow(LastActiveAdminError);
+
+                const user = await getUser(id);
+                expect(user!.roles).toEqual([SystemUserRole.ADMINISTRATOR]);
+            });
+
+            it("allows removing admin role when another active admin exists", async () => {
+                await createUser({ roles: [SystemUserRole.ADMINISTRATOR] });
+                const id = await createUser({ roles: [SystemUserRole.ADMINISTRATOR] });
+
+                await commandBus.execute(
+                    new AssignRolesCommand({
+                        userId: id,
+                        roles: [SystemUserRole.USER],
+                        actorId: "different-actor",
+                    }),
+                );
+
+                const user = await getUser(id);
+                expect(user!.roles).toEqual([SystemUserRole.USER]);
+            });
         });
 
         it("prevents admin from removing own admin role", async () => {
@@ -274,6 +321,33 @@ describe("System Module — Integration Tests", () => {
 
             const user = await getUser(id);
             expect(user!.status).toBe(SystemUserStatus.ACTIVATED);
+        });
+
+        describe("last active admin protection", () => {
+            beforeEach(async () => {
+                await orm.em.nativeDelete(SystemUser, {});
+            });
+
+            it("prevents suspending the last active admin", async () => {
+                const id = await createUser({ roles: [SystemUserRole.ADMINISTRATOR] });
+
+                await expect(commandBus.execute(new SuspendSystemUserCommand({ userId: id }))).rejects.toThrow(
+                    LastActiveAdminError,
+                );
+
+                const user = await getUser(id);
+                expect(user!.status).toBe(SystemUserStatus.UNACTIVATED);
+            });
+
+            it("allows suspending an admin when another active admin exists", async () => {
+                await createUser({ roles: [SystemUserRole.ADMINISTRATOR] });
+                const id = await createUser({ roles: [SystemUserRole.ADMINISTRATOR] });
+
+                await commandBus.execute(new SuspendSystemUserCommand({ userId: id }));
+
+                const user = await getUser(id);
+                expect(user!.status).toBe(SystemUserStatus.SUSPENDED);
+            });
         });
 
         it("throws SystemUserNotFoundError when suspending non-existent user", async () => {

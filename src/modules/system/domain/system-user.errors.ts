@@ -15,3 +15,11 @@ export class CannotRemoveOwnAdminRoleError extends ConflictDomainException {
         super("Administrator cannot remove the administrator role from themselves");
     }
 }
+
+export class LastActiveAdminError extends ConflictDomainException {
+    readonly code = "SYSTEM_USER.LAST_ACTIVE_ADMIN";
+
+    constructor() {
+        super("Cannot remove the last active administrator from the system");
+    }
+}
