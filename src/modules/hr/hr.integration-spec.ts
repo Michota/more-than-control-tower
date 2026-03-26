@@ -28,10 +28,7 @@ import {
 } from "./domain/employee.errors";
 import { ListPositionsQuery } from "./queries/list-positions/list-positions.query";
 import { type ListPositionsResponse } from "./queries/list-positions/list-positions.query-handler";
-import {
-    PERMISSION_REGISTRY,
-    PermissionRegistry,
-} from "../../shared/infrastructure/permission-registry";
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry";
 import { HrModule } from "./hr.module";
 
 describe("HR Module — Integration Tests", () => {
@@ -59,7 +56,12 @@ describe("HR Module — Integration Tests", () => {
         permissionRegistry.registerMany([
             { key: "freight:view-routes", name: "View Routes", module: "freight", description: "View delivery routes" },
             { key: "freight:execute-route", name: "Execute Route", module: "freight", description: "Execute a route" },
-            { key: "warehouse:create-receipt", name: "Create Receipt", module: "warehouse", description: "Create goods receipt" },
+            {
+                key: "warehouse:create-receipt",
+                name: "Create Receipt",
+                module: "warehouse",
+                description: "Create goods receipt",
+            },
             { key: "warehouse:view-stock", name: "View Stock", module: "warehouse", description: "View stock levels" },
         ]);
     });
@@ -121,9 +123,7 @@ describe("HR Module — Integration Tests", () => {
 
             expect(positionId).toBeDefined();
 
-            const result = await queryBus.execute<ListPositionsQuery, ListPositionsResponse>(
-                new ListPositionsQuery(),
-            );
+            const result = await queryBus.execute<ListPositionsQuery, ListPositionsResponse>(new ListPositionsQuery());
             const found = result.positions.find((p) => p.key === "test:position-crud");
             expect(found).toBeDefined();
             expect(found!.displayName).toBe("Test Position");
@@ -134,16 +134,12 @@ describe("HR Module — Integration Tests", () => {
                 new CreatePositionCommand({
                     key: "test:qualified",
                     displayName: "Qualified Position",
-                    qualificationSchema: [
-                        { key: "level", type: "STRING", description: "Skill level", required: true },
-                    ],
+                    qualificationSchema: [{ key: "level", type: "STRING", description: "Skill level", required: true }],
                     permissionKeys: ["freight:view-routes"],
                 }),
             );
 
-            const result = await queryBus.execute<ListPositionsQuery, ListPositionsResponse>(
-                new ListPositionsQuery(),
-            );
+            const result = await queryBus.execute<ListPositionsQuery, ListPositionsResponse>(new ListPositionsQuery());
             const found = result.positions.find((p) => p.key === "test:qualified");
             expect(found!.qualificationSchema).toHaveLength(1);
             expect(found!.permissionKeys).toEqual(["freight:view-routes"]);
@@ -195,9 +191,7 @@ describe("HR Module — Integration Tests", () => {
                 }),
             );
 
-            const result = await queryBus.execute<ListPositionsQuery, ListPositionsResponse>(
-                new ListPositionsQuery(),
-            );
+            const result = await queryBus.execute<ListPositionsQuery, ListPositionsResponse>(new ListPositionsQuery());
             const found = result.positions.find((p) => p.key === "test:updatable");
             expect(found!.displayName).toBe("After Update");
             expect(found!.permissionKeys).toEqual(["freight:view-routes"]);
@@ -236,9 +230,7 @@ describe("HR Module — Integration Tests", () => {
         it("updates basic info", async () => {
             const id = await createEmployee();
 
-            await commandBus.execute(
-                new UpdateEmployeeCommand({ employeeId: id, firstName: "Adam" }),
-            );
+            await commandBus.execute(new UpdateEmployeeCommand({ employeeId: id, firstName: "Adam" }));
 
             const employee = await getEmployee(id);
             expect(employee!.firstName).toBe("Adam");
@@ -438,16 +430,25 @@ describe("HR Module — Integration Tests", () => {
             ).rejects.toThrow(UnknownPermissionError);
         });
 
-        it("allows removing an override (state null) even for unknown keys", async () => {
+        it("allows removing an override (state null)", async () => {
             const id = await createEmployee();
 
-            // Should not throw — removing a non-existent override is a no-op
+            // Set then remove
+            await commandBus.execute(
+                new SetPermissionOverrideCommand({
+                    employeeId: id,
+                    overrides: [{ permissionKey: "freight:view-routes", state: PermissionOverrideState.ALLOWED }],
+                }),
+            );
             await commandBus.execute(
                 new SetPermissionOverrideCommand({
                     employeeId: id,
                     overrides: [{ permissionKey: "freight:view-routes", state: null }],
                 }),
             );
+
+            const employee = await getEmployee(id);
+            expect(employee).not.toBeNull();
         });
     });
 
