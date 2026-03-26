@@ -10,6 +10,7 @@
 import { Migrator, TSMigrationGenerator } from "@mikro-orm/migrations";
 import { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
 import { ConnectionOptions, PostgreSqlDriver } from "@mikro-orm/postgresql";
+import { SeedManager } from "@mikro-orm/seeder";
 
 type DatabaseCredentials = Pick<ConnectionOptions, "host" | "port" | "user" | "password" | "dbName">;
 
@@ -21,7 +22,7 @@ function generateMikroOrmOptions({
     dbName,
 }: DatabaseCredentials): MikroOrmModuleSyncOptions {
     return {
-        extensions: [Migrator],
+        extensions: [Migrator, SeedManager],
         driver: PostgreSqlDriver,
         /*
             we are using `defineEntity` approach.
@@ -51,6 +52,12 @@ function generateMikroOrmOptions({
             path: "dist/migrations",
             pathTs: "src/database/migrations",
             generator: TSMigrationGenerator,
+        },
+
+        seeder: {
+            path: "dist/seeders",
+            pathTs: "src/database/seeders",
+            defaultSeeder: "DatabaseSeeder",
         },
     };
 }
