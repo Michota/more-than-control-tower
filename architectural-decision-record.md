@@ -836,3 +836,53 @@ This is a process checkpoint, not a technical constraint. The goal is to prevent
 ### Negative
 - `cli.module.ts` must import every domain module that has CLI commands — grows over time. Acceptable for a modular monolith.
 - nest-commander adds a dependency. Justified by the NestJS DI integration it provides — a raw `yargs` or `commander` setup would need manual DI wiring.
+
+
+# ADR-018: Merge qualifications into permissions — use permissions as capability tags
+
+**Status:** Proposed (not accepted)
+**Date:** 2026-03-26
+
+## Context
+
+The HR module currently has two separate concepts for describing what an employee can do:
+
+1. **Permissions** — boolean flags gating system actions (e.g., `freight:execute-route`). Defined by modules, assigned to positions by HR, overridable per user.
+2. **Qualifications** — typed key-value attributes on position assignments (e.g., `licenseCategory: "C"`). Defined on positions by HR, used for filtering employees by capabilities.
+
+The question: should qualifications be eliminated and replaced by permissions used as capability tags?
+
+### Proposed change
+
+Modules define capability permissions alongside action permissions:
+- `freight:drive-cat-b`, `freight:drive-cat-c`, `freight:drive-cat-ce` (capability tags)
+- `freight:execute-route`, `freight:plan-route` (action gates)
+
+HR assigns them to positions or overrides per employee. Cross-module queries become `FindEmployeesByPermissionQuery("freight:drive-cat-c")` instead of filtering by qualification key-value pairs.
+
+This eliminates the `QualificationAttribute` value object, `qualificationSchema` on positions, and the `QualificationAttribute` embeddable — simplifying the domain model.
+
+## Arguments for merging
+
+- **Single concept** — no distinction between "what you can do" and "what you are qualified for." Everything is a permission.
+- **Clean cross-module contract** — Freight defines `freight:drive-cat-c` as a permission key. It doesn't need to know about HR's qualification schema. The contract is the permission key itself.
+- **Simpler domain model** — Position becomes just `{ key, displayName, permissionKeys }`. No qualification schema, no typed values, no validation of qualification entries.
+- **Same resolution mechanism** — effective permissions already handle position defaults + per-user overrides. Capability queries reuse the same logic.
+
+## Arguments against merging
+
+- **Combinatorial explosion for high-cardinality attributes** — License categories (5-6 values) are fine. But "Warehouse Worker who can handle product X" with 500 products means 500 permissions (`warehouse:handle-product-001`, ..., `warehouse:handle-product-500`). Every new product requires registering a new permission and assigning it to employees.
+- **Permissions become dual-purpose** — Some gate actions (checked by guards), some describe capabilities (used for filtering). These are conceptually different but now live in one flat list. The UI for "manage permissions" mixes access control with capability tagging.
+- **No typed values** — Qualifications carry data (`maxWeight: 3500`, `licenseCategory: "C"`). Permissions are binary (have it or don't). Merging loses the ability to store and query by value.
+- **Query performance** — Finding employees by qualification can be indexed in the DB (JSON query on qualification attributes). Finding employees by effective permissions requires computing position defaults + overrides for every employee, then filtering in memory.
+- **Permission count bloat** — 10 modules x 20 real actions + 30 capability tags = 500 permissions in the registry. Most are tags, not access control. Harder to manage and audit.
+
+## Decision
+
+**Deferred.** The current system has qualifications implemented. This ADR documents the trade-offs for when the team revisits the model. The key deciding factor will be: does any module need high-cardinality capability attributes (e.g., per-product handling permissions)? If yes, keep qualifications. If all capabilities are small finite sets, merging into permissions is viable.
+
+## Trigger for revisiting
+
+- When the Warehouse module is built and needs to assign per-product handling capabilities to workers.
+- When the Freight module is built and defines its driver capability model.
+- When the UI for permission management is designed and the UX of mixed action/capability permissions is evaluated.
