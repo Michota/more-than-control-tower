@@ -1,7 +1,7 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { DeleteEmployeeCommand } from "../../modules/hr/commands/delete-employee/delete-employee.command.js";
+import { DeleteEmployeeCommand } from "../commands/delete-employee/delete-employee.command.js";
 
 interface DeleteEmployeeOptions {
     id: string;
@@ -14,7 +14,7 @@ interface DeleteEmployeeOptions {
 export class DeleteEmployeeCliCommand extends CommandRunner {
     private readonly logger = new Logger(DeleteEmployeeCliCommand.name);
 
-    constructor(private readonly commandBus: CommandBus) {
+    constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {
         super();
     }
 

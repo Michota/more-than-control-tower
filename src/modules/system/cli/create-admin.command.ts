@@ -1,8 +1,8 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { CreateSystemUserCommand } from "../../modules/system/commands/create-system-user/create-system-user.command.js";
-import { SystemUserRole } from "../../modules/system/domain/system-user-role.enum.js";
+import { CreateSystemUserCommand } from "../commands/create-system-user/create-system-user.command.js";
+import { SystemUserRole } from "../domain/system-user-role.enum.js";
 
 interface CreateAdminOptions {
     email: string;
@@ -17,7 +17,7 @@ interface CreateAdminOptions {
 export class CreateAdminCliCommand extends CommandRunner {
     private readonly logger = new Logger(CreateAdminCliCommand.name);
 
-    constructor(private readonly commandBus: CommandBus) {
+    constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {
         super();
     }
 

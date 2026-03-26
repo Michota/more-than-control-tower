@@ -1,8 +1,8 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { ListEmployeesQuery } from "../../modules/hr/queries/list-employees/list-employees.query.js";
-import type { ListEmployeesResponse } from "../../modules/hr/queries/list-employees/list-employees.query-handler.js";
+import { ListEmployeesQuery } from "../queries/list-employees/list-employees.query.js";
+import type { ListEmployeesResponse } from "../queries/list-employees/list-employees.query-handler.js";
 
 interface ListEmployeesOptions {
     page?: number;
@@ -16,7 +16,7 @@ interface ListEmployeesOptions {
 export class ListEmployeesCliCommand extends CommandRunner {
     private readonly logger = new Logger(ListEmployeesCliCommand.name);
 
-    constructor(private readonly queryBus: QueryBus) {
+    constructor(@Inject(QueryBus) private readonly queryBus: QueryBus) {
         super();
     }
 

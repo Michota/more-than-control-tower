@@ -1,10 +1,7 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import {
-    SearchCustomersQuery,
-    SearchCustomersResponse,
-} from "../../modules/crm/queries/search-customers/search-customers.query.js";
+import { SearchCustomersQuery, SearchCustomersResponse } from "../queries/search-customers/search-customers.query.js";
 
 interface SearchCustomersOptions {
     term: string;
@@ -19,7 +16,7 @@ interface SearchCustomersOptions {
 export class SearchCustomersCliCommand extends CommandRunner {
     private readonly logger = new Logger(SearchCustomersCliCommand.name);
 
-    constructor(private readonly queryBus: QueryBus) {
+    constructor(@Inject(QueryBus) private readonly queryBus: QueryBus) {
         super();
     }
 

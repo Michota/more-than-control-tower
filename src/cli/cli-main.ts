@@ -5,6 +5,7 @@ import { CliModule } from "./cli.module.js";
 async function bootstrap() {
     await CommandFactory.run(CliModule, {
         cliName: "mtct",
+        logger: ["log", "error", "warn"],
         errorHandler: (err) => {
             console.error("CLI Error:", err.message);
             process.exit(1);

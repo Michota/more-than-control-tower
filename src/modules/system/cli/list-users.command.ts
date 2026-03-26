@@ -1,8 +1,8 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { ListSystemUsersQuery } from "../../modules/system/queries/list-system-users/list-system-users.query.js";
-import type { ListSystemUsersResponse } from "../../modules/system/queries/list-system-users/list-system-users.query.js";
+import { ListSystemUsersQuery } from "../queries/list-system-users/list-system-users.query.js";
+import type { ListSystemUsersResponse } from "../queries/list-system-users/list-system-users.query.js";
 
 interface ListUsersOptions {
     page?: number;
@@ -16,7 +16,7 @@ interface ListUsersOptions {
 export class ListUsersCliCommand extends CommandRunner {
     private readonly logger = new Logger(ListUsersCliCommand.name);
 
-    constructor(private readonly queryBus: QueryBus) {
+    constructor(@Inject(QueryBus) private readonly queryBus: QueryBus) {
         super();
     }
 

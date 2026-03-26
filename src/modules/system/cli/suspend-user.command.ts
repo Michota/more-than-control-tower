@@ -1,7 +1,7 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { SuspendSystemUserCommand } from "../../modules/system/commands/suspend-system-user/suspend-system-user.command.js";
+import { SuspendSystemUserCommand } from "../commands/suspend-system-user/suspend-system-user.command.js";
 
 interface SuspendUserOptions {
     id: string;
@@ -14,7 +14,7 @@ interface SuspendUserOptions {
 export class SuspendUserCliCommand extends CommandRunner {
     private readonly logger = new Logger(SuspendUserCliCommand.name);
 
-    constructor(private readonly commandBus: CommandBus) {
+    constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {
         super();
     }
 

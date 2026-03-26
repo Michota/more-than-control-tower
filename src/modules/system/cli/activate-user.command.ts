@@ -1,7 +1,7 @@
-import { Logger } from "@nestjs/common";
+import { Inject, Logger } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { ActivateSystemUserCommand } from "../../modules/system/commands/activate-system-user/activate-system-user.command.js";
+import { ActivateSystemUserCommand } from "../commands/activate-system-user/activate-system-user.command.js";
 
 interface ActivateUserOptions {
     id: string;
@@ -14,7 +14,7 @@ interface ActivateUserOptions {
 export class ActivateUserCliCommand extends CommandRunner {
     private readonly logger = new Logger(ActivateUserCliCommand.name);
 
-    constructor(private readonly commandBus: CommandBus) {
+    constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {
         super();
     }
 
