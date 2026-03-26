@@ -778,3 +778,61 @@ CLI commands (`update-admin`) dispatch `UpdateSystemUserCommand` directly, bypas
 ## Implementation status
 
 **Not yet implemented.** The Auth module does not exist yet. This ADR documents the intended design so that the System module is not polluted with confirmation logic when the Auth module is built.
+
+
+# ADR-017: CLI commands via nest-commander — mandatory review after each module
+
+**Status:** Accepted
+**Date:** 2026-03-26
+
+## Context
+
+The platform runs as an HTTP server, but several operational tasks need to be executable from the terminal without the HTTP stack — initial setup (seeding admin accounts, creating warehouses), emergency ops (suspending users, deactivating employees), and quick data lookups (listing users, searching customers). These are server-level operations performed by IT administrators or during deployment, not by end users through the UI.
+
+The project adopted `nest-commander` for CLI commands. It reuses the same NestJS DI container, module system, and CQRS buses as the HTTP server — CLI commands dispatch the same `Command` and `Query` objects that HTTP controllers do. This means zero code duplication between the two entry points.
+
+## Decision
+
+### 1. nest-commander is the CLI framework
+
+CLI commands are NestJS providers decorated with `@Command()` from `nest-commander`. They are registered in `src/cli/cli.module.ts`, which imports the same domain modules as `AppModule` but without HTTP controllers. Entry point: `pnpm cli <command> [options]`.
+
+### 2. CLI commands dispatch through the bus, not through services
+
+CLI commands use `CommandBus` and `QueryBus` — the same path as HTTP controllers. They never import repositories, mappers, or domain services directly. This ensures that domain rules (e.g. last-admin protection) are enforced identically regardless of entry point.
+
+### 3. CLI commands are organized by module
+
+```
+src/cli/
+├── cli-main.ts          # Entry point
+├── cli.module.ts         # DI registration
+├── system/               # System module commands
+├── hr/                   # HR module commands
+└── crm/                  # CRM module commands
+```
+
+Each module gets its own directory under `src/cli/`. The CLI module imports all domain modules it needs.
+
+### 4. Mandatory review: "does this module need CLI commands?"
+
+After completing any module (new or significantly extended), the developer must ask: **which operations in this module should be available from the CLI?** Good candidates are:
+
+- **Bootstrap operations** — creating initial records needed before the system is usable (admin accounts, warehouses, positions).
+- **Emergency ops** — suspending users, deactivating employees, removing stock — actions that may be needed when the HTTP server is down or inaccessible.
+- **Data lookups** — listing and searching records for quick verification without opening the UI.
+- **Destructive operations** — hard deletes, data corrections — things that should require server access, not just an API call.
+
+This is a process checkpoint, not a technical constraint. The goal is to prevent CLI commands from being an afterthought that gets discovered only when someone needs them in production.
+
+## Consequences
+
+### Positive
+- One codebase, two entry points — HTTP and CLI share the same domain logic via the bus.
+- CLI commands respect all domain invariants (validation, last-admin protection, etc.) because they go through the same handlers.
+- Organized by module — easy to find which CLI commands exist for a given domain.
+- Explicit review step prevents gaps in operational tooling.
+
+### Negative
+- `cli.module.ts` must import every domain module that has CLI commands — grows over time. Acceptable for a modular monolith.
+- nest-commander adds a dependency. Justified by the NestJS DI integration it provides — a raw `yargs` or `commander` setup would need manual DI wiring.
