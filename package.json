@@ -18,6 +18,7 @@
         "start:debug": "nest start --debug --watch",
         "start:prod": "node dist/main",
         "cli": "tsx src/cli/cli-main.ts",
+        "cli:prod": "node dist/src/cli/cli-main.js",
         "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
         "test": "vitest run",
         "test:watch": "vitest watch",
