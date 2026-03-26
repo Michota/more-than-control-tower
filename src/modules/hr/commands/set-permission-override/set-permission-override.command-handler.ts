@@ -2,7 +2,8 @@ import { Inject } from "@nestjs/common";
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
-import { EmployeeNotFoundError } from "../../domain/employee.errors.js";
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../../../shared/infrastructure/permission-registry.js";
+import { EmployeeNotFoundError, UnknownPermissionError } from "../../domain/employee.errors.js";
 import type { EmployeeRepositoryPort } from "../../database/employee.repository.port.js";
 import { EMPLOYEE_REPOSITORY_PORT } from "../../hr.di-tokens.js";
 import { SetPermissionOverrideCommand } from "./set-permission-override.command.js";
@@ -15,6 +16,9 @@ export class SetPermissionOverrideCommandHandler implements ICommandHandler<SetP
 
         @Inject(UNIT_OF_WORK_PORT)
         private readonly uow: UnitOfWorkPort,
+
+        @Inject(PERMISSION_REGISTRY)
+        private readonly permissionRegistry: PermissionRegistry,
     ) {}
 
     async execute(cmd: SetPermissionOverrideCommand): Promise<void> {
@@ -23,10 +27,18 @@ export class SetPermissionOverrideCommandHandler implements ICommandHandler<SetP
             throw new EmployeeNotFoundError(cmd.employeeId);
         }
 
-        if (cmd.state === null) {
-            employee.removePermissionOverride(cmd.permissionKey);
-        } else {
-            employee.setPermissionOverride(cmd.permissionKey, cmd.state);
+        for (const override of cmd.overrides) {
+            if (override.state !== null && !this.permissionRegistry.has(override.permissionKey)) {
+                throw new UnknownPermissionError(override.permissionKey);
+            }
+        }
+
+        for (const override of cmd.overrides) {
+            if (override.state === null) {
+                employee.removePermissionOverride(override.permissionKey);
+            } else {
+                employee.setPermissionOverride(override.permissionKey, override.state);
+            }
         }
 
         await this.employeeRepo.save(employee);

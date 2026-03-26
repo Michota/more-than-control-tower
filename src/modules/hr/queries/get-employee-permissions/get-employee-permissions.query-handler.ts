@@ -5,15 +5,8 @@ import {
     GetEmployeePermissionsResponse,
 } from "../../../../shared/queries/get-employee-permissions.query.js";
 import type { EmployeeRepositoryPort } from "../../database/employee.repository.port.js";
-import { EMPLOYEE_REPOSITORY_PORT } from "../../hr.di-tokens.js";
-
-/**
- * Resolves effective permissions for a user.
- *
- * The position→permission mapping is injected via the POSITION_PERMISSIONS token,
- * which HR module owns. This mapping determines which permissions each position grants.
- */
-export const POSITION_PERMISSIONS = Symbol("PositionPermissions");
+import type { PositionRepositoryPort } from "../../database/position.repository.port.js";
+import { EMPLOYEE_REPOSITORY_PORT, POSITION_REPOSITORY_PORT } from "../../hr.di-tokens.js";
 
 @QueryHandler(GetEmployeePermissionsQuery)
 export class GetEmployeePermissionsQueryHandler implements IQueryHandler<
@@ -24,8 +17,8 @@ export class GetEmployeePermissionsQueryHandler implements IQueryHandler<
         @Inject(EMPLOYEE_REPOSITORY_PORT)
         private readonly employeeRepo: EmployeeRepositoryPort,
 
-        @Inject(POSITION_PERMISSIONS)
-        private readonly positionPermissions: ReadonlyMap<string, readonly string[]>,
+        @Inject(POSITION_REPOSITORY_PORT)
+        private readonly positionRepo: PositionRepositoryPort,
     ) {}
 
     async execute(query: GetEmployeePermissionsQuery): Promise<GetEmployeePermissionsResponse | null> {
@@ -34,7 +27,15 @@ export class GetEmployeePermissionsQueryHandler implements IQueryHandler<
             return null;
         }
 
-        const effectivePermissions = employee.getEffectivePermissions(this.positionPermissions);
+        const positionPermissions = new Map<string, readonly string[]>();
+        for (const assignment of employee.positionAssignments) {
+            const position = await this.positionRepo.findByKey(assignment.positionKey);
+            if (position) {
+                positionPermissions.set(position.key, position.permissionKeys);
+            }
+        }
+
+        const effectivePermissions = employee.getEffectivePermissions(positionPermissions);
 
         return {
             userId: query.userId,

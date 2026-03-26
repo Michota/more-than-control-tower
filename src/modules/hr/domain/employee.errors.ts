@@ -68,6 +68,46 @@ export class UserNotFoundError extends BadRequestDomainException {
     }
 }
 
+export class InvalidPositionKeyError extends BadRequestDomainException {
+    public readonly code = "EMPLOYEE.INVALID_POSITION_KEY";
+
+    constructor(positionKey: string) {
+        super(`Position "${positionKey}" does not exist`);
+    }
+}
+
+export class PositionNotFoundError extends NotFoundDomainException {
+    public readonly code = "POSITION.NOT_FOUND";
+
+    constructor(positionId: string) {
+        super(`Position with id "${positionId}" not found`);
+    }
+}
+
+export class PositionKeyAlreadyExistsError extends ConflictDomainException {
+    public readonly code = "POSITION.KEY_ALREADY_EXISTS";
+
+    constructor(key: string) {
+        super(`Position with key "${key}" already exists`);
+    }
+}
+
+export class InvalidQualificationError extends BadRequestDomainException {
+    public readonly code = "EMPLOYEE.INVALID_QUALIFICATION";
+
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+export class UnknownPermissionError extends BadRequestDomainException {
+    public readonly code = "EMPLOYEE.UNKNOWN_PERMISSION";
+
+    constructor(permissionKey: string) {
+        super(`Permission "${permissionKey}" does not exist in the system`);
+    }
+}
+
 export class EmployeeInactiveError extends BadRequestDomainException {
     public readonly code = "EMPLOYEE.INACTIVE";
 

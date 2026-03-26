@@ -25,9 +25,14 @@ import { UnassignPositionCommand } from "./commands/unassign-position/unassign-p
 import { DeactivateEmployeeCommand } from "./commands/deactivate-employee/deactivate-employee.command.js";
 import { SetPermissionOverrideCommand } from "./commands/set-permission-override/set-permission-override.command.js";
 import { SetPermissionOverrideRequest } from "./commands/set-permission-override/set-permission-override.request.dto.js";
+import { CreatePositionCommand } from "./commands/create-position/create-position.command.js";
+import { CreatePositionRequest } from "./commands/create-position/create-position.request.dto.js";
+import { UpdatePositionCommand } from "./commands/update-position/update-position.command.js";
 import { ListEmployeesQuery } from "./queries/list-employees/list-employees.query.js";
 import { ListEmployeesRequestDto } from "./queries/list-employees/list-employees.request.dto.js";
 import { type ListEmployeesResponse } from "./queries/list-employees/list-employees.query-handler.js";
+import { ListPositionsQuery } from "./queries/list-positions/list-positions.query.js";
+import { type ListPositionsResponse } from "./queries/list-positions/list-positions.query-handler.js";
 
 @Controller("employees")
 export class HrHttpController {
@@ -35,6 +40,40 @@ export class HrHttpController {
         private readonly commandBus: CommandBus,
         private readonly queryBus: QueryBus,
     ) {}
+
+    // ─── Positions ───────────────────────────────────────────
+
+    @Post("positions")
+    async createPosition(@Body() body: CreatePositionRequest): Promise<{ positionId: string }> {
+        const positionId = await this.commandBus.execute(
+            new CreatePositionCommand({
+                key: body.key,
+                displayName: body.displayName,
+                qualificationSchema: body.qualificationSchema,
+                permissionKeys: body.permissionKeys,
+            }),
+        );
+        return { positionId };
+    }
+
+    @Patch("positions/:id")
+    async updatePosition(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: CreatePositionRequest): Promise<void> {
+        await this.commandBus.execute(
+            new UpdatePositionCommand({
+                positionId: id,
+                displayName: body.displayName,
+                qualificationSchema: body.qualificationSchema,
+                permissionKeys: body.permissionKeys,
+            }),
+        );
+    }
+
+    @Get("positions")
+    async listPositions(): Promise<ListPositionsResponse> {
+        return this.queryBus.execute(new ListPositionsQuery());
+    }
+
+    // ─── Employees ───────────────────────────────────────────
 
     @Post()
     async createEmployee(@Body() body: CreateEmployeeRequest): Promise<{ employeeId: string }> {
@@ -104,15 +143,17 @@ export class HrHttpController {
     }
 
     @Post(":id/permission-overrides")
-    async setPermissionOverride(
+    async setPermissionOverrides(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Body() body: SetPermissionOverrideRequest,
     ): Promise<void> {
         await this.commandBus.execute(
             new SetPermissionOverrideCommand({
                 employeeId: id,
-                permissionKey: body.permissionKey,
-                state: body.state ?? null,
+                overrides: body.overrides.map((o) => ({
+                    permissionKey: o.permissionKey,
+                    state: o.state ?? null,
+                })),
             }),
         );
     }
