@@ -45,6 +45,7 @@ export class HrHttpController {
                 email: body.email,
                 phone: body.phone,
                 userId: body.userId,
+                skipUniquenessCheck: body.skipUniquenessCheck,
             }),
         );
         return { employeeId };

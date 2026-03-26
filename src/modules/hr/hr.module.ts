@@ -10,6 +10,7 @@ import { AssignPositionCommandHandler } from "./commands/assign-position/assign-
 import { UnassignPositionCommandHandler } from "./commands/unassign-position/unassign-position.command-handler.js";
 import { DeactivateEmployeeCommandHandler } from "./commands/deactivate-employee/deactivate-employee.command-handler.js";
 import { SetPermissionOverrideCommandHandler } from "./commands/set-permission-override/set-permission-override.command-handler.js";
+import { DeleteEmployeeCommandHandler } from "./commands/delete-employee/delete-employee.command-handler.js";
 import { GetEmployeeQueryHandler } from "./queries/get-employee/get-employee.query-handler.js";
 import { FindEmployeesByQualificationQueryHandler } from "./queries/find-employees-by-qualification/find-employees-by-qualification.query-handler.js";
 import {
@@ -48,6 +49,7 @@ const positionPermissionsMap = new Map<string, readonly string[]>([
         UnassignPositionCommandHandler,
         DeactivateEmployeeCommandHandler,
         SetPermissionOverrideCommandHandler,
+        DeleteEmployeeCommandHandler,
         GetEmployeeQueryHandler,
         FindEmployeesByQualificationQueryHandler,
         GetEmployeePermissionsQueryHandler,

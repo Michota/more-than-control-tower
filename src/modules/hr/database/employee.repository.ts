@@ -30,6 +30,16 @@ export class EmployeeRepository implements EmployeeRepositoryPort {
         return count > 0;
     }
 
+    async findByEmail(email: string): Promise<EmployeeAggregate | null> {
+        const record = await this.em.findOne(Employee, { email }, { populate: POPULATE });
+        return record ? this.mapper.toDomain(record) : null;
+    }
+
+    async findByPhone(phone: string): Promise<EmployeeAggregate | null> {
+        const record = await this.em.findOne(Employee, { phone }, { populate: POPULATE });
+        return record ? this.mapper.toDomain(record) : null;
+    }
+
     async findByPositionAndQualifications(
         positionKey: string,
         filters: QualificationFilter[],

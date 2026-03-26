@@ -20,6 +20,22 @@ export class EmployeeAlreadyExistsError extends ConflictDomainException {
     }
 }
 
+export class EmployeeDuplicateEmailError extends ConflictDomainException {
+    public readonly code = "EMPLOYEE.DUPLICATE_EMAIL";
+
+    constructor(email: string) {
+        super(`An active employee with email "${email}" already exists`);
+    }
+}
+
+export class EmployeeDuplicatePhoneError extends ConflictDomainException {
+    public readonly code = "EMPLOYEE.DUPLICATE_PHONE";
+
+    constructor(phone: string) {
+        super(`An active employee with phone "${phone}" already exists`);
+    }
+}
+
 export class PositionAlreadyAssignedError extends ConflictDomainException {
     public readonly code = "EMPLOYEE.POSITION_ALREADY_ASSIGNED";
 
@@ -41,6 +57,14 @@ export class EmployeeAlreadyLinkedError extends ConflictDomainException {
 
     constructor(userId: string) {
         super(`Employee is already linked to user "${userId}"`);
+    }
+}
+
+export class UserNotFoundError extends BadRequestDomainException {
+    public readonly code = "EMPLOYEE.USER_NOT_FOUND";
+
+    constructor(userId: string) {
+        super(`System user "${userId}" does not exist`);
     }
 }
 
