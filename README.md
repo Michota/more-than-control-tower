@@ -30,10 +30,10 @@ pnpm run cli create-admin \
 # 2. Set password and activate
 pnpm run cli activate-account \
   --user-id <uuid-from-step-1> \
-  --password SecurePass123
+  --password "YourSecurePass1!"
 ```
 
-The admin can now log in via the API.
+The admin can now log in via the API. Password must be at least 10 characters with uppercase, lowercase, digit, and special character.
 
 ## Creating New Users
 
@@ -42,7 +42,7 @@ Admin logs in
   POST /auth/login { email, password } -> { accessToken, refreshToken }
 
 Admin creates a user
-  POST /system-user { email, firstName, lastName, roles } -> { userId }
+  POST /system-user { email, name, roles } -> { userId }
 
 Admin generates activation token
   POST /auth/activation-token { userId } -> { activationToken }
@@ -65,19 +65,34 @@ Admin links the employee to their system user
   PATCH /employees/:employeeId/link-user { userId }
 
 Admin assigns a position (which carries permissions)
-  PATCH /employees/:employeeId/assign-position { positionKey }
+  POST /employees/:employeeId/positions { positionKey }
 ```
 
 Once linked, the user's permissions are resolved through HR: position defaults + per-user overrides. Users with the `administrator` system role bypass permission checks entirely.
 
-## API Endpoints
+## Auth API Endpoints
 
-| Method | Route                  | Auth?  | Purpose                                  |
-|--------|------------------------|--------|------------------------------------------|
-| POST   | `/auth/login`          | Public | Email + password -> tokens               |
-| POST   | `/auth/activate`       | Public | Set password using activation token       |
-| POST   | `/auth/refresh`        | Public | Refresh token -> new access token        |
-| POST   | `/auth/activation-token` | Bearer | Generate activation token (admin-only) |
+| Method | Route                    | Auth?  | Purpose                                  |
+|--------|--------------------------|--------|------------------------------------------|
+| POST   | `/auth/login`            | Public | Email + password -> tokens               |
+| POST   | `/auth/activate`         | Public | Set password using activation token      |
+| POST   | `/auth/refresh`          | Public | Refresh token -> new access token        |
+| POST   | `/auth/activation-token` | Bearer | Generate activation token (admin-only)   |
 
 All other endpoints require a valid access token.
+
+## CLI Commands
+
+| Command                    | Purpose                                           |
+|----------------------------|---------------------------------------------------|
+| `create-admin`             | Create an administrator account                   |
+| `activate-account`         | Set password and activate (for unactivated users)  |
+| `change-password`          | Set or change password (any user status)           |
+| `generate-activation-token`| Generate activation token for a user              |
+| `list-users`               | List/search users (`--search <term>`)             |
+| `update-user`              | Update user email or name                         |
+| `suspend-user`             | Suspend a user                                    |
+| `activate-user`            | Activate a user (status only, no password)        |
+
+Run `pnpm run cli --help` for full usage. Requires `pnpm build` or `nest start --watch` to have run first.
 

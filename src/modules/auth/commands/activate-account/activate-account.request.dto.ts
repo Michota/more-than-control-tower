@@ -1,10 +1,11 @@
-import { createZodDto } from "nestjs-zod";
-import z from "zod";
-import { passwordSchema } from "../../domain/password.schema.js";
+import { IsNotEmpty, IsString, MinLength } from "class-validator";
 
-export const activateAccountSchema = z.object({
-    activationToken: z.string().min(1, "Activation token is required"),
-    password: passwordSchema,
-});
+export class ActivateAccountRequestDto {
+    @IsString()
+    @IsNotEmpty()
+    activationToken!: string;
 
-export class ActivateAccountRequestDto extends createZodDto(activateAccountSchema) {}
+    @IsString()
+    @MinLength(10)
+    password!: string;
+}

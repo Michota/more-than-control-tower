@@ -28,7 +28,6 @@ export class LoginCommandHandler implements ICommandHandler<LoginCommand, LoginR
         const systemUser = await this.queryBus.execute<GetSystemUserByEmailQuery, GetSystemUserByEmailResponse>(
             new GetSystemUserByEmailQuery(cmd.email),
         );
-
         if (!systemUser) {
             throw new InvalidCredentialsError();
         }

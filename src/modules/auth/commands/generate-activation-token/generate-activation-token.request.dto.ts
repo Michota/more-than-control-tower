@@ -1,8 +1,6 @@
-import { createZodDto } from "nestjs-zod";
-import z from "zod";
+import { IsUUID } from "class-validator";
 
-export const generateActivationTokenSchema = z.object({
-    userId: z.uuid(),
-});
-
-export class GenerateActivationTokenRequestDto extends createZodDto(generateActivationTokenSchema) {}
+export class GenerateActivationTokenRequestDto {
+    @IsUUID()
+    userId!: string;
+}
