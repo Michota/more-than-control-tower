@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import { Body, Controller, HttpCode, HttpStatus, Post, UsePipes, ValidationPipe } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { Public } from "../../shared/auth/decorators/public.decorator.js";
@@ -14,6 +14,7 @@ import {
 } from "./commands/generate-activation-token/generate-activation-token.command.js";
 import { GenerateActivationTokenRequestDto } from "./commands/generate-activation-token/generate-activation-token.request.dto.js";
 import { AccessTokenResponseDto, ActivationTokenResponseDto, AuthTokensResponseDto } from "./dtos/auth.response.dto.js";
+import { OAuth2TokenRequestDto } from "./commands/login/oauth2-token.request.dto.js";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -58,6 +59,29 @@ export class AuthHttpController {
                 refreshToken: body.refreshToken,
             }),
         );
+    }
+
+    @Public()
+    @Post("token")
+    @HttpCode(HttpStatus.OK)
+    @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+    @ApiOperation({ summary: "OAuth2 password flow token endpoint (used by Swagger UI)" })
+    @ApiResponse({ status: 200 })
+    async oauth2Token(
+        @Body() body: OAuth2TokenRequestDto,
+    ): Promise<{ access_token: string; refresh_token: string; token_type: string }> {
+        const result = await this.commandBus.execute<LoginCommand, LoginResult>(
+            new LoginCommand({
+                email: body.username,
+                password: body.password,
+            }),
+        );
+
+        return {
+            access_token: result.accessToken,
+            refresh_token: result.refreshToken,
+            token_type: "bearer",
+        };
     }
 
     @Post("activation-token")
