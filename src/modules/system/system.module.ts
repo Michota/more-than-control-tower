@@ -10,6 +10,7 @@ import { SuspendSystemUserCommandHandler } from "./commands/suspend-system-user/
 import { ActivateSystemUserCommandHandler } from "./commands/activate-system-user/activate-system-user.command-handler.js";
 import { GetSystemUserQueryHandler } from "./queries/get-system-user/get-system-user.query-handler.js";
 import { ListSystemUsersQueryHandler } from "./queries/list-system-users/list-system-users.query-handler.js";
+import { GetSystemUserByEmailQueryHandler } from "./queries/get-system-user-by-email/get-system-user-by-email.query-handler.js";
 import { SystemHttpController } from "./system.http.controller.js";
 import { SystemUser } from "./database/system-user.entity.js";
 import { SystemUserMapper } from "./database/system-user.mapper.js";
@@ -28,6 +29,7 @@ import { SYSTEM_USER_REPOSITORY_PORT } from "./system.di-tokens.js";
         ActivateSystemUserCommandHandler,
         GetSystemUserQueryHandler,
         ListSystemUsersQueryHandler,
+        GetSystemUserByEmailQueryHandler,
         {
             provide: SYSTEM_USER_REPOSITORY_PORT,
             useFactory: (em: EntityManager) => new SystemUserRepository(em),
