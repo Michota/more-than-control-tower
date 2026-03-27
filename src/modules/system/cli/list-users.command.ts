@@ -5,6 +5,7 @@ import { ListSystemUsersQuery } from "../queries/list-system-users/list-system-u
 import type { ListSystemUsersResponse } from "../queries/list-system-users/list-system-users.query.js";
 
 interface ListUsersOptions {
+    search?: string;
     page?: number;
     limit?: number;
 }
@@ -23,7 +24,7 @@ export class ListUsersCliCommand extends CommandRunner {
         const limit = options.limit ?? 20;
 
         const result = await this.queryBus.execute<ListSystemUsersQuery, ListSystemUsersResponse>(
-            new ListSystemUsersQuery(undefined, page, limit),
+            new ListSystemUsersQuery(options.search, page, limit),
         );
 
         console.log(`Users (page ${result.page}, ${result.count} total):`);
@@ -37,6 +38,11 @@ export class ListUsersCliCommand extends CommandRunner {
         if (result.data.length === 0) {
             console.log("  (no users found)");
         }
+    }
+
+    @Option({ flags: "--search <term>", description: "Search by email or name" })
+    parseSearch(val: string): string {
+        return val;
     }
 
     @Option({ flags: "--page <page>", description: "Page number (default: 1)" })
