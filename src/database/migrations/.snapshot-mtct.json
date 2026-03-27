@@ -71,7 +71,17 @@
                 }
             ],
             "checks": [],
-            "foreignKeys": {},
+            "foreignKeys": {
+                "auth_credentials_user_id_foreign": {
+                    "columnNames": ["user_id"],
+                    "constraintName": "auth_credentials_user_id_foreign",
+                    "localTableName": "public.auth_credentials",
+                    "referencedTableName": "public.system_user",
+                    "referencedColumnNames": ["id"],
+                    "updateRule": "no action",
+                    "deleteRule": "cascade"
+                }
+            },
             "nativeEnums": {},
             "comment": null
         },
