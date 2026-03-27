@@ -1,6 +1,7 @@
-import { IsUUID } from "class-validator";
+import z from "zod";
 
-export class GenerateActivationTokenRequestDto {
-    @IsUUID()
-    userId!: string;
-}
+export const generateActivationTokenSchema = z.object({
+    userId: z.uuid(),
+});
+
+export type GenerateActivationTokenRequestDto = z.infer<typeof generateActivationTokenSchema>;

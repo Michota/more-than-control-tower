@@ -1,11 +1,8 @@
-import { IsNotEmpty, IsString, MinLength } from "class-validator";
+import z from "zod";
 
-export class ActivateAccountRequestDto {
-    @IsString()
-    @IsNotEmpty()
-    activationToken!: string;
+export const activateAccountSchema = z.object({
+    activationToken: z.string().min(1, "Activation token is required"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
-    @IsString()
-    @MinLength(8)
-    password!: string;
-}
+export type ActivateAccountRequestDto = z.infer<typeof activateAccountSchema>;
