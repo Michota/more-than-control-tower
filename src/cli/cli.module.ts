@@ -3,6 +3,7 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigType } from "@nestjs/config";
 import { CqrsModule } from "@nestjs/cqrs";
+import { PermissionRegistryModule } from "../shared/infrastructure/permission-registry.module.js";
 import { CrmModule } from "../modules/crm/crm.module.js";
 import { HrModule } from "../modules/hr/hr.module.js";
 import { SystemModule } from "../modules/system/system.module.js";
@@ -32,6 +33,7 @@ import { UpdateAdminCliCommand } from "../modules/system/cli/update-admin.comman
             inject: [databaseConfig.KEY],
         }),
         CqrsModule.forRoot(),
+        PermissionRegistryModule,
         CrmModule,
         HrModule,
         SystemModule,
