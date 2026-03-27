@@ -5,7 +5,6 @@ import { EmployeeStatus } from "./employee-status.enum.js";
 import { PermissionOverrideState } from "./permission-override-state.enum.js";
 import { PermissionOverride } from "./permission-override.value-object.js";
 import { PositionAssignment } from "./position-assignment.value-object.js";
-import { QualificationAttribute } from "./qualification-attribute.value-object.js";
 import { EmployeeAggregate } from "./employee.aggregate.js";
 import { EmployeeCreatedDomainEvent } from "./events/employee-created.domain-event.js";
 import { EmployeeDeactivatedDomainEvent } from "./events/employee-deactivated.domain-event.js";
@@ -25,20 +24,11 @@ const validProps = () => ({
     phone: "+48123456789",
 });
 
-const driverQualification = () => new QualificationAttribute({ key: "licenseCategory", type: "STRING", value: "C" });
-
 const driverAssignment = () =>
     new PositionAssignment({
         positionKey: "freight:driver",
         assignedAt: new Date("2026-01-15"),
-        qualifications: [driverQualification()],
     });
-
-// --- helpers for qualification types ---
-const stringQual = (key: string, value: string) => new QualificationAttribute({ key, type: "STRING", value });
-
-const stringArrayQual = (key: string, values: string[]) =>
-    new QualificationAttribute({ key, type: "STRING_ARRAY", value: JSON.stringify(values) });
 
 describe("EmployeeAggregate.create()", () => {
     describe("happy path", () => {
@@ -127,27 +117,18 @@ describe("EmployeeAggregate.linkToUser()", () => {
 
 describe("EmployeeAggregate position management", () => {
     describe("assignPosition()", () => {
-        it("assigns a position with qualifications", () => {
+        it("assigns a position", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", [driverQualification()]);
+            employee.assignPosition("freight:driver");
 
             expect(employee.positionAssignments).toHaveLength(1);
             expect(employee.positionAssignments[0].positionKey).toBe("freight:driver");
-            expect(employee.positionAssignments[0].qualifications).toHaveLength(1);
-        });
-
-        it("assigns a position without qualifications", () => {
-            const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("crm:manager", []);
-
-            expect(employee.positionAssignments).toHaveLength(1);
-            expect(employee.positionAssignments[0].qualifications).toHaveLength(0);
         });
 
         it("allows multiple different positions", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", [driverQualification()]);
-            employee.assignPosition("warehouse:worker", []);
+            employee.assignPosition("freight:driver");
+            employee.assignPosition("warehouse:worker");
 
             expect(employee.positionAssignments).toHaveLength(2);
         });
@@ -155,7 +136,7 @@ describe("EmployeeAggregate position management", () => {
         it("emits PositionAssignedDomainEvent", () => {
             const employee = EmployeeAggregate.create(validProps());
             employee.clearEvents();
-            employee.assignPosition("freight:driver", [driverQualification()]);
+            employee.assignPosition("freight:driver");
 
             expect(employee.domainEvents).toHaveLength(1);
             expect(employee.domainEvents[0]).toBeInstanceOf(PositionAssignedDomainEvent);
@@ -164,16 +145,16 @@ describe("EmployeeAggregate position management", () => {
 
         it("throws when position is already assigned", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", [driverQualification()]);
+            employee.assignPosition("freight:driver");
 
-            expect(() => employee.assignPosition("freight:driver", [])).toThrow(PositionAlreadyAssignedError);
+            expect(() => employee.assignPosition("freight:driver")).toThrow(PositionAlreadyAssignedError);
         });
     });
 
     describe("unassignPosition()", () => {
         it("removes a position assignment", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", [driverQualification()]);
+            employee.assignPosition("freight:driver");
             employee.clearEvents();
 
             employee.unassignPosition("freight:driver");
@@ -183,7 +164,7 @@ describe("EmployeeAggregate position management", () => {
 
         it("emits PositionUnassignedDomainEvent", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", []);
+            employee.assignPosition("freight:driver");
             employee.clearEvents();
 
             employee.unassignPosition("freight:driver");
@@ -199,27 +180,10 @@ describe("EmployeeAggregate position management", () => {
         });
     });
 
-    describe("updateQualifications()", () => {
-        it("updates qualifications for an existing position", () => {
-            const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", [stringQual("licenseCategory", "B")]);
-
-            employee.updateQualifications("freight:driver", [stringQual("licenseCategory", "C")]);
-
-            expect(employee.positionAssignments[0].qualifications[0].value).toBe("C");
-        });
-
-        it("throws when position is not assigned", () => {
-            const employee = EmployeeAggregate.create(validProps());
-
-            expect(() => employee.updateQualifications("freight:driver", [])).toThrow(PositionNotAssignedError);
-        });
-    });
-
     describe("hasPosition()", () => {
         it("returns true for assigned position", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", []);
+            employee.assignPosition("freight:driver");
 
             expect(employee.hasPosition("freight:driver")).toBe(true);
         });
@@ -228,28 +192,6 @@ describe("EmployeeAggregate position management", () => {
             const employee = EmployeeAggregate.create(validProps());
 
             expect(employee.hasPosition("freight:driver")).toBe(false);
-        });
-    });
-
-    describe("getQualification()", () => {
-        it("returns qualification value", () => {
-            const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", [stringQual("licenseCategory", "C")]);
-
-            expect(employee.getQualification("freight:driver", "licenseCategory")).toBe("C");
-        });
-
-        it("returns undefined for missing position", () => {
-            const employee = EmployeeAggregate.create(validProps());
-
-            expect(employee.getQualification("freight:driver", "licenseCategory")).toBeUndefined();
-        });
-
-        it("returns undefined for missing qualification key", () => {
-            const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver", []);
-
-            expect(employee.getQualification("freight:driver", "licenseCategory")).toBeUndefined();
         });
     });
 });
@@ -327,7 +269,7 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("returns position-based permissions", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver", []);
+        employee.assignPosition("freight:driver");
 
         const perms = employee.getEffectivePermissions(positionPermissions);
 
@@ -338,8 +280,8 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("merges permissions from multiple positions", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver", []);
-        employee.assignPosition("warehouse:worker", []);
+        employee.assignPosition("freight:driver");
+        employee.assignPosition("warehouse:worker");
 
         const perms = employee.getEffectivePermissions(positionPermissions);
 
@@ -350,7 +292,7 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("ALLOWED override adds a permission not in position defaults", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver", []);
+        employee.assignPosition("freight:driver");
         employee.setPermissionOverride("freight:plan-route", PermissionOverrideState.ALLOWED);
 
         const perms = employee.getEffectivePermissions(positionPermissions);
@@ -360,7 +302,7 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("DENIED override removes a permission from position defaults", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver", []);
+        employee.assignPosition("freight:driver");
         employee.setPermissionOverride("freight:execute-route", PermissionOverrideState.DENIED);
 
         const perms = employee.getEffectivePermissions(positionPermissions);
@@ -413,39 +355,5 @@ describe("EmployeeAggregate.update()", () => {
         const employee = EmployeeAggregate.create(validProps());
 
         expect(() => employee.update({ firstName: "" })).toThrow(ZodError);
-    });
-});
-
-describe("PositionAssignment.hasQualification()", () => {
-    it("matches exact STRING qualification", () => {
-        const assignment = new PositionAssignment({
-            positionKey: "freight:driver",
-            assignedAt: new Date(),
-            qualifications: [stringQual("licenseCategory", "C")],
-        });
-
-        expect(assignment.hasQualification("licenseCategory", "C")).toBe(true);
-        expect(assignment.hasQualification("licenseCategory", "B")).toBe(false);
-    });
-
-    it("matches STRING_ARRAY qualification with contains", () => {
-        const assignment = new PositionAssignment({
-            positionKey: "warehouse:worker",
-            assignedAt: new Date(),
-            qualifications: [stringArrayQual("productHandling", ["product-xyz", "product-abc"])],
-        });
-
-        expect(assignment.hasQualification("productHandling", "product-xyz")).toBe(true);
-        expect(assignment.hasQualification("productHandling", "product-unknown")).toBe(false);
-    });
-
-    it("returns false for missing key", () => {
-        const assignment = new PositionAssignment({
-            positionKey: "freight:driver",
-            assignedAt: new Date(),
-            qualifications: [],
-        });
-
-        expect(assignment.hasQualification("licenseCategory", "C")).toBe(false);
     });
 });

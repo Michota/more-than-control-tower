@@ -92,14 +92,6 @@ export class PositionKeyAlreadyExistsError extends ConflictDomainException {
     }
 }
 
-export class InvalidQualificationError extends BadRequestDomainException {
-    public readonly code = "EMPLOYEE.INVALID_QUALIFICATION";
-
-    constructor(message: string) {
-        super(message);
-    }
-}
-
 export class UnknownPermissionError extends BadRequestDomainException {
     public readonly code = "EMPLOYEE.UNKNOWN_PERMISSION";
 

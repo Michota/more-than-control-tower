@@ -6,10 +6,8 @@ import { GetEmployeeResponse } from "../../../shared/queries/get-employee.query.
 import { EmployeeAggregate } from "../domain/employee.aggregate.js";
 import { EmployeeStatus } from "../domain/employee-status.enum.js";
 import { PositionAssignment as DomainPositionAssignment } from "../domain/position-assignment.value-object.js";
-import { QualificationAttribute as DomainQualificationAttribute } from "../domain/qualification-attribute.value-object.js";
 import { PermissionOverride as DomainPermissionOverride } from "../domain/permission-override.value-object.js";
 import { PermissionOverrideState } from "../domain/permission-override-state.enum.js";
-import type { QualificationValueType } from "../../../shared/positions/position.types.js";
 import { Employee } from "./employee.entity.js";
 
 @Injectable()
@@ -20,14 +18,6 @@ export class EmployeeMapper implements Mapper<EmployeeAggregate, RequiredEntityD
                 new DomainPositionAssignment({
                     positionKey: pa.positionKey,
                     assignedAt: pa.assignedAt,
-                    qualifications: (pa.qualifications ?? []).map(
-                        (q) =>
-                            new DomainQualificationAttribute({
-                                key: q.key,
-                                type: q.type as QualificationValueType,
-                                value: q.value,
-                            }),
-                    ),
                 }),
         );
 
@@ -66,11 +56,6 @@ export class EmployeeMapper implements Mapper<EmployeeAggregate, RequiredEntityD
             positionAssignments: domain.positionAssignments.map((pa) => ({
                 positionKey: pa.positionKey,
                 assignedAt: pa.assignedAt,
-                qualifications: pa.qualifications.map((q) => ({
-                    key: q.key,
-                    type: q.type,
-                    value: q.value,
-                })),
             })) as RequiredEntityData<Employee>["positionAssignments"],
             permissionOverrides: domain.permissionOverrides.map((po) => ({
                 permissionKey: po.permissionKey,
@@ -91,11 +76,6 @@ export class EmployeeMapper implements Mapper<EmployeeAggregate, RequiredEntityD
             positionAssignments: employee.positionAssignments.map((pa) => ({
                 positionKey: pa.positionKey,
                 assignedAt: pa.assignedAt.toISOString(),
-                qualifications: pa.qualifications.map((q) => ({
-                    key: q.key,
-                    type: q.type,
-                    value: q.value,
-                })),
             })),
         };
     }

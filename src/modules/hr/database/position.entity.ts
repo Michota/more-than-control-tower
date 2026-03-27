@@ -7,7 +7,6 @@ const PositionSchema = defineEntity({
         id: p.uuid().primary(),
         key: p.string().unique(),
         displayName: p.string(),
-        qualificationSchema: p.type("jsonb").default([]),
         permissionKeys: p.type("jsonb").default([]),
     },
 });

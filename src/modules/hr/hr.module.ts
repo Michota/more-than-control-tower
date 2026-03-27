@@ -15,7 +15,7 @@ import { DeleteEmployeeCommandHandler } from "./commands/delete-employee/delete-
 import { CreatePositionCommandHandler } from "./commands/create-position/create-position.command-handler.js";
 import { UpdatePositionCommandHandler } from "./commands/update-position/update-position.command-handler.js";
 import { GetEmployeeQueryHandler } from "./queries/get-employee/get-employee.query-handler.js";
-import { FindEmployeesByQualificationQueryHandler } from "./queries/find-employees-by-qualification/find-employees-by-qualification.query-handler.js";
+import { FindEmployeesByPermissionQueryHandler } from "./queries/find-employees-by-permission/find-employees-by-permission.query-handler.js";
 import { GetEmployeePermissionsQueryHandler } from "./queries/get-employee-permissions/get-employee-permissions.query-handler.js";
 import { ListEmployeesQueryHandler } from "./queries/list-employees/list-employees.query-handler.js";
 import { ListPositionsQueryHandler } from "./queries/list-positions/list-positions.query-handler.js";
@@ -50,7 +50,7 @@ import { EMPLOYEE_REPOSITORY_PORT, POSITION_REPOSITORY_PORT } from "./hr.di-toke
         UpdatePositionCommandHandler,
         // Queries
         GetEmployeeQueryHandler,
-        FindEmployeesByQualificationQueryHandler,
+        FindEmployeesByPermissionQueryHandler,
         GetEmployeePermissionsQueryHandler,
         ListEmployeesQueryHandler,
         ListPositionsQueryHandler,

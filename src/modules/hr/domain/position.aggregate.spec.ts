@@ -6,9 +6,6 @@ import { PositionAggregate } from "./position.aggregate.js";
 const validProps = () => ({
     key: "freight:driver",
     displayName: "Driver",
-    qualificationSchema: [
-        { key: "licenseCategory", type: "STRING" as const, description: "Driving license category", required: true },
-    ],
     permissionKeys: ["freight:view-routes", "freight:execute-route"],
 });
 
@@ -19,19 +16,16 @@ describe("PositionAggregate.create()", () => {
         expect(position.id).toMatch(uuidRegex);
         expect(position.key).toBe("freight:driver");
         expect(position.displayName).toBe("Driver");
-        expect(position.qualificationSchema).toHaveLength(1);
         expect(position.permissionKeys).toHaveLength(2);
     });
 
-    it("creates a position without qualifications or permissions", () => {
+    it("creates a position without permissions", () => {
         const position = PositionAggregate.create({
             key: "hr:worker",
             displayName: "HR Worker",
-            qualificationSchema: [],
             permissionKeys: [],
         });
 
-        expect(position.qualificationSchema).toHaveLength(0);
         expect(position.permissionKeys).toHaveLength(0);
     });
 
@@ -39,9 +33,7 @@ describe("PositionAggregate.create()", () => {
         it("accepts valid namespaced keys", () => {
             expect(() => PositionAggregate.create({ ...validProps(), key: "warehouse:worker" })).not.toThrow();
             expect(() => PositionAggregate.create({ ...validProps(), key: "delivery:rsr" })).not.toThrow();
-            expect(() =>
-                PositionAggregate.create({ ...validProps(), key: "accountancy:accountant" }),
-            ).not.toThrow();
+            expect(() => PositionAggregate.create({ ...validProps(), key: "accountancy:accountant" })).not.toThrow();
         });
 
         it("rejects keys without namespace", () => {
@@ -61,25 +53,6 @@ describe("PositionAggregate.create()", () => {
         it("throws when displayName is empty", () => {
             expect(() => PositionAggregate.create({ ...validProps(), displayName: "" })).toThrow(ZodError);
         });
-
-        it("throws when qualification schema entry has empty key", () => {
-            expect(() =>
-                PositionAggregate.create({
-                    ...validProps(),
-                    qualificationSchema: [{ key: "", type: "STRING", description: "test" }],
-                }),
-            ).toThrow(ZodError);
-        });
-
-        it("throws when qualification schema entry has invalid type", () => {
-            expect(() =>
-                PositionAggregate.create({
-                    ...validProps(),
-                    // @ts-expect-error - testing invalid type
-                    qualificationSchema: [{ key: "test", type: "INVALID", description: "test" }],
-                }),
-            ).toThrow(ZodError);
-        });
     });
 });
 
@@ -96,18 +69,6 @@ describe("PositionAggregate.update()", () => {
         position.update({ permissionKeys: ["freight:plan-route"] });
 
         expect(position.permissionKeys).toEqual(["freight:plan-route"]);
-    });
-
-    it("updates qualificationSchema", () => {
-        const position = PositionAggregate.create(validProps());
-        position.update({
-            qualificationSchema: [
-                { key: "licenseCategory", type: "STRING", description: "License", required: true },
-                { key: "experience", type: "NUMBER", description: "Years of experience" },
-            ],
-        });
-
-        expect(position.qualificationSchema).toHaveLength(2);
     });
 
     it("validates after update", () => {

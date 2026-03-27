@@ -49,7 +49,6 @@ export class HrHttpController {
             new CreatePositionCommand({
                 key: body.key,
                 displayName: body.displayName,
-                qualificationSchema: body.qualificationSchema,
                 permissionKeys: body.permissionKeys,
             }),
         );
@@ -62,7 +61,6 @@ export class HrHttpController {
             new UpdatePositionCommand({
                 positionId: id,
                 displayName: body.displayName,
-                qualificationSchema: body.qualificationSchema,
                 permissionKeys: body.permissionKeys,
             }),
         );
@@ -119,7 +117,6 @@ export class HrHttpController {
             new AssignPositionCommand({
                 employeeId: id,
                 positionKey: body.positionKey,
-                qualifications: body.qualifications,
             }),
         );
     }

@@ -840,8 +840,8 @@ This is a process checkpoint, not a technical constraint. The goal is to prevent
 
 # ADR-018: Merge qualifications into permissions — use permissions as capability tags
 
-**Status:** Proposed (not accepted)
-**Date:** 2026-03-26
+**Status:** Accepted
+**Date:** 2026-03-27
 
 ## Context
 
@@ -879,10 +879,13 @@ This eliminates the `QualificationAttribute` value object, `qualificationSchema`
 
 ## Decision
 
-**Deferred.** The current system has qualifications implemented. This ADR documents the trade-offs for when the team revisits the model. The key deciding factor will be: does any module need high-cardinality capability attributes (e.g., per-product handling permissions)? If yes, keep qualifications. If all capabilities are small finite sets, merging into permissions is viable.
+**Accepted.** Qualifications have been removed. Permissions serve dual purpose: gating actions and describing capabilities. Positions map to permission keys. Cross-module queries use `FindEmployeesByPermissionQuery`.
 
-## Trigger for revisiting
+The known risks (combinatorial explosion for high-cardinality attributes, dual-purpose permissions in UI) are accepted as trade-offs for simplicity. If a module later needs high-cardinality capability attributes (e.g., per-product handling), the qualification concept may be reintroduced as a separate mechanism alongside permissions.
 
-- When the Warehouse module is built and needs to assign per-product handling capabilities to workers.
-- When the Freight module is built and defines its driver capability model.
-- When the UI for permission management is designed and the UX of mixed action/capability permissions is evaluated.
+## Consequences of acceptance
+
+- `QualificationAttribute` value object, `qualificationSchema` on Position, and `QualificationAttribute` embeddable have been removed.
+- `FindEmployeesByQualificationQuery` replaced with `FindEmployeesByPermissionQuery`.
+- Position is now: `{ key, displayName, permissionKeys }` — simpler model.
+- Modules define capability permissions (e.g., `freight:drive-cat-c`) alongside action permissions (e.g., `freight:execute-route`).

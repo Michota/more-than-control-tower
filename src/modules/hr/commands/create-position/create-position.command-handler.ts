@@ -38,7 +38,6 @@ export class CreatePositionCommandHandler implements ICommandHandler<CreatePosit
         const position = PositionAggregate.create({
             key: cmd.key,
             displayName: cmd.displayName,
-            qualificationSchema: cmd.qualificationSchema,
             permissionKeys: cmd.permissionKeys,
         });
 

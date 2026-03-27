@@ -37,7 +37,6 @@ export class UpdatePositionCommandHandler implements ICommandHandler<UpdatePosit
 
         position.update({
             displayName: cmd.displayName,
-            qualificationSchema: cmd.qualificationSchema,
             permissionKeys: cmd.permissionKeys,
         });
 

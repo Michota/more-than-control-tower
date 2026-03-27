@@ -3,7 +3,6 @@ import { EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import z from "zod";
 import { EmployeeStatus } from "./employee-status.enum.js";
 import { PositionAssignment } from "./position-assignment.value-object.js";
-import { QualificationAttribute } from "./qualification-attribute.value-object.js";
 import { PermissionOverride } from "./permission-override.value-object.js";
 import { PermissionOverrideState } from "./permission-override-state.enum.js";
 import {
@@ -87,7 +86,7 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
         );
     }
 
-    assignPosition(positionKey: string, qualifications: QualificationAttribute[]): void {
+    assignPosition(positionKey: string): void {
         const existing = this.properties.positionAssignments.find((pa) => pa.positionKey === positionKey);
         if (existing) {
             throw new PositionAlreadyAssignedError(positionKey);
@@ -96,7 +95,6 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
         const assignment = new PositionAssignment({
             positionKey,
             assignedAt: new Date(),
-            qualifications,
         });
 
         this.properties.positionAssignments.push(assignment);
@@ -124,21 +122,6 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
                 positionKey,
             }),
         );
-    }
-
-    updateQualifications(positionKey: string, qualifications: QualificationAttribute[]): void {
-        const index = this.properties.positionAssignments.findIndex((pa) => pa.positionKey === positionKey);
-        if (index === -1) {
-            throw new PositionNotAssignedError(positionKey);
-        }
-
-        const current = this.properties.positionAssignments[index];
-        this.properties.positionAssignments[index] = new PositionAssignment({
-            positionKey: current.positionKey,
-            assignedAt: current.assignedAt,
-            qualifications,
-        });
-        this.validate();
     }
 
     deactivate(): void {
@@ -177,7 +160,7 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
 
     /**
      * Computes effective permissions from position-based permissions + per-user overrides.
-     * @param positionPermissions - Map of positionKey → permission keys (owned by HR, not by PositionDefinition)
+     * @param positionPermissions - Map of positionKey → permission keys
      */
     getEffectivePermissions(positionPermissions: ReadonlyMap<string, readonly string[]>): string[] {
         const permissions = new Set<string>();
@@ -204,15 +187,6 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
 
     hasPosition(positionKey: string): boolean {
         return this.properties.positionAssignments.some((pa) => pa.positionKey === positionKey);
-    }
-
-    getQualification(positionKey: string, qualKey: string): string | undefined {
-        const assignment = this.properties.positionAssignments.find((pa) => pa.positionKey === positionKey);
-        if (!assignment) {
-            return undefined;
-        }
-        const qual = assignment.qualifications.find((q) => q.key === qualKey);
-        return qual?.value;
     }
 
     get userId(): string | undefined {

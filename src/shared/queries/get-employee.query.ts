@@ -6,16 +6,9 @@ export class GetEmployeeQuery {
     constructor(public readonly employeeId: string) {}
 }
 
-export interface GetEmployeeQualificationResponse {
-    key: string;
-    type: string;
-    value: string;
-}
-
 export interface GetEmployeePositionAssignmentResponse {
     positionKey: string;
     assignedAt: string;
-    qualifications: GetEmployeeQualificationResponse[];
 }
 
 export interface GetEmployeeResponse {

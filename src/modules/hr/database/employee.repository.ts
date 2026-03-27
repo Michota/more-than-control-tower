@@ -5,8 +5,6 @@ import { EmployeeAggregate } from "../domain/employee.aggregate.js";
 import { EmployeeRepositoryPort } from "./employee.repository.port.js";
 import { Employee } from "./employee.entity.js";
 import { EmployeeMapper } from "./employee.mapper.js";
-import type { QualificationFilter } from "../../../shared/queries/find-employees-by-qualification.query.js";
-
 const POPULATE = ["positionAssignments", "permissionOverrides"] as const;
 
 @Injectable()
@@ -38,36 +36,6 @@ export class EmployeeRepository implements EmployeeRepositoryPort {
     async findByPhone(phone: string): Promise<EmployeeAggregate | null> {
         const record = await this.em.findOne(Employee, { phone }, { populate: POPULATE });
         return record ? this.mapper.toDomain(record) : null;
-    }
-
-    async findByPositionAndQualifications(
-        positionKey: string,
-        filters: QualificationFilter[],
-    ): Promise<EmployeeAggregate[]> {
-        const records = await this.em.find(Employee, { positionAssignments: { positionKey } }, { populate: POPULATE });
-
-        const domainEntities = records.map((r) => this.mapper.toDomain(r));
-
-        if (filters.length === 0) {
-            return domainEntities;
-        }
-
-        return domainEntities.filter((employee) => {
-            const assignment = employee.positionAssignments.find((pa) => pa.positionKey === positionKey);
-            if (!assignment) {
-                return false;
-            }
-
-            return filters.every((filter) => {
-                if (filter.operator === "eq") {
-                    return assignment.hasQualification(filter.key, filter.value);
-                }
-                if (filter.operator === "contains") {
-                    return assignment.hasQualification(filter.key, filter.value);
-                }
-                return false;
-            });
-        });
     }
 
     async findAll(): Promise<EmployeeAggregate[]> {
