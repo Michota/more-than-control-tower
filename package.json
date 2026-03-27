@@ -22,7 +22,7 @@
         "start:dev": "nest start --watch",
         "start:debug": "nest start --debug --watch",
         "start:prod": "node dist/main",
-        "cli": "nest start --entryFile src/cli/cli-main --",
+        "cli": "node dist/src/cli/cli-main.js",
         "cli:prod": "node dist/src/cli/cli-main.js",
         "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
         "test": "vitest run",
