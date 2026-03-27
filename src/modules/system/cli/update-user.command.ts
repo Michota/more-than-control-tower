@@ -3,22 +3,22 @@ import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
 import { UpdateSystemUserCommand } from "../commands/update-system-user/update-system-user.command.js";
 
-interface UpdateAdminOptions {
+interface UpdateUserOptions {
     id: string;
     email?: string;
     name?: string;
 }
 
 @Command({
-    name: "update-admin",
-    description: "Update an administrator account's data (email, name)",
+    name: "update-user",
+    description: "Update a system user's data (email, name)",
 })
-export class UpdateAdminCliCommand extends CommandRunner {
+export class UpdateUserCliCommand extends CommandRunner {
     constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {
         super();
     }
 
-    async run(_passedParams: string[], options: UpdateAdminOptions): Promise<void> {
+    async run(_passedParams: string[], options: UpdateUserOptions): Promise<void> {
         if (!options.id) {
             console.error("--id is required");
             return;
@@ -29,8 +29,6 @@ export class UpdateAdminCliCommand extends CommandRunner {
             return;
         }
 
-        console.log(`Updating administrator ${options.id}...`);
-
         await this.commandBus.execute(
             new UpdateSystemUserCommand({
                 userId: options.id,
@@ -39,12 +37,12 @@ export class UpdateAdminCliCommand extends CommandRunner {
             }),
         );
 
-        console.log(`Administrator ${options.id} updated successfully`);
+        console.log(`User ${options.id} updated`);
     }
 
     @Option({
         flags: "--id <userId>",
-        description: "Administrator UUID",
+        description: "User UUID",
         required: true,
     })
     parseId(val: string): string {

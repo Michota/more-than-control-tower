@@ -18,7 +18,7 @@ import { ActivateUserCliCommand } from "../modules/system/cli/activate-user.comm
 import { CreateAdminCliCommand } from "../modules/system/cli/create-admin.command.js";
 import { ListUsersCliCommand } from "../modules/system/cli/list-users.command.js";
 import { SuspendUserCliCommand } from "../modules/system/cli/suspend-user.command.js";
-import { UpdateAdminCliCommand } from "../modules/system/cli/update-admin.command.js";
+import { UpdateUserCliCommand } from "../modules/system/cli/update-user.command.js";
 
 /**
  * CLI module — bootstraps the same infrastructure as AppModule
@@ -45,7 +45,7 @@ import { UpdateAdminCliCommand } from "../modules/system/cli/update-admin.comman
     providers: [
         // System
         CreateAdminCliCommand,
-        UpdateAdminCliCommand,
+        UpdateUserCliCommand,
         ListUsersCliCommand,
         SuspendUserCliCommand,
         ActivateUserCliCommand,
