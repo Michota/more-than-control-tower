@@ -12,7 +12,11 @@ async function bootstrap() {
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     app.useGlobalFilters(new DomainExceptionFilter());
 
-    const config = new DocumentBuilder().setVersion("1.0").build();
+    const config = new DocumentBuilder()
+        .setVersion("1.0")
+        .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "access-token")
+        .addSecurityRequirements("access-token")
+        .build();
     const documentFactory = () => SwaggerModule.createDocument(app, config);
     SwaggerModule.setup("api", app, documentFactory);
 

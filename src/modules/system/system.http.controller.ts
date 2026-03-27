@@ -1,4 +1,5 @@
 import { Body, Controller, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
+import { CurrentUser, type RequestUser } from "../../shared/auth/decorators/current-user.decorator.js";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { type UUID } from "crypto";
@@ -60,13 +61,16 @@ export class SystemHttpController {
     @ApiOperation({ summary: "Assign roles to a system user" })
     @ApiResponse({ status: 200 })
     @ApiResponse({ status: 409, description: "Cannot remove the last active administrator" })
-    async assignRoles(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: AssignRolesRequest): Promise<void> {
-        // TODO: extract actorId from auth context when auth is implemented
+    async assignRoles(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: AssignRolesRequest,
+        @CurrentUser() user: RequestUser,
+    ): Promise<void> {
         await this.commandBus.execute(
             new AssignRolesCommand({
                 userId: id,
                 roles: body.roles,
-                actorId: "unknown",
+                actorId: user.userId,
             }),
         );
     }
