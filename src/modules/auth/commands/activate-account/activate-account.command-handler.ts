@@ -47,7 +47,7 @@ export class ActivateAccountCommandHandler implements ICommandHandler<ActivateAc
             throw new InvalidActivationTokenError();
         }
 
-        if (systemUser.status !== "UNACTIVATED") {
+        if (systemUser.status !== "unactivated") {
             throw new AccountAlreadyActivatedError();
         }
 

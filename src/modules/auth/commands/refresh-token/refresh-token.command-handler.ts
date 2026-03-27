@@ -24,7 +24,7 @@ export class RefreshTokenCommandHandler implements ICommandHandler<RefreshTokenC
             new GetSystemUserQuery(userId),
         );
 
-        if (!systemUser || systemUser.status !== "ACTIVATED") {
+        if (!systemUser || systemUser.status !== "activated") {
             throw new UnauthorizedException("User account is not active");
         }
 

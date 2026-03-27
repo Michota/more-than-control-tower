@@ -24,7 +24,7 @@ export class GenerateActivationTokenCommandHandler implements ICommandHandler<
             throw new NotFoundException(`User with id ${cmd.userId} not found`);
         }
 
-        if (systemUser.status !== "UNACTIVATED") {
+        if (systemUser.status !== "unactivated") {
             throw new AccountAlreadyActivatedError();
         }
 

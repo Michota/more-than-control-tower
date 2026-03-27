@@ -33,11 +33,11 @@ export class LoginCommandHandler implements ICommandHandler<LoginCommand, LoginR
             throw new InvalidCredentialsError();
         }
 
-        if (systemUser.status === "SUSPENDED") {
+        if (systemUser.status === "suspended") {
             throw new AccountSuspendedError();
         }
 
-        if (systemUser.status === "UNACTIVATED") {
+        if (systemUser.status === "unactivated") {
             throw new AccountNotActivatedError();
         }
 

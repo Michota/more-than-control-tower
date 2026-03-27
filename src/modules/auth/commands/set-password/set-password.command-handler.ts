@@ -37,7 +37,7 @@ export class SetPasswordCommandHandler implements ICommandHandler<SetPasswordCom
             throw new NotFoundException(`User with id ${cmd.userId} not found`);
         }
 
-        if (user.status !== "UNACTIVATED") {
+        if (user.status !== "unactivated") {
             throw new AccountAlreadyActivatedError();
         }
 
