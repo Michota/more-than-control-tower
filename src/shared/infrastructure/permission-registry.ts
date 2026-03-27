@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 
-export interface PermissionDefinition {
-    /** Unique key, must be prefixed with module name and colon (e.g., "warehouse:create-receipt") */
+export interface PermissionInput {
+    /** Permission key without module prefix (e.g., "create-receipt") */
     key: string;
     /** Display name for UI / translations (e.g., "Create Receipt") */
     name: string;
@@ -9,42 +9,43 @@ export interface PermissionDefinition {
     description?: string;
 }
 
+export interface PermissionDefinition extends PermissionInput {
+    /** Full key with module prefix (e.g., "warehouse:create-receipt") — set by the registry */
+    fullKey: string;
+    /** Module that registered this permission */
+    module: string;
+}
+
 /**
  * Runtime registry of all permission keys in the system.
  *
- * Each module registers its permissions during onModuleInit().
- * HR reads from this registry to validate permission overrides
- * and to display available permissions in the UI.
+ * Each module registers its permissions during onModuleInit() by calling
+ * registerForModule("warehouse", [...]) — the registry prefixes each key
+ * with the module name automatically. Modules never hardcode the prefix.
  *
- * Permission keys must be prefixed with the module name and a colon
- * (e.g., "freight:execute-route"). The module prefix is derived from
- * the key automatically — no separate `module` field needed.
+ * All lookups (has, get) use the full key (e.g., "warehouse:create-receipt").
  */
 @Injectable()
 export class PermissionRegistry {
     private readonly permissions = new Map<string, PermissionDefinition>();
 
-    register(definition: PermissionDefinition): void {
-        if (!definition.key.includes(":")) {
-            throw new Error(
-                `Permission key "${definition.key}" must be prefixed with module name (e.g., "module:action")`,
-            );
-        }
-        this.permissions.set(definition.key, definition);
-    }
-
-    registerMany(definitions: PermissionDefinition[]): void {
+    registerForModule(module: string, definitions: PermissionInput[]): void {
         for (const def of definitions) {
-            this.register(def);
+            const fullKey = `${module}:${def.key}`;
+            this.permissions.set(fullKey, {
+                ...def,
+                fullKey,
+                module,
+            });
         }
     }
 
-    has(key: string): boolean {
-        return this.permissions.has(key);
+    has(fullKey: string): boolean {
+        return this.permissions.has(fullKey);
     }
 
-    get(key: string): PermissionDefinition | undefined {
-        return this.permissions.get(key);
+    get(fullKey: string): PermissionDefinition | undefined {
+        return this.permissions.get(fullKey);
     }
 
     getAll(): PermissionDefinition[] {
@@ -52,8 +53,7 @@ export class PermissionRegistry {
     }
 
     getByModule(module: string): PermissionDefinition[] {
-        const prefix = `${module}:`;
-        return [...this.permissions.values()].filter((p) => p.key.startsWith(prefix));
+        return [...this.permissions.values()].filter((p) => p.module === module);
     }
 
     getAllKeys(): ReadonlySet<string> {

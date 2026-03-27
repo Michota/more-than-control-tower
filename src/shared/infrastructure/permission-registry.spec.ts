@@ -7,45 +7,49 @@ describe("PermissionRegistry", () => {
         registry = new PermissionRegistry();
     });
 
-    const warehousePermission = () => ({
-        key: "warehouse:create-receipt",
-        name: "Create Receipt",
-        description: "Create a new goods receipt",
-    });
-
-    const freightPermission = () => ({
-        key: "freight:execute-route",
-        name: "Execute Route",
-        description: "Execute a delivery route",
-    });
-
-    describe("register()", () => {
-        it("registers a permission", () => {
-            registry.register(warehousePermission());
+    describe("registerForModule()", () => {
+        it("registers permissions with module prefix", () => {
+            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
 
             expect(registry.has("warehouse:create-receipt")).toBe(true);
         });
 
-        it("overwrites an existing permission with the same key", () => {
-            registry.register(warehousePermission());
-            registry.register({ ...warehousePermission(), name: "Updated Name" });
+        it("stores full key and module on the definition", () => {
+            registry.registerForModule("warehouse", [
+                { key: "create-receipt", name: "Create Receipt", description: "Create a new goods receipt" },
+            ]);
 
-            expect(registry.get("warehouse:create-receipt")?.name).toBe("Updated Name");
+            const result = registry.get("warehouse:create-receipt");
+
+            expect(result?.key).toBe("create-receipt");
+            expect(result?.fullKey).toBe("warehouse:create-receipt");
+            expect(result?.module).toBe("warehouse");
+            expect(result?.name).toBe("Create Receipt");
+            expect(result?.description).toBe("Create a new goods receipt");
         });
 
-        it("throws when key has no module prefix", () => {
-            expect(() => registry.register({ key: "no-prefix", name: "Bad", description: "test" })).toThrow(
-                /must be prefixed/,
-            );
-        });
-    });
+        it("registers multiple permissions for a module", () => {
+            registry.registerForModule("freight", [
+                { key: "execute-route", name: "Execute Route" },
+                { key: "view-routes", name: "View Routes" },
+            ]);
 
-    describe("registerMany()", () => {
-        it("registers multiple permissions", () => {
-            registry.registerMany([warehousePermission(), freightPermission()]);
+            expect(registry.has("freight:execute-route")).toBe(true);
+            expect(registry.has("freight:view-routes")).toBe(true);
+        });
+
+        it("registers permissions from different modules", () => {
+            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
+            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
 
             expect(registry.has("warehouse:create-receipt")).toBe(true);
             expect(registry.has("freight:execute-route")).toBe(true);
+        });
+
+        it("description is optional", () => {
+            registry.registerForModule("warehouse", [{ key: "view-stock", name: "View Stock" }]);
+
+            expect(registry.get("warehouse:view-stock")?.description).toBeUndefined();
         });
     });
 
@@ -56,16 +60,6 @@ describe("PermissionRegistry", () => {
     });
 
     describe("get()", () => {
-        it("returns the permission definition", () => {
-            registry.register(warehousePermission());
-
-            const result = registry.get("warehouse:create-receipt");
-
-            expect(result?.key).toBe("warehouse:create-receipt");
-            expect(result?.name).toBe("Create Receipt");
-            expect(result?.description).toBe("Create a new goods receipt");
-        });
-
         it("returns undefined for unknown key", () => {
             expect(registry.get("unknown:permission")).toBeUndefined();
         });
@@ -73,7 +67,8 @@ describe("PermissionRegistry", () => {
 
     describe("getAll()", () => {
         it("returns all registered permissions", () => {
-            registry.registerMany([warehousePermission(), freightPermission()]);
+            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
+            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
 
             expect(registry.getAll()).toHaveLength(2);
         });
@@ -84,29 +79,30 @@ describe("PermissionRegistry", () => {
     });
 
     describe("getByModule()", () => {
-        it("filters by key prefix", () => {
-            registry.registerMany([
-                warehousePermission(),
-                { key: "warehouse:view-stock", name: "View Stock", description: "View stock levels" },
-                freightPermission(),
+        it("filters by module", () => {
+            registry.registerForModule("warehouse", [
+                { key: "create-receipt", name: "Create Receipt" },
+                { key: "view-stock", name: "View Stock" },
             ]);
+            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
 
             const warehousePerms = registry.getByModule("warehouse");
 
             expect(warehousePerms).toHaveLength(2);
-            expect(warehousePerms.every((p) => p.key.startsWith("warehouse:"))).toBe(true);
+            expect(warehousePerms.every((p) => p.module === "warehouse")).toBe(true);
         });
 
         it("returns empty array for unknown module", () => {
-            registry.register(warehousePermission());
+            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
 
             expect(registry.getByModule("crm")).toEqual([]);
         });
     });
 
     describe("getAllKeys()", () => {
-        it("returns a set of all permission keys", () => {
-            registry.registerMany([warehousePermission(), freightPermission()]);
+        it("returns full keys with module prefix", () => {
+            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
+            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
 
             const keys = registry.getAllKeys();
 
