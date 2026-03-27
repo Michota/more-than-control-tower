@@ -1,14 +1,12 @@
 import { Injectable } from "@nestjs/common";
 
 export interface PermissionDefinition {
-    /** Unique key namespaced by module (e.g., "warehouse:create-receipt") */
+    /** Unique key, must be prefixed with module name and colon (e.g., "warehouse:create-receipt") */
     key: string;
     /** Display name for UI / translations (e.g., "Create Receipt") */
     name: string;
-    /** Module that owns this permission */
-    module: string;
-    /** Human-readable description */
-    description: string;
+    /** Human-readable description of what this permission grants */
+    description?: string;
 }
 
 /**
@@ -18,14 +16,20 @@ export interface PermissionDefinition {
  * HR reads from this registry to validate permission overrides
  * and to display available permissions in the UI.
  *
- * This is infrastructure, not business logic — analogous to
- * MikroOrmUnitOfWork or NestjsLoggerAdapter.
+ * Permission keys must be prefixed with the module name and a colon
+ * (e.g., "freight:execute-route"). The module prefix is derived from
+ * the key automatically — no separate `module` field needed.
  */
 @Injectable()
 export class PermissionRegistry {
     private readonly permissions = new Map<string, PermissionDefinition>();
 
     register(definition: PermissionDefinition): void {
+        if (!definition.key.includes(":")) {
+            throw new Error(
+                `Permission key "${definition.key}" must be prefixed with module name (e.g., "module:action")`,
+            );
+        }
         this.permissions.set(definition.key, definition);
     }
 
@@ -48,7 +52,8 @@ export class PermissionRegistry {
     }
 
     getByModule(module: string): PermissionDefinition[] {
-        return [...this.permissions.values()].filter((p) => p.module === module);
+        const prefix = `${module}:`;
+        return [...this.permissions.values()].filter((p) => p.key.startsWith(prefix));
     }
 
     getAllKeys(): ReadonlySet<string> {

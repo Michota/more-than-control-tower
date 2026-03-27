@@ -10,14 +10,12 @@ describe("PermissionRegistry", () => {
     const warehousePermission = () => ({
         key: "warehouse:create-receipt",
         name: "Create Receipt",
-        module: "warehouse",
         description: "Create a new goods receipt",
     });
 
     const freightPermission = () => ({
         key: "freight:execute-route",
         name: "Execute Route",
-        module: "freight",
         description: "Execute a delivery route",
     });
 
@@ -33,6 +31,12 @@ describe("PermissionRegistry", () => {
             registry.register({ ...warehousePermission(), name: "Updated Name" });
 
             expect(registry.get("warehouse:create-receipt")?.name).toBe("Updated Name");
+        });
+
+        it("throws when key has no module prefix", () => {
+            expect(() => registry.register({ key: "no-prefix", name: "Bad", description: "test" })).toThrow(
+                /must be prefixed/,
+            );
         });
     });
 
@@ -59,7 +63,7 @@ describe("PermissionRegistry", () => {
 
             expect(result?.key).toBe("warehouse:create-receipt");
             expect(result?.name).toBe("Create Receipt");
-            expect(result?.module).toBe("warehouse");
+            expect(result?.description).toBe("Create a new goods receipt");
         });
 
         it("returns undefined for unknown key", () => {
@@ -80,17 +84,17 @@ describe("PermissionRegistry", () => {
     });
 
     describe("getByModule()", () => {
-        it("filters by module", () => {
+        it("filters by key prefix", () => {
             registry.registerMany([
                 warehousePermission(),
-                { key: "warehouse:view-stock", name: "View Stock", module: "warehouse", description: "View stock levels" },
+                { key: "warehouse:view-stock", name: "View Stock", description: "View stock levels" },
                 freightPermission(),
             ]);
 
             const warehousePerms = registry.getByModule("warehouse");
 
             expect(warehousePerms).toHaveLength(2);
-            expect(warehousePerms.every((p) => p.module === "warehouse")).toBe(true);
+            expect(warehousePerms.every((p) => p.key.startsWith("warehouse:"))).toBe(true);
         });
 
         it("returns empty array for unknown module", () => {

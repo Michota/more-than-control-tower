@@ -52,20 +52,10 @@ describe("HR Module — Integration Tests", () => {
         await orm.schema.refresh();
 
         permissionRegistry.registerMany([
-            { key: "freight:view-routes", name: "View Routes", module: "freight", description: "View delivery routes" },
-            { key: "freight:execute-route", name: "Execute Route", module: "freight", description: "Execute a route" },
-            {
-                key: "freight:drive-cat-c",
-                name: "Drive Cat C",
-                module: "freight",
-                description: "Drive category C vehicles",
-            },
-            {
-                key: "warehouse:create-receipt",
-                name: "Create Receipt",
-                module: "warehouse",
-                description: "Create goods receipt",
-            },
+            { key: "freight:view-routes", name: "View Routes" },
+            { key: "freight:execute-route", name: "Execute Route" },
+            { key: "freight:drive-cat-c", name: "Drive Cat C" },
+            { key: "warehouse:create-receipt", name: "Create Receipt" },
         ]);
     });
 

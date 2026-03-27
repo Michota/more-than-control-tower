@@ -24,13 +24,7 @@ export class FindEmployeesByPermissionQueryHandler implements IQueryHandler<
 
     async execute(query: FindEmployeesByPermissionQuery): Promise<FindEmployeesByPermissionResponse> {
         const allPositions = await this.positionRepo.findAll();
-        const matchingPositionKeys = allPositions
-            .filter((p) => p.permissionKeys.includes(query.permissionKey))
-            .map((p) => p.key);
-
-        if (matchingPositionKeys.length === 0) {
-            return { employees: [] };
-        }
+        const positionPermissions = new Map(allPositions.map((p) => [p.key, p.permissionKeys] as const));
 
         const allEmployees = await this.employeeRepo.findAll();
 
@@ -39,7 +33,8 @@ export class FindEmployeesByPermissionQueryHandler implements IQueryHandler<
                 return false;
             }
 
-            return employee.positionAssignments.some((pa) => matchingPositionKeys.includes(pa.positionKey));
+            const effectivePermissions = employee.getEffectivePermissions(positionPermissions);
+            return effectivePermissions.includes(query.permissionKey);
         });
 
         return {
