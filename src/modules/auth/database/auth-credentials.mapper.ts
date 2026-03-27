@@ -10,7 +10,7 @@ export class AuthCredentialsMapper {
         return AuthCredentialsAggregate.reconstitute({
             id: record.id as EntityId,
             properties: {
-                userId: record.userId,
+                userId: record.systemUser.id,
                 passwordHash: record.passwordHash,
             },
         });
@@ -19,7 +19,7 @@ export class AuthCredentialsMapper {
     toPersistence(domain: AuthCredentialsAggregate): RequiredEntityData<AuthCredentials> {
         return {
             id: domain.id as string,
-            userId: domain.userId,
+            systemUser: domain.userId,
             passwordHash: domain.passwordHash,
         };
     }

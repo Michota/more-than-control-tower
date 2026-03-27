@@ -12,7 +12,7 @@ export class AuthCredentialsRepository implements AuthCredentialsRepositoryPort 
     constructor(private readonly em: EntityManager) {}
 
     async findByUserId(userId: string): Promise<AuthCredentialsAggregate | null> {
-        const record = await this.em.findOne(AuthCredentials, { userId });
+        const record = await this.em.findOne(AuthCredentials, { systemUser: userId });
         return record ? this.mapper.toDomain(record) : null;
     }
 
