@@ -10,8 +10,7 @@ import { CannotRemoveOwnAdminRoleError } from "./system-user.errors.js";
 
 const validProps = () => ({
     email: "jan@example.com",
-    firstName: "Jan",
-    lastName: "Kowalski",
+    name: "Jan Kowalski",
     roles: [SystemUserRole.USER],
 });
 
@@ -21,8 +20,7 @@ describe("SystemUserAggregate.create()", () => {
             const user = SystemUserAggregate.create(validProps());
 
             expect(user.email).toBe("jan@example.com");
-            expect(user.firstName).toBe("Jan");
-            expect(user.lastName).toBe("Kowalski");
+            expect(user.name).toBe("Jan Kowalski");
             expect(user.roles).toEqual([SystemUserRole.USER]);
             expect(user.status).toBe(SystemUserStatus.UNACTIVATED);
         });
@@ -56,12 +54,8 @@ describe("SystemUserAggregate.create()", () => {
             expect(() => SystemUserAggregate.create({ ...validProps(), email: "not-an-email" })).toThrow(ZodError);
         });
 
-        it("throws when firstName is empty", () => {
-            expect(() => SystemUserAggregate.create({ ...validProps(), firstName: "" })).toThrow(ZodError);
-        });
-
-        it("throws when lastName is empty", () => {
-            expect(() => SystemUserAggregate.create({ ...validProps(), lastName: "" })).toThrow(ZodError);
+        it("throws when name is empty", () => {
+            expect(() => SystemUserAggregate.create({ ...validProps(), name: "" })).toThrow(ZodError);
         });
 
         it("throws when roles array is empty", () => {
@@ -78,12 +72,11 @@ describe("SystemUserAggregate.update()", () => {
         expect(user.email).toBe("new@example.com");
     });
 
-    it("updates firstName and lastName", () => {
+    it("updates name", () => {
         const user = SystemUserAggregate.create(validProps());
-        user.update({ firstName: "Adam", lastName: "Nowak" });
+        user.update({ name: "Adam Nowak" });
 
-        expect(user.firstName).toBe("Adam");
-        expect(user.lastName).toBe("Nowak");
+        expect(user.name).toBe("Adam Nowak");
     });
 
     it("validates after update — throws on invalid email", () => {
@@ -172,8 +165,7 @@ describe("SystemUserAggregate.reconstitute()", () => {
             id: generateEntityId("123e4567-e89b-12d3-a456-426614174000"),
             properties: {
                 email: "admin@example.com",
-                firstName: "Admin",
-                lastName: "User",
+                name: "Admin User",
                 roles: [SystemUserRole.ADMINISTRATOR],
                 status: SystemUserStatus.ACTIVATED,
             },

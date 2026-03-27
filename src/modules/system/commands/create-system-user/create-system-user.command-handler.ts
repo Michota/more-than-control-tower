@@ -29,8 +29,7 @@ export class CreateSystemUserCommandHandler implements ICommandHandler<CreateSys
 
         const user = SystemUserAggregate.create({
             email: cmd.email,
-            firstName: cmd.firstName,
-            lastName: cmd.lastName,
+            name: cmd.name,
             roles: cmd.roles,
         });
 

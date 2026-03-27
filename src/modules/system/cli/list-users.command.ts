@@ -30,7 +30,7 @@ export class ListUsersCliCommand extends CommandRunner {
 
         for (const user of result.data) {
             console.log(
-                `  ${user.id}  ${user.email}  ${user.firstName} ${user.lastName}  roles=[${user.roles.join(",")}]  status=${user.status}`,
+                `  ${user.id}  ${user.email}  ${user.name}  roles=[${user.roles.join(",")}]  status=${user.status}`,
             );
         }
 

@@ -3,15 +3,13 @@ import { SystemUserRole } from "../../domain/system-user-role.enum.js";
 
 export class CreateSystemUserCommand extends Command<string> {
     readonly email: string;
-    readonly firstName: string;
-    readonly lastName: string;
+    readonly name: string;
     readonly roles: SystemUserRole[];
 
     constructor(props: CommandProps<CreateSystemUserCommand>) {
         super(props);
         this.email = props.email;
-        this.firstName = props.firstName;
-        this.lastName = props.lastName;
+        this.name = props.name;
         this.roles = props.roles;
     }
 }

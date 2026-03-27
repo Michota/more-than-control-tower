@@ -25,8 +25,7 @@ export class UpdateSystemUserCommandHandler implements ICommandHandler<UpdateSys
 
         user.update({
             email: cmd.email,
-            firstName: cmd.firstName,
-            lastName: cmd.lastName,
+            name: cmd.name,
         });
 
         await this.userRepo.save(user);

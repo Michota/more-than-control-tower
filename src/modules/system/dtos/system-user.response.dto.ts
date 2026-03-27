@@ -9,11 +9,8 @@ export class SystemUserResponseDto {
     /** @example "admin@example.com" */
     email!: string;
 
-    /** @example "Jan" */
-    firstName!: string;
-
-    /** @example "Kowalski" */
-    lastName!: string;
+    /** @example "Jan Kowalski" */
+    name!: string;
 
     @ApiProperty({ enum: SystemUserRole, isArray: true, example: [SystemUserRole.USER] })
     roles!: string[];

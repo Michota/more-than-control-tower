@@ -9,8 +9,7 @@ export class GetSystemUserQuery {
 export interface GetSystemUserResponse {
     id: string;
     email: string;
-    firstName: string;
-    lastName: string;
+    name: string;
     roles: string[];
     status: string;
 }

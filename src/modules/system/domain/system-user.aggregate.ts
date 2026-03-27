@@ -9,8 +9,7 @@ import { CannotRemoveOwnAdminRoleError } from "./system-user.errors.js";
 
 const systemUserSchema = z.object({
     email: z.string().email(),
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
+    name: z.string().min(1),
     roles: z.array(z.enum(SystemUserRole)).min(1, "User must have at least one role"),
     status: z.enum(SystemUserStatus),
 });
@@ -43,7 +42,7 @@ export class SystemUserAggregate extends AggregateRoot<SystemUserProperties> {
         systemUserSchema.parse(this.properties);
     }
 
-    update(props: Partial<Pick<SystemUserProperties, "email" | "firstName" | "lastName">>): void {
+    update(props: Partial<Pick<SystemUserProperties, "email" | "name">>): void {
         const defined = Object.fromEntries(Object.entries(props).filter(([, v]) => v !== undefined));
         Object.assign(this.properties, defined);
         this.validate();
@@ -82,12 +81,8 @@ export class SystemUserAggregate extends AggregateRoot<SystemUserProperties> {
         return this.properties.email;
     }
 
-    get firstName(): string {
-        return this.properties.firstName;
-    }
-
-    get lastName(): string {
-        return this.properties.lastName;
+    get name(): string {
+        return this.properties.name;
     }
 
     get roles(): SystemUserRole[] {

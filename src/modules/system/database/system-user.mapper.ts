@@ -19,8 +19,7 @@ export class SystemUserMapper implements Mapper<
             id: record.id as EntityId,
             properties: {
                 email: record.email,
-                firstName: record.firstName,
-                lastName: record.lastName,
+                name: record.name,
                 roles: record.roles as SystemUserRole[],
                 status: record.status as SystemUserStatus,
             },
@@ -31,8 +30,7 @@ export class SystemUserMapper implements Mapper<
         return {
             id: domain.id as string,
             email: domain.email,
-            firstName: domain.firstName,
-            lastName: domain.lastName,
+            name: domain.name,
             roles: domain.roles,
             status: domain.status,
         };
@@ -42,8 +40,7 @@ export class SystemUserMapper implements Mapper<
         return {
             id: domain.id,
             email: domain.email,
-            firstName: domain.firstName,
-            lastName: domain.lastName,
+            name: domain.name,
             roles: domain.roles,
             status: domain.status,
         };

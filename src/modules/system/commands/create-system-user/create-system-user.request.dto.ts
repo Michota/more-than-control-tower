@@ -6,10 +6,7 @@ export class CreateSystemUserRequest {
     email!: string;
 
     @IsString()
-    firstName!: string;
-
-    @IsString()
-    lastName!: string;
+    name!: string;
 
     @IsArray()
     @IsEnum(SystemUserRole, { each: true })

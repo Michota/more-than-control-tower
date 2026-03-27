@@ -25,7 +25,7 @@ Email + password authentication with JWT tokens. The Auth module is separate fro
 # 1. Create admin user (UNACTIVATED)
 pnpm run cli create-admin \
   --email admin@company.com \
-  --first-name Admin --last-name Boss
+  --name "Admin Boss"
 
 # 2. Set password and activate
 pnpm run cli activate-account \

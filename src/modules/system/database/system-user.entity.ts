@@ -7,8 +7,7 @@ const SystemUserSchema = defineEntity({
     properties: {
         id: p.uuid().primary(),
         email: p.string().unique(),
-        firstName: p.string(),
-        lastName: p.string(),
+        name: p.string(),
         roles: p.array(),
         status: p.enum(() => SystemUserStatus),
     },

@@ -57,11 +57,7 @@ export class SystemUserRepository implements SystemUserRepositoryPort {
         const [records, count] = await this.em.findAndCount(
             SystemUser,
             {
-                $or: [
-                    { email: { $ilike: pattern } },
-                    { firstName: { $ilike: pattern } },
-                    { lastName: { $ilike: pattern } },
-                ],
+                $or: [{ email: { $ilike: pattern } }, { name: { $ilike: pattern } }],
             },
             {
                 limit: pagination.limit,

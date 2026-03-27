@@ -55,8 +55,7 @@ describe("System Module — Integration Tests", () => {
     function createUserCmd(overrides: Partial<CreateSystemUserCommand> = {}) {
         return new CreateSystemUserCommand({
             email: overrides.email ?? uniqueEmail(),
-            firstName: overrides.firstName ?? "Jan",
-            lastName: overrides.lastName ?? "Kowalski",
+            name: overrides.name ?? "Jan Kowalski",
             roles: overrides.roles ?? [SystemUserRole.USER],
         });
     }
@@ -83,8 +82,7 @@ describe("System Module — Integration Tests", () => {
 
             expect(user).not.toBeNull();
             expect(user!.email).toBe(email);
-            expect(user!.firstName).toBe("Jan");
-            expect(user!.lastName).toBe("Kowalski");
+            expect(user!.name).toBe("Jan Kowalski");
             expect(user!.roles).toEqual([SystemUserRole.USER]);
             expect(user!.status).toBe(SystemUserStatus.UNACTIVATED);
         });
@@ -106,14 +104,13 @@ describe("System Module — Integration Tests", () => {
     // ─── Update ───────────────────────────────────────────────
 
     describe("Update System User", () => {
-        it("updates firstName and lastName", async () => {
+        it("updates name", async () => {
             const id = await createUser();
 
-            await commandBus.execute(new UpdateSystemUserCommand({ userId: id, firstName: "Adam", lastName: "Nowak" }));
+            await commandBus.execute(new UpdateSystemUserCommand({ userId: id, name: "Adam Nowak" }));
 
             const user = await getUser(id);
-            expect(user!.firstName).toBe("Adam");
-            expect(user!.lastName).toBe("Nowak");
+            expect(user!.name).toBe("Adam Nowak");
         });
 
         it("updates email", async () => {
@@ -128,14 +125,12 @@ describe("System Module — Integration Tests", () => {
 
         it("partial update preserves unchanged fields", async () => {
             const email = uniqueEmail();
-            const id = await createUser({ email, firstName: "Original", lastName: "Name" });
+            const id = await createUser({ email, name: "Original Name" });
 
-            await commandBus.execute(new UpdateSystemUserCommand({ userId: id, firstName: "Changed" }));
+            await commandBus.execute(new UpdateSystemUserCommand({ userId: id, email: uniqueEmail() }));
 
             const user = await getUser(id);
-            expect(user!.firstName).toBe("Changed");
-            expect(user!.lastName).toBe("Name");
-            expect(user!.email).toBe(email);
+            expect(user!.name).toBe("Original Name");
         });
 
         it("throws SystemUserNotFoundError for non-existent user", async () => {
@@ -143,7 +138,7 @@ describe("System Module — Integration Tests", () => {
                 commandBus.execute(
                     new UpdateSystemUserCommand({
                         userId: "00000000-0000-0000-0000-000000000000",
-                        firstName: "Ghost",
+                        name: "Ghost",
                     }),
                 ),
             ).rejects.toThrow(SystemUserNotFoundError);
@@ -380,7 +375,7 @@ describe("System Module — Integration Tests", () => {
 
         it("returns all expected fields in each list item", async () => {
             const email = uniqueEmail();
-            await createUser({ email, firstName: "FieldCheck", roles: [SystemUserRole.MODERATOR] });
+            await createUser({ email, name: "FieldCheck", roles: [SystemUserRole.MODERATOR] });
 
             const result = await listUsers("FieldCheck", 1, 10);
 
@@ -388,17 +383,16 @@ describe("System Module — Integration Tests", () => {
             const user = result.data[0];
             expect(user.id).toBeDefined();
             expect(user.email).toBe(email);
-            expect(user.firstName).toBe("FieldCheck");
-            expect(user.lastName).toBe("Kowalski");
+            expect(user.name).toBe("FieldCheck");
             expect(user.roles).toEqual([SystemUserRole.MODERATOR]);
             expect(user.status).toBe(SystemUserStatus.UNACTIVATED);
         });
 
         it("paginates correctly across pages", async () => {
             const tag = `page-${Date.now()}`;
-            await createUser({ firstName: tag, lastName: "A" });
-            await createUser({ firstName: tag, lastName: "B" });
-            await createUser({ firstName: tag, lastName: "C" });
+            await createUser({ name: `${tag} A` });
+            await createUser({ name: `${tag} B` });
+            await createUser({ name: `${tag} C` });
 
             const page1 = await listUsers(tag, 1, 2);
             const page2 = await listUsers(tag, 2, 2);
@@ -411,24 +405,14 @@ describe("System Module — Integration Tests", () => {
             expect(new Set(allIds).size).toBe(3);
         });
 
-        it("searches users by firstName", async () => {
-            const uniqueName = `FirstSearch-${Date.now()}`;
-            await createUser({ firstName: uniqueName });
+        it("searches users by name", async () => {
+            const uniqueName = `NameSearch-${Date.now()}`;
+            await createUser({ name: uniqueName });
 
             const result = await listUsers(uniqueName, 1, 10);
 
             expect(result.data).toHaveLength(1);
-            expect(result.data[0].firstName).toBe(uniqueName);
-        });
-
-        it("searches users by lastName", async () => {
-            const uniqueName = `LastSearch-${Date.now()}`;
-            await createUser({ lastName: uniqueName });
-
-            const result = await listUsers(uniqueName, 1, 10);
-
-            expect(result.data).toHaveLength(1);
-            expect(result.data[0].lastName).toBe(uniqueName);
+            expect(result.data[0].name).toBe(uniqueName);
         });
 
         it("searches users by email", async () => {
@@ -443,12 +427,12 @@ describe("System Module — Integration Tests", () => {
 
         it("search is case-insensitive", async () => {
             const uniqueName = `CaseTest-${Date.now()}`;
-            await createUser({ firstName: uniqueName });
+            await createUser({ name: uniqueName });
 
             const result = await listUsers(uniqueName.toLowerCase(), 1, 10);
 
             expect(result.data).toHaveLength(1);
-            expect(result.data[0].firstName).toBe(uniqueName);
+            expect(result.data[0].name).toBe(uniqueName);
         });
 
         it("returns empty result for non-matching search", async () => {
@@ -460,11 +444,11 @@ describe("System Module — Integration Tests", () => {
 
         it("lists without search term returns all users (paginated path)", async () => {
             const tag = `listall-${Date.now()}`;
-            await createUser({ firstName: tag });
+            await createUser({ name: tag });
 
             const result = await listUsers(undefined, 1, 100);
 
-            const found = result.data.find((u) => u.firstName === tag);
+            const found = result.data.find((u) => u.name === tag);
             expect(found).toBeDefined();
         });
     });
@@ -505,12 +489,9 @@ describe("System Module — Integration Tests", () => {
             expect((await getUser(id))!.status).toBe(SystemUserStatus.ACTIVATED);
 
             // Update profile
-            await commandBus.execute(
-                new UpdateSystemUserCommand({ userId: id, firstName: "Updated", lastName: "User" }),
-            );
+            await commandBus.execute(new UpdateSystemUserCommand({ userId: id, name: "Updated User" }));
             const updated = await getUser(id);
-            expect(updated!.firstName).toBe("Updated");
-            expect(updated!.lastName).toBe("User");
+            expect(updated!.name).toBe("Updated User");
             expect(updated!.email).toBe(email);
 
             // Promote to moderator

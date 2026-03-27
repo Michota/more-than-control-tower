@@ -6,8 +6,7 @@ import { SystemUserRole } from "../domain/system-user-role.enum.js";
 
 interface CreateAdminOptions {
     email: string;
-    firstName: string;
-    lastName: string;
+    name: string;
 }
 
 @Command({
@@ -20,8 +19,8 @@ export class CreateAdminCliCommand extends CommandRunner {
     }
 
     async run(_passedParams: string[], options: CreateAdminOptions): Promise<void> {
-        if (!options.email || !options.firstName || !options.lastName) {
-            console.error("--email, --first-name, and --last-name are all required");
+        if (!options.email || !options.name) {
+            console.error("--email and --name are both required");
             return;
         }
 
@@ -30,8 +29,7 @@ export class CreateAdminCliCommand extends CommandRunner {
         const userId = await this.commandBus.execute(
             new CreateSystemUserCommand({
                 email: options.email,
-                firstName: options.firstName,
-                lastName: options.lastName,
+                name: options.name,
                 roles: [SystemUserRole.ADMINISTRATOR],
             }),
         );
@@ -49,20 +47,11 @@ export class CreateAdminCliCommand extends CommandRunner {
     }
 
     @Option({
-        flags: "--first-name <firstName>",
-        description: "Administrator first name",
+        flags: "--name <name>",
+        description: "Administrator name",
         required: true,
     })
-    parseFirstName(val: string): string {
-        return val;
-    }
-
-    @Option({
-        flags: "--last-name <lastName>",
-        description: "Administrator last name",
-        required: true,
-    })
-    parseLastName(val: string): string {
+    parseName(val: string): string {
         return val;
     }
 }

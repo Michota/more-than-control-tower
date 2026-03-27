@@ -35,8 +35,7 @@ export class SystemHttpController {
         const userId = await this.commandBus.execute(
             new CreateSystemUserCommand({
                 email: body.email,
-                firstName: body.firstName,
-                lastName: body.lastName,
+                name: body.name,
                 roles: body.roles,
             }),
         );
@@ -51,8 +50,7 @@ export class SystemHttpController {
             new UpdateSystemUserCommand({
                 userId: id,
                 email: body.email,
-                firstName: body.firstName,
-                lastName: body.lastName,
+                name: body.name,
             }),
         );
     }

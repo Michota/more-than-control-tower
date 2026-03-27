@@ -6,8 +6,7 @@ import { UpdateSystemUserCommand } from "../commands/update-system-user/update-s
 interface UpdateAdminOptions {
     id: string;
     email?: string;
-    firstName?: string;
-    lastName?: string;
+    name?: string;
 }
 
 @Command({
@@ -25,8 +24,8 @@ export class UpdateAdminCliCommand extends CommandRunner {
             return;
         }
 
-        if (!options.email && !options.firstName && !options.lastName) {
-            console.error("At least one of --email, --first-name, or --last-name must be provided");
+        if (!options.email && !options.name) {
+            console.error("At least one of --email or --name must be provided");
             return;
         }
 
@@ -36,8 +35,7 @@ export class UpdateAdminCliCommand extends CommandRunner {
             new UpdateSystemUserCommand({
                 userId: options.id,
                 email: options.email,
-                firstName: options.firstName,
-                lastName: options.lastName,
+                name: options.name,
             }),
         );
 
@@ -62,18 +60,10 @@ export class UpdateAdminCliCommand extends CommandRunner {
     }
 
     @Option({
-        flags: "--first-name <firstName>",
-        description: "New first name",
+        flags: "--name <name>",
+        description: "New name",
     })
-    parseFirstName(val: string): string {
-        return val;
-    }
-
-    @Option({
-        flags: "--last-name <lastName>",
-        description: "New last name",
-    })
-    parseLastName(val: string): string {
+    parseName(val: string): string {
         return val;
     }
 }
