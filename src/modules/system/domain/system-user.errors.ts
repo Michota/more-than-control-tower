@@ -16,6 +16,14 @@ export class CannotRemoveOwnAdminRoleError extends ConflictDomainException {
     }
 }
 
+export class SystemUserDuplicateEmailError extends ConflictDomainException {
+    readonly code = "SYSTEM_USER.DUPLICATE_EMAIL";
+
+    constructor(email: string) {
+        super(`System user with email ${email} already exists`);
+    }
+}
+
 export class LastActiveAdminError extends ConflictDomainException {
     readonly code = "SYSTEM_USER.LAST_ACTIVE_ADMIN";
 
