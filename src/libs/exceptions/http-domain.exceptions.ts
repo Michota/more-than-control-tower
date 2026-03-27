@@ -17,6 +17,10 @@ export abstract class ForbiddenDomainException extends Exception {
     readonly httpStatusCode = HttpStatus.FORBIDDEN;
 }
 
+export abstract class UnauthorizedDomainException extends Exception {
+    readonly httpStatusCode = HttpStatus.UNAUTHORIZED;
+}
+
 export abstract class InternalDomainException extends Exception {
     readonly httpStatusCode = HttpStatus.INTERNAL_SERVER_ERROR;
 }

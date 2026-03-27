@@ -17,6 +17,12 @@ const envSchema = z.object({
     // Server configuration
     SERVER_PORT: portSchema,
 
+    // JWT configuration
+    JWT_SECRET: z.string().min(1),
+    JWT_EXPIRES_IN: z.string().min(1).default("15m"),
+    JWT_REFRESH_SECRET: z.string().min(1),
+    JWT_REFRESH_EXPIRES_IN: z.string().min(1).default("7d"),
+
     // Testing-purposes environment variables
     TEST_DB_NAME: isTestEnv ? z.string().optional() : z.string().min(1),
 });
