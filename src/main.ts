@@ -1,6 +1,7 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+
 import "tsconfig-paths/register"; // <-- Must be first import to work with tsconfig paths
 import { AppModule } from "./app.module";
 import { env } from "./config/env";

@@ -1,3 +1,4 @@
+import { createZodDto } from "nestjs-zod";
 import z from "zod";
 import { passwordSchema } from "../../domain/password.schema.js";
 
@@ -6,4 +7,4 @@ export const activateAccountSchema = z.object({
     password: passwordSchema,
 });
 
-export type ActivateAccountRequestDto = z.infer<typeof activateAccountSchema>;
+export class ActivateAccountRequestDto extends createZodDto(activateAccountSchema) {}

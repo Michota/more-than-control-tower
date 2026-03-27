@@ -1,7 +1,8 @@
+import { createZodDto } from "nestjs-zod";
 import z from "zod";
 
 export const generateActivationTokenSchema = z.object({
     userId: z.uuid(),
 });
 
-export type GenerateActivationTokenRequestDto = z.infer<typeof generateActivationTokenSchema>;
+export class GenerateActivationTokenRequestDto extends createZodDto(generateActivationTokenSchema) {}
