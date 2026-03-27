@@ -19,6 +19,7 @@ import { UpdateEmployeeCommand } from "./commands/update-employee/update-employe
 import { UpdateEmployeeRequest } from "./commands/update-employee/update-employee.request.dto.js";
 import { LinkEmployeeToUserCommand } from "./commands/link-employee-to-user/link-employee-to-user.command.js";
 import { LinkEmployeeToUserRequest } from "./commands/link-employee-to-user/link-employee-to-user.request.dto.js";
+import { CurrentUser, type RequestUser } from "../../shared/auth/decorators/current-user.decorator.js";
 import { AssignPositionCommand } from "./commands/assign-position/assign-position.command.js";
 import { AssignPositionRequest } from "./commands/assign-position/assign-position.request.dto.js";
 import { UnassignPositionCommand } from "./commands/unassign-position/unassign-position.command.js";
@@ -82,7 +83,6 @@ export class HrHttpController {
                 email: body.email,
                 phone: body.phone,
                 userId: body.userId,
-                skipUniquenessCheck: body.skipUniquenessCheck,
             }),
         );
         return { employeeId };
@@ -112,12 +112,16 @@ export class HrHttpController {
     }
 
     @Post(":id/positions")
-    async assignPosition(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: AssignPositionRequest): Promise<void> {
+    async assignPosition(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: AssignPositionRequest,
+        @CurrentUser() user: RequestUser,
+    ): Promise<void> {
         await this.commandBus.execute(
             new AssignPositionCommand({
                 employeeId: id,
                 positionKey: body.positionKey,
-                assignedBy: body.assignedBy,
+                assignedBy: user.userId,
             }),
         );
     }
