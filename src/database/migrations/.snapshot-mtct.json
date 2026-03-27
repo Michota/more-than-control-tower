@@ -3,6 +3,79 @@
     "namespaces": ["public"],
     "tables": [
         {
+            "name": "auth_credentials",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": true,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "password_hash": {
+                    "name": "password_hash",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                }
+            },
+            "indexes": [
+                {
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": false,
+                    "keyName": "auth_credentials_pkey",
+                    "unique": true,
+                    "primary": true
+                },
+                {
+                    "columnNames": ["user_id"],
+                    "composite": false,
+                    "constraint": true,
+                    "keyName": "auth_credentials_user_id_unique",
+                    "unique": true,
+                    "primary": false
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {},
+            "nativeEnums": {},
+            "comment": null
+        },
+        {
             "name": "customer",
             "schema": "public",
             "columns": {
@@ -50,6 +123,96 @@
                     "default": null,
                     "comment": null,
                     "enumItems": []
+                },
+                "customer_type": {
+                    "name": "customer_type",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": ["b2c", "b2b", "b2a"]
+                },
+                "note": {
+                    "name": "note",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "first_name": {
+                    "name": "first_name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "last_name": {
+                    "name": "last_name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "company_name": {
+                    "name": "company_name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "nip": {
+                    "name": "nip",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
                 }
             },
             "indexes": [
@@ -62,7 +225,14 @@
                     "primary": true
                 }
             ],
-            "checks": [],
+            "checks": [
+                {
+                    "name": "customer_customer_type_check",
+                    "columnName": "customer_type",
+                    "definition": "check (\"customer_type\" in ('b2c', 'b2b', 'b2a'))",
+                    "expression": "\"customer_type\" in ('b2c', 'b2b', 'b2a')"
+                }
+            ],
             "foreignKeys": {},
             "nativeEnums": {},
             "comment": null
@@ -190,6 +360,21 @@
                     "default": null,
                     "comment": null,
                     "enumItems": []
+                },
+                "note": {
+                    "name": "note",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
                 }
             },
             "indexes": [
@@ -249,7 +434,7 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": ["phone", "email"]
+                    "enumItems": ["phone", "email", "custom"]
                 },
                 "title": {
                     "name": "title",
@@ -310,6 +495,51 @@
                     "default": null,
                     "comment": null,
                     "enumItems": []
+                },
+                "note": {
+                    "name": "note",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "custom_label": {
+                    "name": "custom_label",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "history": {
+                    "name": "history",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": "'[]'",
+                    "comment": null,
+                    "enumItems": []
                 }
             },
             "indexes": [
@@ -326,8 +556,8 @@
                 {
                     "name": "customer_contact_type_check",
                     "columnName": "type",
-                    "definition": "check (\"type\" in ('phone', 'email'))",
-                    "expression": "\"type\" in ('phone', 'email')"
+                    "definition": "check (\"type\" in ('phone', 'email', 'custom'))",
+                    "expression": "\"type\" in ('phone', 'email', 'custom')"
                 }
             ],
             "foreignKeys": {
@@ -568,14 +798,14 @@
                 }
             ],
             "foreignKeys": {
-                "employee_permission_override_employee_id_fkey": {
+                "employee_permission_override_employee_id_foreign": {
                     "columnNames": ["employee_id"],
-                    "constraintName": "employee_permission_override_employee_id_fkey",
+                    "constraintName": "employee_permission_override_employee_id_foreign",
                     "localTableName": "public.employee_permission_override",
                     "referencedTableName": "public.employee",
                     "referencedColumnNames": ["id"],
-                    "updateRule": "cascade",
-                    "deleteRule": "cascade"
+                    "updateRule": "no action",
+                    "deleteRule": "no action"
                 }
             },
             "nativeEnums": {},
@@ -630,21 +860,6 @@
                     "comment": null,
                     "enumItems": []
                 },
-                "qualifications": {
-                    "name": "qualifications",
-                    "type": "jsonb",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": null,
-                    "precision": null,
-                    "scale": null,
-                    "default": "'[]'",
-                    "comment": null,
-                    "enumItems": []
-                },
                 "employee_id": {
                     "name": "employee_id",
                     "type": "uuid",
@@ -654,6 +869,21 @@
                     "nullable": false,
                     "unique": false,
                     "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "assigned_by": {
+                    "name": "assigned_by",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
                     "precision": null,
                     "scale": null,
                     "default": null,
@@ -673,14 +903,14 @@
             ],
             "checks": [],
             "foreignKeys": {
-                "employee_position_assignment_employee_id_fkey": {
+                "employee_position_assignment_employee_id_foreign": {
                     "columnNames": ["employee_id"],
-                    "constraintName": "employee_position_assignment_employee_id_fkey",
+                    "constraintName": "employee_position_assignment_employee_id_foreign",
                     "localTableName": "public.employee_position_assignment",
                     "referencedTableName": "public.employee",
                     "referencedColumnNames": ["id"],
-                    "updateRule": "cascade",
-                    "deleteRule": "cascade"
+                    "updateRule": "no action",
+                    "deleteRule": "no action"
                 }
             },
             "nativeEnums": {},
@@ -1136,6 +1366,94 @@
                     "expression": "\"status\" in ('DRAFTED', 'PLACED', 'IN_PROGRESS', 'CANCELLED', 'COMPLETED')"
                 }
             ],
+            "foreignKeys": {},
+            "nativeEnums": {},
+            "comment": null
+        },
+        {
+            "name": "position",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "key": {
+                    "name": "key",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": true,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "display_name": {
+                    "name": "display_name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
+                },
+                "permission_keys": {
+                    "name": "permission_keys",
+                    "type": "jsonb",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": "'[]'",
+                    "comment": null,
+                    "enumItems": []
+                }
+            },
+            "indexes": [
+                {
+                    "columnNames": ["key"],
+                    "composite": false,
+                    "constraint": true,
+                    "keyName": "position_key_unique",
+                    "unique": true,
+                    "primary": false
+                },
+                {
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": false,
+                    "keyName": "position_pkey",
+                    "unique": true,
+                    "primary": true
+                }
+            ],
+            "checks": [],
             "foreignKeys": {},
             "nativeEnums": {},
             "comment": null
@@ -1828,36 +2146,6 @@
                     "comment": null,
                     "enumItems": []
                 },
-                "first_name": {
-                    "name": "first_name",
-                    "type": "varchar(255)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": 255,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
-                "last_name": {
-                    "name": "last_name",
-                    "type": "varchar(255)",
-                    "unsigned": false,
-                    "autoincrement": false,
-                    "primary": false,
-                    "nullable": false,
-                    "unique": false,
-                    "length": 255,
-                    "precision": null,
-                    "scale": null,
-                    "default": null,
-                    "comment": null,
-                    "enumItems": []
-                },
                 "roles": {
                     "name": "roles",
                     "type": "text[]",
@@ -1887,6 +2175,21 @@
                     "default": null,
                     "comment": null,
                     "enumItems": ["unactivated", "activated", "suspended"]
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": []
                 }
             },
             "indexes": [
@@ -2054,7 +2357,7 @@
                     "length": null,
                     "precision": null,
                     "scale": null,
-                    "default": "'REGULAR'",
+                    "default": null,
                     "comment": null,
                     "enumItems": ["REGULAR", "MOBILE"]
                 }

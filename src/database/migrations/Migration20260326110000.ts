@@ -3,7 +3,7 @@ import { Migration } from "@mikro-orm/migrations";
 export class Migration20260326110000 extends Migration {
     override async up(): Promise<void> {
         this.addSql(`
-            create table "position" (
+            create table if not exists "position" (
                 "id" uuid not null,
                 "key" varchar(255) not null,
                 "display_name" varchar(255) not null,
