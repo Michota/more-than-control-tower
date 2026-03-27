@@ -889,3 +889,26 @@ The known risks (combinatorial explosion for high-cardinality attributes, dual-p
 - `FindEmployeesByQualificationQuery` replaced with `FindEmployeesByPermissionQuery`.
 - Position is now: `{ key, displayName, permissionKeys }` — simpler model.
 - Modules define capability permissions (e.g., `freight:drive-cat-c`) alongside action permissions (e.g., `freight:execute-route`).
+
+---
+
+# ADR-019: Email Notification Port
+
+**Status:** Proposed
+**Date:** 2026-03-27
+
+## Context
+
+Several flows would benefit from automated email delivery: user activation (sending the activation link instead of admin sharing it manually), self-service password reset, and future operational notifications (delivery confirmations, order receipts).
+
+Currently the admin manually shares activation tokens. Password reset doesn't exist — admin sets a new password directly.
+
+## Decision
+
+Introduce an `EmailPort` interface in `src/shared/ports/` with a single method: `send(to, subject, html)`. The initial adapter will use Resend (API-based, no SMTP infrastructure). The port makes the provider swappable (Resend → SendGrid → SES → SMTP) without touching consumers.
+
+Consumers: Auth module (activation emails, password reset), potentially Accountancy (sales documents) and Delivery (visit confirmations) later.
+
+## Status
+
+Not yet implemented. Tracked here so the port is designed when email sending is first needed rather than bolted on ad-hoc.
