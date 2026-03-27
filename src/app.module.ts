@@ -9,8 +9,6 @@ import { HrModule } from "./modules/hr/hr.module.js";
 import { SystemModule } from "./modules/system/system.module.js";
 import { CqrsModule } from "@nestjs/cqrs";
 import { PermissionRegistryModule } from "./shared/infrastructure/permission-registry.module.js";
-import { AUTHORIZATION_PORT } from "./shared/auth/authorization.port.js";
-import { HrAuthorizationAdapter } from "./shared/auth/hr-authorization.adapter.js";
 
 @Module({
     imports: [
@@ -31,11 +29,6 @@ import { HrAuthorizationAdapter } from "./shared/auth/hr-authorization.adapter.j
         SystemModule,
     ],
     controllers: [],
-    providers: [
-        {
-            provide: AUTHORIZATION_PORT,
-            useClass: HrAuthorizationAdapter,
-        },
-    ],
+    providers: [],
 })
 export class AppModule {}
