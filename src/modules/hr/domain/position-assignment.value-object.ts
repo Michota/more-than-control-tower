@@ -4,6 +4,7 @@ import z from "zod";
 const positionAssignmentSchema = z.object({
     positionKey: z.string().min(1),
     assignedAt: z.date(),
+    assignedBy: z.string().min(1),
 });
 
 export type PositionAssignmentProperties = z.infer<typeof positionAssignmentSchema>;
@@ -19,5 +20,9 @@ export class PositionAssignment extends ValueObjectWithSchema<PositionAssignment
 
     get assignedAt(): Date {
         return this.properties.assignedAt;
+    }
+
+    get assignedBy(): string {
+        return this.properties.assignedBy;
     }
 }

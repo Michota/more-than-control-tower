@@ -34,7 +34,7 @@ export class AssignPositionCommandHandler implements ICommandHandler<AssignPosit
             throw new EmployeeNotFoundError(cmd.employeeId);
         }
 
-        employee.assignPosition(cmd.positionKey);
+        employee.assignPosition(cmd.positionKey, cmd.assignedBy);
 
         await this.employeeRepo.save(employee);
         await this.uow.commit();

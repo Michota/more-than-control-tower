@@ -3,7 +3,6 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
-import { PermissionRegistry, PERMISSION_REGISTRY } from "../../shared/infrastructure/permission-registry.js";
 import { CreateEmployeeCommandHandler } from "./commands/create-employee/create-employee.command-handler.js";
 import { UpdateEmployeeCommandHandler } from "./commands/update-employee/update-employee.command-handler.js";
 import { LinkEmployeeToUserCommandHandler } from "./commands/link-employee-to-user/link-employee-to-user.command-handler.js";
@@ -70,11 +69,6 @@ import { EMPLOYEE_REPOSITORY_PORT, POSITION_REPOSITORY_PORT } from "./hr.di-toke
             useFactory: (em: EntityManager) => new MikroOrmUnitOfWork(em),
             inject: [EntityManager],
         },
-        {
-            provide: PERMISSION_REGISTRY,
-            useFactory: () => new PermissionRegistry(),
-        },
     ],
-    exports: [PERMISSION_REGISTRY],
 })
 export class HrModule {}

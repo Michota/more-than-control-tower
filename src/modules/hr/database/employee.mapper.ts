@@ -18,6 +18,7 @@ export class EmployeeMapper implements Mapper<EmployeeAggregate, RequiredEntityD
                 new DomainPositionAssignment({
                     positionKey: pa.positionKey,
                     assignedAt: pa.assignedAt,
+                    assignedBy: pa.assignedBy,
                 }),
         );
 
@@ -56,6 +57,7 @@ export class EmployeeMapper implements Mapper<EmployeeAggregate, RequiredEntityD
             positionAssignments: domain.positionAssignments.map((pa) => ({
                 positionKey: pa.positionKey,
                 assignedAt: pa.assignedAt,
+                assignedBy: pa.assignedBy,
             })) as RequiredEntityData<Employee>["positionAssignments"],
             permissionOverrides: domain.permissionOverrides.map((po) => ({
                 permissionKey: po.permissionKey,
@@ -76,6 +78,7 @@ export class EmployeeMapper implements Mapper<EmployeeAggregate, RequiredEntityD
             positionAssignments: employee.positionAssignments.map((pa) => ({
                 positionKey: pa.positionKey,
                 assignedAt: pa.assignedAt.toISOString(),
+                assignedBy: pa.assignedBy,
             })),
         };
     }

@@ -117,6 +117,7 @@ export class HrHttpController {
             new AssignPositionCommand({
                 employeeId: id,
                 positionKey: body.positionKey,
+                assignedBy: body.assignedBy,
             }),
         );
     }

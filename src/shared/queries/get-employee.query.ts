@@ -9,6 +9,7 @@ export class GetEmployeeQuery {
 export interface GetEmployeePositionAssignmentResponse {
     positionKey: string;
     assignedAt: string;
+    assignedBy: string;
 }
 
 export interface GetEmployeeResponse {

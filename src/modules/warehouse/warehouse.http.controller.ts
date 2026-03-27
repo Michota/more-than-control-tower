@@ -13,6 +13,8 @@ import {
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
+import { WarehousePermission } from "./warehouse.permissions.js";
 import type { UUID } from "crypto";
 import { SetGoodsReceiptLinesCommand } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command.js";
 import { SetGoodsReceiptLinesRequestDto } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.request.dto.js";
@@ -200,6 +202,7 @@ export class WarehouseHttpController {
         );
     }
 
+    @RequirePermission(WarehousePermission.CREATE_GOOD)
     @Post("goods")
     @ApiOperation({ summary: "Create a new good (type catalog entry)" })
     @ApiResponse({ status: 201, type: GoodIdResponseDto })

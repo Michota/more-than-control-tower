@@ -86,7 +86,7 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
         );
     }
 
-    assignPosition(positionKey: string): void {
+    assignPosition(positionKey: string, assignedBy: string): void {
         const existing = this.properties.positionAssignments.find((pa) => pa.positionKey === positionKey);
         if (existing) {
             throw new PositionAlreadyAssignedError(positionKey);
@@ -95,6 +95,7 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
         const assignment = new PositionAssignment({
             positionKey,
             assignedAt: new Date(),
+            assignedBy,
         });
 
         this.properties.positionAssignments.push(assignment);

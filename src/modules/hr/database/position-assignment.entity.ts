@@ -8,6 +8,7 @@ const PositionAssignmentSchema = defineEntity({
         id: p.uuid().primary().defaultRaw("gen_random_uuid()"),
         positionKey: p.string(),
         assignedAt: p.datetime(),
+        assignedBy: p.string(),
         employee: () => p.manyToOne(Employee).inversedBy("positionAssignments"),
     },
 });

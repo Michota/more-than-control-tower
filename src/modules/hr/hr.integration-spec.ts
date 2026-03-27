@@ -224,7 +224,9 @@ describe("HR Module — Integration Tests", () => {
 
         it("assigns a position to an employee", async () => {
             const id = await createEmployee();
-            await commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver" }));
+            await commandBus.execute(
+                new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver", assignedBy: "test-admin" }),
+            );
 
             const employee = await getEmployee(id);
             expect(employee!.positionAssignments).toHaveLength(1);
@@ -233,8 +235,16 @@ describe("HR Module — Integration Tests", () => {
 
         it("assigns multiple positions", async () => {
             const id = await createEmployee();
-            await commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver" }));
-            await commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "warehouse:worker" }));
+            await commandBus.execute(
+                new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver", assignedBy: "test-admin" }),
+            );
+            await commandBus.execute(
+                new AssignPositionCommand({
+                    employeeId: id,
+                    positionKey: "warehouse:worker",
+                    assignedBy: "test-admin",
+                }),
+            );
 
             const employee = await getEmployee(id);
             expect(employee!.positionAssignments).toHaveLength(2);
@@ -244,16 +254,30 @@ describe("HR Module — Integration Tests", () => {
             const id = await createEmployee();
 
             await expect(
-                commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "fake:position" })),
+                commandBus.execute(
+                    new AssignPositionCommand({
+                        employeeId: id,
+                        positionKey: "fake:position",
+                        assignedBy: "test-admin",
+                    }),
+                ),
             ).rejects.toThrow(InvalidPositionKeyError);
         });
 
         it("throws PositionAlreadyAssignedError for duplicate", async () => {
             const id = await createEmployee();
-            await commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver" }));
+            await commandBus.execute(
+                new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver", assignedBy: "test-admin" }),
+            );
 
             await expect(
-                commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver" })),
+                commandBus.execute(
+                    new AssignPositionCommand({
+                        employeeId: id,
+                        positionKey: "freight:driver",
+                        assignedBy: "test-admin",
+                    }),
+                ),
             ).rejects.toThrow(PositionAlreadyAssignedError);
         });
     });
@@ -262,7 +286,9 @@ describe("HR Module — Integration Tests", () => {
         it("removes a position assignment", async () => {
             const id = await createEmployee();
             await ensurePosition("freight:driver", "Driver");
-            await commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver" }));
+            await commandBus.execute(
+                new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver", assignedBy: "test-admin" }),
+            );
 
             await commandBus.execute(new UnassignPositionCommand({ employeeId: id, positionKey: "freight:driver" }));
 
@@ -370,7 +396,9 @@ describe("HR Module — Integration Tests", () => {
 
         it("finds employees who have a specific permission via their position", async () => {
             const id = await createEmployee({ firstName: "PermDriver", lastName: "Test" });
-            await commandBus.execute(new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver" }));
+            await commandBus.execute(
+                new AssignPositionCommand({ employeeId: id, positionKey: "freight:driver", assignedBy: "test-admin" }),
+            );
 
             const result = await queryBus.execute<FindEmployeesByPermissionQuery, FindEmployeesByPermissionResponse>(
                 new FindEmployeesByPermissionQuery("freight:drive-cat-c"),

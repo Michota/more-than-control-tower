@@ -28,6 +28,7 @@ const driverAssignment = () =>
     new PositionAssignment({
         positionKey: "freight:driver",
         assignedAt: new Date("2026-01-15"),
+        assignedBy: "hr-admin-001",
     });
 
 describe("EmployeeAggregate.create()", () => {
@@ -119,7 +120,7 @@ describe("EmployeeAggregate position management", () => {
     describe("assignPosition()", () => {
         it("assigns a position", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver");
+            employee.assignPosition("freight:driver", "hr-admin-001");
 
             expect(employee.positionAssignments).toHaveLength(1);
             expect(employee.positionAssignments[0].positionKey).toBe("freight:driver");
@@ -127,8 +128,8 @@ describe("EmployeeAggregate position management", () => {
 
         it("allows multiple different positions", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver");
-            employee.assignPosition("warehouse:worker");
+            employee.assignPosition("freight:driver", "hr-admin-001");
+            employee.assignPosition("warehouse:worker", "hr-admin-001");
 
             expect(employee.positionAssignments).toHaveLength(2);
         });
@@ -136,7 +137,7 @@ describe("EmployeeAggregate position management", () => {
         it("emits PositionAssignedDomainEvent", () => {
             const employee = EmployeeAggregate.create(validProps());
             employee.clearEvents();
-            employee.assignPosition("freight:driver");
+            employee.assignPosition("freight:driver", "hr-admin-001");
 
             expect(employee.domainEvents).toHaveLength(1);
             expect(employee.domainEvents[0]).toBeInstanceOf(PositionAssignedDomainEvent);
@@ -145,16 +146,18 @@ describe("EmployeeAggregate position management", () => {
 
         it("throws when position is already assigned", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver");
+            employee.assignPosition("freight:driver", "hr-admin-001");
 
-            expect(() => employee.assignPosition("freight:driver")).toThrow(PositionAlreadyAssignedError);
+            expect(() => employee.assignPosition("freight:driver", "hr-admin-001")).toThrow(
+                PositionAlreadyAssignedError,
+            );
         });
     });
 
     describe("unassignPosition()", () => {
         it("removes a position assignment", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver");
+            employee.assignPosition("freight:driver", "hr-admin-001");
             employee.clearEvents();
 
             employee.unassignPosition("freight:driver");
@@ -164,7 +167,7 @@ describe("EmployeeAggregate position management", () => {
 
         it("emits PositionUnassignedDomainEvent", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver");
+            employee.assignPosition("freight:driver", "hr-admin-001");
             employee.clearEvents();
 
             employee.unassignPosition("freight:driver");
@@ -183,7 +186,7 @@ describe("EmployeeAggregate position management", () => {
     describe("hasPosition()", () => {
         it("returns true for assigned position", () => {
             const employee = EmployeeAggregate.create(validProps());
-            employee.assignPosition("freight:driver");
+            employee.assignPosition("freight:driver", "hr-admin-001");
 
             expect(employee.hasPosition("freight:driver")).toBe(true);
         });
@@ -269,7 +272,7 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("returns position-based permissions", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver");
+        employee.assignPosition("freight:driver", "hr-admin-001");
 
         const perms = employee.getEffectivePermissions(positionPermissions);
 
@@ -280,8 +283,8 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("merges permissions from multiple positions", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver");
-        employee.assignPosition("warehouse:worker");
+        employee.assignPosition("freight:driver", "hr-admin-001");
+        employee.assignPosition("warehouse:worker", "hr-admin-001");
 
         const perms = employee.getEffectivePermissions(positionPermissions);
 
@@ -292,7 +295,7 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("ALLOWED override adds a permission not in position defaults", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver");
+        employee.assignPosition("freight:driver", "hr-admin-001");
         employee.setPermissionOverride("freight:plan-route", PermissionOverrideState.ALLOWED);
 
         const perms = employee.getEffectivePermissions(positionPermissions);
@@ -302,7 +305,7 @@ describe("EmployeeAggregate.getEffectivePermissions()", () => {
 
     it("DENIED override removes a permission from position defaults", () => {
         const employee = EmployeeAggregate.create(validProps());
-        employee.assignPosition("freight:driver");
+        employee.assignPosition("freight:driver", "hr-admin-001");
         employee.setPermissionOverride("freight:execute-route", PermissionOverrideState.DENIED);
 
         const perms = employee.getEffectivePermissions(positionPermissions);
