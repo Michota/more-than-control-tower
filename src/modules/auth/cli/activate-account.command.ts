@@ -1,14 +1,7 @@
 import { Inject } from "@nestjs/common";
-import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
-import { GetSystemUserQuery, GetSystemUserResponse } from "../../../shared/queries/get-system-user.query.js";
-import { ActivateSystemUserCommand } from "../../system/commands/activate-system-user/activate-system-user.command.js";
-import { AuthCredentialsAggregate } from "../domain/auth-credentials.aggregate.js";
-import type { AuthCredentialsRepositoryPort } from "../database/auth-credentials.repository.port.js";
-import type { PasswordHasherPort } from "../infrastructure/password-hasher.port.js";
-import { AUTH_CREDENTIALS_REPOSITORY_PORT, PASSWORD_HASHER_PORT } from "../auth.di-tokens.js";
-import type { UnitOfWorkPort } from "../../../shared/ports/unit-of-work.port.js";
-import { UNIT_OF_WORK_PORT } from "../../../shared/ports/tokens.js";
+import { SetPasswordCommand } from "../commands/set-password/set-password.command.js";
 
 interface ActivateAccountOptions {
     userId: string;
@@ -20,13 +13,7 @@ interface ActivateAccountOptions {
     description: "Set password and activate a user account (for first admin bootstrap)",
 })
 export class ActivateAccountCliCommand extends CommandRunner {
-    constructor(
-        @Inject(CommandBus) private readonly commandBus: CommandBus,
-        @Inject(QueryBus) private readonly queryBus: QueryBus,
-        @Inject(AUTH_CREDENTIALS_REPOSITORY_PORT) private readonly credentialsRepo: AuthCredentialsRepositoryPort,
-        @Inject(PASSWORD_HASHER_PORT) private readonly passwordHasher: PasswordHasherPort,
-        @Inject(UNIT_OF_WORK_PORT) private readonly uow: UnitOfWorkPort,
-    ) {
+    constructor(@Inject(CommandBus) private readonly commandBus: CommandBus) {
         super();
     }
 
@@ -41,34 +28,9 @@ export class ActivateAccountCliCommand extends CommandRunner {
             return;
         }
 
-        const user = await this.queryBus.execute<GetSystemUserQuery, GetSystemUserResponse | null>(
-            new GetSystemUserQuery(options.userId),
-        );
+        await this.commandBus.execute(new SetPasswordCommand({ userId: options.userId, password: options.password }));
 
-        if (!user) {
-            console.error(`User ${options.userId} not found`);
-            return;
-        }
-
-        if (user.status !== "UNACTIVATED") {
-            console.error(`User ${options.userId} is already ${user.status.toLowerCase()}`);
-            return;
-        }
-
-        const existing = await this.credentialsRepo.findByUserId(options.userId);
-        if (existing) {
-            console.error(`Credentials already exist for user ${options.userId}`);
-            return;
-        }
-
-        const passwordHash = await this.passwordHasher.hash(options.password);
-        const credentials = AuthCredentialsAggregate.create({ userId: options.userId, passwordHash });
-
-        await this.credentialsRepo.save(credentials);
-        await this.commandBus.execute(new ActivateSystemUserCommand({ userId: options.userId }));
-        await this.uow.commit();
-
-        console.log(`Account activated for ${user.email}. User can now log in.`);
+        console.log("Account activated. User can now log in.");
     }
 
     @Option({

@@ -14,6 +14,7 @@ import { ActivateAccountCommandHandler } from "./commands/activate-account/activ
 import { LoginCommandHandler } from "./commands/login/login.command-handler.js";
 import { RefreshTokenCommandHandler } from "./commands/refresh-token/refresh-token.command-handler.js";
 import { GenerateActivationTokenCommandHandler } from "./commands/generate-activation-token/generate-activation-token.command-handler.js";
+import { SetPasswordCommandHandler } from "./commands/set-password/set-password.command-handler.js";
 
 @Module({
     imports: [MikroOrmModule.forFeature([AuthCredentials]), JwtModule.register({})],
@@ -24,6 +25,7 @@ import { GenerateActivationTokenCommandHandler } from "./commands/generate-activ
         LoginCommandHandler,
         RefreshTokenCommandHandler,
         GenerateActivationTokenCommandHandler,
+        SetPasswordCommandHandler,
         {
             provide: AUTH_CREDENTIALS_REPOSITORY_PORT,
             useFactory: (em: EntityManager) => new AuthCredentialsRepository(em),
