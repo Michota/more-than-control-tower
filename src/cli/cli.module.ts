@@ -7,6 +7,8 @@ import { PermissionRegistryModule } from "../shared/infrastructure/permission-re
 import { CrmModule } from "../modules/crm/crm.module.js";
 import { HrModule } from "../modules/hr/hr.module.js";
 import { SystemModule } from "../modules/system/system.module.js";
+import { AuthModule } from "../modules/auth/auth.module.js";
+import { GenerateActivationTokenCliCommand } from "../modules/auth/cli/generate-activation-token.command.js";
 import { SearchCustomersCliCommand } from "../modules/crm/cli/search-customers.command.js";
 import { DeactivateEmployeeCliCommand } from "../modules/hr/cli/deactivate-employee.command.js";
 import { DeleteEmployeeCliCommand } from "../modules/hr/cli/delete-employee.command.js";
@@ -37,6 +39,7 @@ import { UpdateAdminCliCommand } from "../modules/system/cli/update-admin.comman
         CrmModule,
         HrModule,
         SystemModule,
+        AuthModule,
     ],
     providers: [
         // System
@@ -49,6 +52,8 @@ import { UpdateAdminCliCommand } from "../modules/system/cli/update-admin.comman
         DeleteEmployeeCliCommand,
         DeactivateEmployeeCliCommand,
         ListEmployeesCliCommand,
+        // Auth
+        GenerateActivationTokenCliCommand,
         // CRM
         SearchCustomersCliCommand,
     ],
