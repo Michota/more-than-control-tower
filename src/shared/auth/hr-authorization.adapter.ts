@@ -1,5 +1,5 @@
 import { QueryBus } from "@nestjs/cqrs";
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { AuthorizationPort } from "./authorization.port.js";
 import { GetSystemUserQuery, GetSystemUserResponse } from "../queries/get-system-user.query.js";
 import {
@@ -19,6 +19,8 @@ import {
  */
 @Injectable()
 export class HrAuthorizationAdapter implements AuthorizationPort {
+    private readonly logger = new Logger(HrAuthorizationAdapter.name);
+
     constructor(private readonly queryBus: QueryBus) {}
 
     async canPerform(userId: string, action: string): Promise<boolean> {
@@ -41,7 +43,8 @@ export class HrAuthorizationAdapter implements AuthorizationPort {
             return await this.queryBus.execute<GetSystemUserQuery, GetSystemUserResponse | null>(
                 new GetSystemUserQuery(userId),
             );
-        } catch {
+        } catch (error) {
+            this.logger.error(`Failed to query system user ${userId} for authorization`, error);
             return null;
         }
     }
@@ -51,7 +54,8 @@ export class HrAuthorizationAdapter implements AuthorizationPort {
             return await this.queryBus.execute<GetEmployeePermissionsQuery, GetEmployeePermissionsResponse | null>(
                 new GetEmployeePermissionsQuery(userId),
             );
-        } catch {
+        } catch (error) {
+            this.logger.error(`Failed to query employee permissions for user ${userId}`, error);
             return null;
         }
     }

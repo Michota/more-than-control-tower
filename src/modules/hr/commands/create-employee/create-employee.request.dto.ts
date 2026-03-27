@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsOptional, IsString } from "class-validator";
+import { IsEmail, IsOptional, IsString } from "class-validator";
 
 export class CreateEmployeeRequest {
     @IsString()
@@ -18,8 +18,4 @@ export class CreateEmployeeRequest {
     @IsOptional()
     @IsString()
     userId?: string;
-
-    @IsOptional()
-    @IsBoolean()
-    skipUniquenessCheck?: boolean;
 }

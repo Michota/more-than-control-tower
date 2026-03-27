@@ -30,6 +30,7 @@ export class RefreshTokenCommandHandler implements ICommandHandler<RefreshTokenC
 
         return {
             accessToken: this.jwtTokenService.signAccessToken(userId),
+            refreshToken: this.jwtTokenService.signRefreshToken(userId),
         };
     }
 }

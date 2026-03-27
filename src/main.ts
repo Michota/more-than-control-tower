@@ -9,6 +9,10 @@ import { DomainExceptionFilter } from "./libs/exceptions/domain-exception.filter
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
+    app.enableCors({
+        origin: env.CORS_ORIGIN?.split(",") ?? [],
+        credentials: true,
+    });
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     app.useGlobalFilters(new DomainExceptionFilter());
 

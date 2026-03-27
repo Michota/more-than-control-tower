@@ -3,6 +3,7 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule, ConfigType } from "@nestjs/config";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { CrmModule } from "./modules/crm/crm.module.js";
 import { SalesModule } from "./modules/sales/sales.module.js";
 import { WarehouseModule } from "./modules/warehouse/warehouse.module.js";
@@ -22,6 +23,9 @@ import { JwtAuthGuard } from "./shared/auth/guards/jwt-auth.guard.js";
             inject: [databaseConfig.KEY],
         }),
         CqrsModule.forRoot(),
+        ThrottlerModule.forRoot({
+            throttlers: [{ ttl: 60_000, limit: 10 }],
+        }),
         PermissionRegistryModule,
 
         // Modules
@@ -34,6 +38,10 @@ import { JwtAuthGuard } from "./shared/auth/guards/jwt-auth.guard.js";
     ],
     controllers: [],
     providers: [
+        {
+            provide: APP_GUARD,
+            useClass: ThrottlerGuard,
+        },
         {
             provide: APP_GUARD,
             useClass: JwtAuthGuard,

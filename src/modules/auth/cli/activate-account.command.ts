@@ -1,12 +1,14 @@
 import { Inject } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
+import z from "zod";
+import { passwordSchema } from "../domain/password.schema.js";
 import { SetPasswordCommand } from "../commands/set-password/set-password.command.js";
 
-interface ActivateAccountOptions {
-    userId: string;
-    password: string;
-}
+const cliOptionsSchema = z.object({
+    userId: z.uuid("Invalid user ID format"),
+    password: passwordSchema,
+});
 
 @Command({
     name: "activate-account",
@@ -17,18 +19,16 @@ export class ActivateAccountCliCommand extends CommandRunner {
         super();
     }
 
-    async run(_passedParams: string[], options: ActivateAccountOptions): Promise<void> {
-        if (!options.userId || !options.password) {
-            console.error("--user-id and --password are both required");
+    async run(_passedParams: string[], options: { userId: string; password: string }): Promise<void> {
+        const result = cliOptionsSchema.safeParse(options);
+        if (!result.success) {
+            console.error(z.prettifyError(result.error));
             return;
         }
 
-        if (options.password.length < 8) {
-            console.error("Password must be at least 8 characters");
-            return;
-        }
-
-        await this.commandBus.execute(new SetPasswordCommand({ userId: options.userId, password: options.password }));
+        await this.commandBus.execute(
+            new SetPasswordCommand({ userId: result.data.userId, password: result.data.password }),
+        );
 
         console.log("Account activated. User can now log in.");
     }

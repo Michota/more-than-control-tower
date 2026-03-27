@@ -1,12 +1,17 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { JwtService } from "@nestjs/jwt";
+import { QueryBus } from "@nestjs/cqrs";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator.js";
 import { env } from "../../../config/env.js";
+import { GetSystemUserQuery, GetSystemUserResponse } from "../../queries/get-system-user.query.js";
 
 interface JwtPayload {
     sub: string;
     type?: string;
+    purpose?: string;
+    aud?: string;
+    iss?: string;
 }
 
 /**
@@ -15,6 +20,7 @@ interface JwtPayload {
  * Reads `Authorization: Bearer <token>` header, verifies the JWT,
  * and sets `req.user = { userId }` for downstream guards and handlers.
  *
+ * Rejects refresh tokens, activation tokens, and suspended/unactivated users.
  * Routes decorated with @Public() bypass this guard.
  */
 @Injectable()
@@ -22,6 +28,7 @@ export class JwtAuthGuard implements CanActivate {
     constructor(
         private readonly reflector: Reflector,
         private readonly jwtService: JwtService,
+        private readonly queryBus: QueryBus,
     ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -50,6 +57,18 @@ export class JwtAuthGuard implements CanActivate {
 
             if (payload.type === "refresh") {
                 throw new UnauthorizedException("Refresh token cannot be used as access token");
+            }
+
+            if (payload.purpose === "activation") {
+                throw new UnauthorizedException("Activation token cannot be used as access token");
+            }
+
+            const systemUser = await this.queryBus.execute<GetSystemUserQuery, GetSystemUserResponse | null>(
+                new GetSystemUserQuery(payload.sub),
+            );
+
+            if (!systemUser || systemUser.status !== "activated") {
+                throw new UnauthorizedException("User account is not active");
             }
 
             request.user = { userId: payload.sub };

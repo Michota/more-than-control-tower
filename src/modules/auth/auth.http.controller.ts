@@ -20,7 +20,7 @@ import {
     generateActivationTokenSchema,
     type GenerateActivationTokenRequestDto,
 } from "./commands/generate-activation-token/generate-activation-token.request.dto.js";
-import { AccessTokenResponseDto, ActivationTokenResponseDto, AuthTokensResponseDto } from "./dtos/auth.response.dto.js";
+import { ActivationTokenResponseDto, AuthTokensResponseDto } from "./dtos/auth.response.dto.js";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -61,8 +61,8 @@ export class AuthHttpController {
     @HttpCode(HttpStatus.OK)
     @UsePipes(new ZodValidationPipe(refreshTokenSchema))
     @ApiOperation({ summary: "Refresh access token" })
-    @ApiResponse({ status: 200, type: AccessTokenResponseDto })
-    async refreshToken(@Body() body: RefreshTokenRequestDto): Promise<AccessTokenResponseDto> {
+    @ApiResponse({ status: 200, type: AuthTokensResponseDto })
+    async refreshToken(@Body() body: RefreshTokenRequestDto): Promise<AuthTokensResponseDto> {
         return this.commandBus.execute<RefreshTokenCommand, RefreshTokenResult>(
             new RefreshTokenCommand({
                 refreshToken: body.refreshToken,
