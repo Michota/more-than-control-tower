@@ -9,6 +9,7 @@ import { HrModule } from "../modules/hr/hr.module.js";
 import { SystemModule } from "../modules/system/system.module.js";
 import { AuthModule } from "../modules/auth/auth.module.js";
 import { ActivateAccountCliCommand } from "../modules/auth/cli/activate-account.command.js";
+import { ChangePasswordCliCommand } from "../modules/auth/cli/change-password.command.js";
 import { GenerateActivationTokenCliCommand } from "../modules/auth/cli/generate-activation-token.command.js";
 import { SearchCustomersCliCommand } from "../modules/crm/cli/search-customers.command.js";
 import { DeactivateEmployeeCliCommand } from "../modules/hr/cli/deactivate-employee.command.js";
@@ -55,6 +56,7 @@ import { UpdateUserCliCommand } from "../modules/system/cli/update-user.command.
         ListEmployeesCliCommand,
         // Auth
         ActivateAccountCliCommand,
+        ChangePasswordCliCommand,
         GenerateActivationTokenCliCommand,
         // CRM
         SearchCustomersCliCommand,
