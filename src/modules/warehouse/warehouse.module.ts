@@ -28,6 +28,8 @@ import {
     ActivateSectorCommandHandler,
     DeactivateSectorCommandHandler,
 } from "./commands/change-sector-status/change-sector-status.command-handler.js";
+import { AttachCodeToGoodCommandHandler } from "./commands/attach-code-to-good/attach-code-to-good.command-handler.js";
+import { DetachCodeFromGoodCommandHandler } from "./commands/detach-code-from-good/detach-code-from-good.command-handler.js";
 import { GetGoodQueryHandler } from "./queries/get-good/get-good.query-handler.js";
 import { GetGoodsReceiptQueryHandler } from "./queries/get-goods-receipt/get-goods-receipt.query-handler.js";
 import { ListGoodsReceiptsQueryHandler } from "./queries/list-goods-receipts/list-goods-receipts.query-handler.js";
@@ -38,6 +40,10 @@ import { ListSectorsQueryHandler } from "./queries/list-sectors/list-sectors.que
 import { GetSectorQueryHandler } from "./queries/get-sector/get-sector.query-handler.js";
 import { GetSectorLoadQueryHandler } from "./queries/get-sector-load/get-sector-load.query-handler.js";
 import { GetGoodExistsQueryHandler } from "./queries/get-good-exists/get-good-exists.query-handler.js";
+import { FindGoodByCodeQueryHandler } from "./queries/find-good-by-code/find-good-by-code.query-handler.js";
+import { ListCodesForGoodQueryHandler } from "./queries/list-codes-for-good/list-codes-for-good.query-handler.js";
+import { Code } from "./database/code.entity.js";
+import { CodeRepository } from "./database/code.repository.js";
 import { Good } from "./database/good.entity.js";
 import { GoodRepository } from "./database/good.repository.js";
 import { GoodsReceipt } from "./database/goods-receipt.entity.js";
@@ -49,6 +55,7 @@ import { SectorRepository } from "./database/sector.repository.js";
 import { Warehouse } from "./database/warehouse.entity.js";
 import { WarehouseRepository } from "./database/warehouse.repository.js";
 import {
+    CODE_REPOSITORY_PORT,
     GOOD_REPOSITORY_PORT,
     GOODS_RECEIPT_REPOSITORY_PORT,
     SECTOR_REPOSITORY_PORT,
@@ -58,7 +65,7 @@ import {
 import { WarehouseHttpController } from "./warehouse.http.controller.js";
 
 @Module({
-    imports: [MikroOrmModule.forFeature([Good, Warehouse, GoodsReceipt, StockEntry, Sector])],
+    imports: [MikroOrmModule.forFeature([Good, Warehouse, GoodsReceipt, StockEntry, Sector, Code])],
     controllers: [WarehouseHttpController],
     providers: [
         CreateGoodCommandHandler,
@@ -79,6 +86,8 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         DeactivateWarehouseCommandHandler,
         ActivateSectorCommandHandler,
         DeactivateSectorCommandHandler,
+        AttachCodeToGoodCommandHandler,
+        DetachCodeFromGoodCommandHandler,
         GetGoodQueryHandler,
         GetGoodsReceiptQueryHandler,
         ListGoodsReceiptsQueryHandler,
@@ -89,6 +98,13 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         GetSectorQueryHandler,
         GetSectorLoadQueryHandler,
         GetGoodExistsQueryHandler,
+        FindGoodByCodeQueryHandler,
+        ListCodesForGoodQueryHandler,
+        {
+            provide: CODE_REPOSITORY_PORT,
+            useFactory: (em: EntityManager) => new CodeRepository(em),
+            inject: [EntityManager],
+        },
         {
             provide: GOOD_REPOSITORY_PORT,
             useFactory: (em: EntityManager) => new GoodRepository(em),
@@ -137,6 +153,9 @@ export class WarehouseModule implements OnModuleInit {
             { key: "edit-good", name: "Edit Good" },
             { key: "delete-goods", name: "Delete Goods" },
             { key: "view-goods", name: "View Goods" },
+            { key: "attach-code", name: "Attach Code to Good" },
+            { key: "detach-code", name: "Detach Code from Good" },
+            { key: "view-codes", name: "View Codes" },
             { key: "create-warehouse", name: "Create Warehouse" },
             { key: "edit-warehouse", name: "Edit Warehouse" },
             { key: "change-warehouse-status", name: "Change Warehouse Status" },

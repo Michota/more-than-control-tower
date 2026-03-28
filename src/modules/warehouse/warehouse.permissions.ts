@@ -34,6 +34,11 @@ export const WarehousePermission = {
     DELETE_GOODS_RECEIPT: "warehouse:delete-goods-receipt",
     VIEW_GOODS_RECEIPTS: "warehouse:view-goods-receipts",
 
+    // Codes
+    ATTACH_CODE: "warehouse:attach-code",
+    DETACH_CODE: "warehouse:detach-code",
+    VIEW_CODES: "warehouse:view-codes",
+
     // Stock
     TRANSFER_STOCK: "warehouse:transfer-stock",
     REMOVE_STOCK: "warehouse:remove-stock",

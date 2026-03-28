@@ -37,7 +37,15 @@ import {
     DeactivateWarehouseCommand,
 } from "./commands/change-warehouse-status/change-warehouse-status.command";
 import { DeactivateSectorCommand } from "./commands/change-sector-status/change-sector-status.command";
-import { WarehouseHasStockError, GoodHasActiveStockError } from "./domain/good.errors";
+import { WarehouseHasStockError, GoodHasActiveStockError, GoodNotFoundError } from "./domain/good.errors";
+import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
+import { AttachCodeToGoodCommand } from "./commands/attach-code-to-good/attach-code-to-good.command";
+import { DetachCodeFromGoodCommand } from "./commands/detach-code-from-good/detach-code-from-good.command";
+import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-code.query";
+import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-for-good.query";
+import { CodeType } from "./domain/code-type.enum";
+import { CodeNotFoundError, CodeValueAlreadyExistsError } from "./domain/code.errors";
+import { uuidRegex } from "src/shared/utils/uuid-regex";
 
 describe("Warehouse Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -47,7 +55,7 @@ describe("Warehouse Module — Integration Tests", () => {
 
     beforeAll(async () => {
         moduleRef = await Test.createTestingModule({
-            imports: [TestMikroOrmDatabaseModule(), CqrsModule.forRoot(), WarehouseModule],
+            imports: [TestMikroOrmDatabaseModule(), CqrsModule.forRoot(), PermissionRegistryModule, WarehouseModule],
         }).compile();
 
         await moduleRef.init();
@@ -1285,6 +1293,137 @@ describe("Warehouse Module — Integration Tests", () => {
             );
 
             expect(result).toHaveLength(0);
+        });
+    });
+
+    // ─── Codes ────────────────────────────────────────────────
+
+    describe("Codes (barcode, QR, etc.)", () => {
+        it("attaches a code to a good and lists it", async () => {
+            const goodId = await createGood({ name: "Coded Product" });
+
+            const codeId: string = await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId,
+                    type: CodeType.EAN_13,
+                    value: "5901234123457",
+                }),
+            );
+
+            expect(codeId).toMatch(uuidRegex);
+
+            const codes = await queryBus.execute(new ListCodesForGoodQuery(goodId));
+            expect(codes).toHaveLength(1);
+            expect(codes[0]).toEqual({
+                id: codeId,
+                type: CodeType.EAN_13,
+                value: "5901234123457",
+            });
+        });
+
+        it("attaches multiple codes of different types to the same good", async () => {
+            const goodId = await createGood({ name: "Multi-code Product" });
+
+            await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId,
+                    type: CodeType.EAN_13,
+                    value: "5901234000001",
+                }),
+            );
+
+            await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId,
+                    type: CodeType.QR,
+                    value: "QR-MULTI-001",
+                }),
+            );
+
+            const codes = await queryBus.execute(new ListCodesForGoodQuery(goodId));
+            expect(codes).toHaveLength(2);
+        });
+
+        it("rejects duplicate code values", async () => {
+            const goodId1 = await createGood({ name: "Product A" });
+            const goodId2 = await createGood({ name: "Product B" });
+
+            await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId: goodId1,
+                    type: CodeType.EAN_13,
+                    value: "5901234999999",
+                }),
+            );
+
+            await expect(
+                commandBus.execute(
+                    new AttachCodeToGoodCommand({
+                        goodId: goodId2,
+                        type: CodeType.EAN_13,
+                        value: "5901234999999",
+                    }),
+                ),
+            ).rejects.toThrow(CodeValueAlreadyExistsError);
+        });
+
+        it("looks up a good by code value", async () => {
+            const goodId = await createGood({ name: "Lookup Product" });
+
+            await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId,
+                    type: CodeType.CODE_128,
+                    value: "LOOKUP-CODE-001",
+                }),
+            );
+
+            const result = await queryBus.execute(new FindGoodByCodeQuery("LOOKUP-CODE-001"));
+            expect(result.goodId).toEqual(goodId);
+            expect(result.goodName).toEqual("Lookup Product");
+            expect(result.codeType).toEqual(CodeType.CODE_128);
+            expect(result.codeValue).toEqual("LOOKUP-CODE-001");
+        });
+
+        it("detaches a code from a good", async () => {
+            const goodId = await createGood({ name: "Detach Product" });
+
+            const codeId: string = await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId,
+                    type: CodeType.INTERNAL,
+                    value: "INT-DETACH-001",
+                }),
+            );
+
+            await commandBus.execute(new DetachCodeFromGoodCommand({ codeId }));
+
+            const codes = await queryBus.execute(new ListCodesForGoodQuery(goodId));
+            expect(codes).toHaveLength(0);
+        });
+
+        it("throws CodeNotFoundError when looking up a non-existent code value", async () => {
+            await expect(
+                queryBus.execute(new FindGoodByCodeQuery("NONEXISTENT-CODE")),
+            ).rejects.toThrow(CodeNotFoundError);
+        });
+
+        it("throws CodeNotFoundError when detaching a non-existent code", async () => {
+            await expect(
+                commandBus.execute(new DetachCodeFromGoodCommand({ codeId: "00000000-0000-0000-0000-000000000000" })),
+            ).rejects.toThrow(CodeNotFoundError);
+        });
+
+        it("throws GoodNotFoundError when attaching a code to a non-existent good", async () => {
+            await expect(
+                commandBus.execute(
+                    new AttachCodeToGoodCommand({
+                        goodId: "00000000-0000-0000-0000-000000000000",
+                        type: CodeType.EAN_13,
+                        value: "ORPHAN-CODE-001",
+                    }),
+                ),
+            ).rejects.toThrow(GoodNotFoundError);
         });
     });
 });

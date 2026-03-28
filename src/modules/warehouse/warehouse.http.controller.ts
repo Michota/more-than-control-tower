@@ -67,6 +67,12 @@ import {
     ActivateSectorCommand,
     DeactivateSectorCommand,
 } from "./commands/change-sector-status/change-sector-status.command.js";
+import { AttachCodeToGoodCommand } from "./commands/attach-code-to-good/attach-code-to-good.command.js";
+import { AttachCodeToGoodRequestDto } from "./commands/attach-code-to-good/attach-code-to-good.request.dto.js";
+import { DetachCodeFromGoodCommand } from "./commands/detach-code-from-good/detach-code-from-good.command.js";
+import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-code.query.js";
+import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-for-good.query.js";
+import { CodeIdResponseDto, CodeResponseDto, FindGoodByCodeResponseDto } from "./dtos/code.response.dto.js";
 
 @ApiTags("Warehouse")
 @Controller("warehouse")
@@ -221,6 +227,51 @@ export class WarehouseHttpController {
             }),
         );
         return { goodId };
+    }
+
+    // ─── Codes ───────────────────────────────────────────────
+
+    @RequirePermission(WarehousePermission.VIEW_CODES)
+    @Get("codes/lookup")
+    @ApiOperation({ summary: "Find a good by scanning a code value" })
+    @ApiQuery({ name: "value", description: "Code value to look up", example: "5901234123457" })
+    @ApiResponse({ status: 200, type: FindGoodByCodeResponseDto })
+    async findGoodByCode(@Query("value") value: string): Promise<FindGoodByCodeResponseDto> {
+        return this.queryBus.execute(new FindGoodByCodeQuery(value));
+    }
+
+    @RequirePermission(WarehousePermission.VIEW_CODES)
+    @Get("goods/:goodId/codes")
+    @ApiOperation({ summary: "List all codes attached to a good" })
+    @ApiResponse({ status: 200, type: [CodeResponseDto] })
+    async listCodesForGood(@Param("goodId", ParseUUIDPipe) goodId: UUID): Promise<CodeResponseDto[]> {
+        return this.queryBus.execute(new ListCodesForGoodQuery(goodId));
+    }
+
+    @RequirePermission(WarehousePermission.ATTACH_CODE)
+    @Post("goods/:goodId/codes")
+    @ApiOperation({ summary: "Attach a code (barcode, QR, etc.) to a good" })
+    @ApiResponse({ status: 201, type: CodeIdResponseDto })
+    async attachCodeToGood(
+        @Param("goodId", ParseUUIDPipe) goodId: UUID,
+        @Body() body: AttachCodeToGoodRequestDto,
+    ): Promise<CodeIdResponseDto> {
+        const codeId = await this.commandBus.execute(
+            new AttachCodeToGoodCommand({
+                goodId,
+                type: body.type,
+                value: body.value,
+            }),
+        );
+        return { codeId };
+    }
+
+    @RequirePermission(WarehousePermission.DETACH_CODE)
+    @Delete("goods/:goodId/codes/:codeId")
+    @ApiOperation({ summary: "Detach a code from a good" })
+    @ApiResponse({ status: 200 })
+    async detachCodeFromGood(@Param("codeId", ParseUUIDPipe) codeId: UUID): Promise<void> {
+        await this.commandBus.execute(new DetachCodeFromGoodCommand({ codeId }));
     }
 
     // ─── Goods Receipts ──────────────────────────────────────
