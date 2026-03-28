@@ -6,6 +6,7 @@ import { Money } from "../../../shared/value-objects/money.js";
 import { OrderItemEntity } from "./order-item.entity.js";
 import { OrderDraftedDomainEvent } from "./events/order-drafted.domain-event.js";
 import { OrderLines } from "./order-lines.value-object.js";
+import { OrderSource } from "./order-source.enum.js";
 import { OrderStatus } from "./order-status.enum.js";
 import { OrderPlacedDomainEvent } from "./events/order-placed.domain-event.js";
 import { OrderCancelledDomainEvent } from "./events/order-cancelled.domain-event.js";
@@ -26,6 +27,8 @@ export interface OrderProperties {
     status: OrderStatus;
     orderLines: OrderLines;
     customerId: string;
+    actorId: string;
+    source: OrderSource;
 }
 
 type DraftedOrderProperties = Except<OrderProperties, "status" | "cost">;
@@ -40,6 +43,8 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
         const orderDraft = new OrderAggregate({
             properties: {
                 customerId: properties.customerId,
+                actorId: properties.actorId,
+                source: properties.source,
                 status: OrderStatus.DRAFTED,
                 orderLines: properties.orderLines,
                 cost: properties.orderLines.getTotalPrice(),
@@ -52,6 +57,8 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
             new OrderDraftedDomainEvent({
                 aggregateId: orderDraft.id,
                 customerId: properties.customerId,
+                actorId: properties.actorId,
+                source: properties.source,
                 orderLines: properties.orderLines,
             }),
         );
@@ -71,6 +78,14 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
 
     get cost(): Money {
         return this.properties.cost;
+    }
+
+    get actorId(): string {
+        return this.properties.actorId;
+    }
+
+    get source(): OrderSource {
+        return this.properties.source;
     }
 
     getOrderLines(): OrderLines {

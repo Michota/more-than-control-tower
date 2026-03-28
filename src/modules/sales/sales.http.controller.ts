@@ -20,6 +20,8 @@ export class SalesHttpController {
         const orderId = await this.commandBus.execute(
             new DraftOrderCommand({
                 customerId: body.customerId,
+                actorId: body.actorId,
+                source: body.source,
                 lines: body.lines,
                 currency: body.currency,
                 buyerPriceTypeId: body.buyerPriceTypeId,

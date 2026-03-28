@@ -6,6 +6,7 @@ import { Money } from "../../../shared/value-objects/money.js";
 import { OrderAggregate } from "./order.aggregate.js";
 import { OrderItemEntity } from "./order-item.entity.js";
 import { OrderLines } from "./order-lines.value-object.js";
+import { OrderSource } from "./order-source.enum.js";
 import { OrderStatus } from "./order-status.enum.js";
 import { OrderDraftedDomainEvent } from "./events/order-drafted.domain-event.js";
 import { OrderPlacedDomainEvent } from "./events/order-placed.domain-event.js";
@@ -23,6 +24,7 @@ import {
 } from "./order.errors.js";
 
 const customerId = randomUUID();
+const actorId = randomUUID();
 const pln = new Currency("PLN");
 
 function createProduct(price = 10): OrderItemEntity {
@@ -44,6 +46,8 @@ function draftOrder(products?: OrderItemEntity[]): OrderAggregate {
     const items = products ?? [createProduct()];
     return OrderAggregate.draft({
         customerId,
+        actorId,
+        source: OrderSource.SR,
         orderLines: createOrderLines(...items),
     });
 }
@@ -55,6 +59,13 @@ describe("OrderAggregate.draft()", () => {
         const order = draftOrder();
 
         expect(order.properties.status).toBe(OrderStatus.DRAFTED);
+    });
+
+    it("preserves actorId and source", () => {
+        const order = draftOrder();
+
+        expect(order.actorId).toBe(actorId);
+        expect(order.source).toBe(OrderSource.SR);
     });
 
     it("computes cost from order lines", () => {
@@ -75,6 +86,8 @@ describe("OrderAggregate.draft()", () => {
         expect(() =>
             OrderAggregate.draft({
                 customerId,
+                actorId,
+                source: OrderSource.SR,
                 orderLines: new OrderLines(),
             }),
         ).toThrow(OrderHasOrderLinesWithoutItems);

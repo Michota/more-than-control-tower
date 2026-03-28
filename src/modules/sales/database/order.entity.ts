@@ -13,6 +13,8 @@ const OrderSchema = defineEntity({
         status: p.enum(() => OrderStatus),
         orderLines: p.embedded(OrderLine).array().default([]),
         customerId: p.uuid(),
+        actorId: p.uuid(),
+        source: p.string(),
     },
 });
 

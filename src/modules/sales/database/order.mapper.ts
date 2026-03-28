@@ -8,6 +8,7 @@ import { OrderLine as DomainOrderLine } from "../domain/order-line.value-object.
 import { OrderLines } from "../domain/order-lines.value-object.js";
 import { OrderItemEntity } from "../domain/order-item.entity.js";
 import { OrderAggregate } from "../domain/order.aggregate.js";
+import { OrderSource } from "../domain/order-source.enum.js";
 import { OrderStatus } from "../domain/order-status.enum.js";
 import { OrderLine as OrmOrderLine } from "./order-line.embeddable.js";
 import { Order } from "./order.entity.js";
@@ -46,6 +47,8 @@ export class OrderMapper implements Mapper<OrderAggregate, RequiredEntityData<Or
                 status: record.status as unknown as OrderStatus,
                 orderLines: new OrderLines(lines),
                 customerId: record.customerId,
+                actorId: record.actorId,
+                source: record.source as OrderSource,
             },
         });
     }
@@ -65,6 +68,8 @@ export class OrderMapper implements Mapper<OrderAggregate, RequiredEntityData<Or
             currency: domain.cost.currency.code,
             status: props.status,
             customerId: props.customerId,
+            actorId: props.actorId,
+            source: props.source,
             orderLines,
         };
     }

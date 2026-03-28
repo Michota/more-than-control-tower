@@ -1,5 +1,6 @@
 import { Type } from "class-transformer";
-import { IsArray, IsOptional, IsNumber, IsString, IsUUID, Min, ValidateNested } from "class-validator";
+import { IsArray, IsEnum, IsOptional, IsNumber, IsString, IsUUID, Min, ValidateNested } from "class-validator";
+import { OrderSource } from "../../domain/order-source.enum.js";
 
 export class OrderLineRequestDto {
     @IsUUID()
@@ -17,6 +18,12 @@ export class OrderLineRequestDto {
 export class DraftOrderRequest {
     @IsUUID()
     customerId!: string;
+
+    @IsUUID()
+    actorId!: string;
+
+    @IsEnum(OrderSource)
+    source!: OrderSource;
 
     @IsArray()
     @ValidateNested({ each: true })

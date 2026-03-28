@@ -33,7 +33,12 @@ export class DraftOrderCommandHandler implements ICommandHandler<DraftOrderComma
 
     async execute(cmd: DraftOrderCommand): Promise<IdOfEntity<OrderAggregate>> {
         const orderLines = await this.resolveOrderLines(cmd.lines, cmd.buyerPriceTypeId);
-        const order = OrderAggregate.draft({ customerId: cmd.customerId, orderLines });
+        const order = OrderAggregate.draft({
+            customerId: cmd.customerId,
+            actorId: cmd.actorId,
+            source: cmd.source,
+            orderLines,
+        });
 
         await this.orderRepo.save(order);
         await this.uow.commit();

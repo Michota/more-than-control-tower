@@ -9,6 +9,7 @@ import { PlaceOrderCommand } from "./commands/place-order/place-order.command";
 import { CancelOrderCommand } from "./commands/cancel-order/cancel-order.command";
 import { CompleteOrderCommand } from "./commands/complete-order/complete-order.command";
 import { AssignGoodCommand } from "./commands/assign-good/assign-good.command";
+import { OrderSource } from "./domain/order-source.enum";
 import { OrderStatus } from "./domain/order-status.enum";
 import {
     OrderCannotBePlacedError,
@@ -101,6 +102,8 @@ describe("Sales Module — Integration Tests", () => {
         const id: string = await commandBus.execute(
             new DraftOrderCommand({
                 customerId: overrides.customerId ?? customerId,
+                actorId: customerId,
+                source: OrderSource.SR,
                 lines: [
                     {
                         itemId: overrides.productId ?? productId,
