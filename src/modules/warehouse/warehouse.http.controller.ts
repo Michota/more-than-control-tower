@@ -73,6 +73,7 @@ import { DetachCodeFromGoodCommand } from "./commands/detach-code-from-good/deta
 import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-code.query.js";
 import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-for-good.query.js";
 import { CodeIdResponseDto, CodeResponseDto, FindGoodByCodeResponseDto } from "./dtos/code.response.dto.js";
+import { ScanCodeQuery, type ScanCodeResponse } from "../../shared/queries/scan-code.query.js";
 import { FulfillStockTransferRequestCommand } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command.js";
 import { CancelStockTransferRequestCommand } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command.js";
 import { RejectStockTransferRequestCommand } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.command.js";
@@ -249,6 +250,19 @@ export class WarehouseHttpController {
     @ApiResponse({ status: 200, type: FindGoodByCodeResponseDto })
     async findGoodByCode(@Query("value") value: string): Promise<FindGoodByCodeResponseDto> {
         return this.queryBus.execute(new FindGoodByCodeQuery(value));
+    }
+
+    @RequirePermission(WarehousePermission.VIEW_CODES)
+    @Get("codes/scan")
+    @ApiOperation({ summary: "Scan a code and resolve to a stock entry in a specific warehouse" })
+    @ApiQuery({ name: "value", description: "Code value to scan", example: "5901234123457" })
+    @ApiQuery({ name: "warehouseId", description: "Warehouse to look up stock in" })
+    @ApiResponse({ status: 200 })
+    async scanCode(
+        @Query("value") value: string,
+        @Query("warehouseId", ParseUUIDPipe) warehouseId: string,
+    ): Promise<ScanCodeResponse> {
+        return this.queryBus.execute<ScanCodeQuery, ScanCodeResponse>(new ScanCodeQuery(value, warehouseId));
     }
 
     @RequirePermission(WarehousePermission.VIEW_CODES)

@@ -57,6 +57,8 @@ import {
     StockTransferRequestNotFoundError,
     StockTransferRequestNotPendingError,
 } from "./domain/stock-transfer-request.errors";
+import { ScanCodeQuery, type ScanCodeResponse } from "../../shared/queries/scan-code.query";
+import { type FindGoodByCodeResponse } from "../../shared/queries/find-good-by-code.query";
 
 describe("Warehouse Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -1389,7 +1391,7 @@ describe("Warehouse Module — Integration Tests", () => {
                 }),
             );
 
-            const result = await queryBus.execute(new FindGoodByCodeQuery("LOOKUP-CODE-001"));
+            const result: FindGoodByCodeResponse = await queryBus.execute(new FindGoodByCodeQuery("LOOKUP-CODE-001"));
             expect(result.goodId).toEqual(goodId);
             expect(result.goodName).toEqual("Lookup Product");
             expect(result.codeType).toEqual(CodeType.CODE_128);
@@ -1435,6 +1437,60 @@ describe("Warehouse Module — Integration Tests", () => {
                     }),
                 ),
             ).rejects.toThrow(GoodNotFoundError);
+        });
+    });
+
+    // ─── Scan Code (cross-module) ──────────────────────────────
+
+    describe("Scan Code (shared query)", () => {
+        it("scans a code and resolves to stock entry in a warehouse", async () => {
+            const goodId = await createGood({ name: "Scannable Product" });
+            const warehouseId = await createWarehouse("Scan WH");
+
+            await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId,
+                    type: CodeType.EAN_13,
+                    value: "5901234777777",
+                }),
+            );
+
+            await receiveGoodsToWarehouse({ goodId, warehouseId, quantity: 15 });
+
+            const result: ScanCodeResponse = await queryBus.execute(new ScanCodeQuery("5901234777777", warehouseId));
+            expect(result.goodId).toEqual(goodId);
+            expect(result.goodName).toEqual("Scannable Product");
+            expect(result.warehouseId).toEqual(warehouseId);
+            expect(result.quantity).toEqual(15);
+            expect(result.codeType).toEqual(CodeType.EAN_13);
+            expect(result.codeValue).toEqual("5901234777777");
+            expect(result.stockEntryId).toMatch(uuidRegex);
+        });
+
+        it("throws StockEntryNotFoundError when good has no stock in the warehouse", async () => {
+            const goodId = await createGood({ name: "No Stock Product" });
+            const warehouseId = await createWarehouse("Empty Scan WH");
+
+            await commandBus.execute(
+                new AttachCodeToGoodCommand({
+                    goodId,
+                    type: CodeType.QR,
+                    value: "QR-NO-STOCK-001",
+                }),
+            );
+
+            // No stock received in this warehouse
+            await expect(queryBus.execute(new ScanCodeQuery("QR-NO-STOCK-001", warehouseId))).rejects.toThrow(
+                StockEntryNotFoundError,
+            );
+        });
+
+        it("throws CodeNotFoundError for unknown code value", async () => {
+            const warehouseId = await createWarehouse("Unknown Code WH");
+
+            await expect(queryBus.execute(new ScanCodeQuery("UNKNOWN-CODE-999", warehouseId))).rejects.toThrow(
+                CodeNotFoundError,
+            );
         });
     });
 

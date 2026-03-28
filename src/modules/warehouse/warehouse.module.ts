@@ -49,6 +49,7 @@ import { FindGoodByCodeQueryHandler } from "./queries/find-good-by-code/find-goo
 import { ListCodesForGoodQueryHandler } from "./queries/list-codes-for-good/list-codes-for-good.query-handler.js";
 import { ListStockTransferRequestsQueryHandler } from "./queries/list-stock-transfer-requests/list-stock-transfer-requests.query-handler.js";
 import { GetStockTransferRequestQueryHandler } from "./queries/get-stock-transfer-request/get-stock-transfer-request.query-handler.js";
+import { ScanCodeQueryHandler } from "./queries/scan-code/scan-code.query-handler.js";
 import { Code } from "./database/code.entity.js";
 import { CodeRepository } from "./database/code.repository.js";
 import { StockTransferRequest } from "./database/stock-transfer-request.entity.js";
@@ -119,6 +120,7 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         ListCodesForGoodQueryHandler,
         ListStockTransferRequestsQueryHandler,
         GetStockTransferRequestQueryHandler,
+        ScanCodeQueryHandler,
         {
             provide: CODE_REPOSITORY_PORT,
             useFactory: (em: EntityManager) => new CodeRepository(em),
