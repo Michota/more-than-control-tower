@@ -64,6 +64,55 @@ describe("OrderLine", () => {
         expect(updated.product).toBe(product);
     });
 
+    it("creates without stockEntryId by default", () => {
+        const product = createProduct();
+        const line = new OrderLine({ product, quantity: 1 });
+
+        expect(line.stockEntryId).toBeUndefined();
+    });
+
+    it("preserves stockEntryId when created with one", () => {
+        const product = createProduct();
+        const stockEntryId = randomUUID();
+        const line = new OrderLine({ product, quantity: 1, stockEntryId });
+
+        expect(line.stockEntryId).toBe(stockEntryId);
+    });
+
+    it("withQuantity preserves stockEntryId", () => {
+        const product = createProduct();
+        const stockEntryId = randomUUID();
+        const line = new OrderLine({ product, quantity: 1, goodId: randomUUID(), stockEntryId });
+
+        const updated = line.withQuantity(5);
+
+        expect(updated.stockEntryId).toBe(stockEntryId);
+        expect(updated.goodId).toBeDefined();
+    });
+
+    it("withGood preserves stockEntryId", () => {
+        const product = createProduct();
+        const stockEntryId = randomUUID();
+        const line = new OrderLine({ product, quantity: 1, stockEntryId });
+
+        const updated = line.withGood(randomUUID());
+
+        expect(updated.stockEntryId).toBe(stockEntryId);
+    });
+
+    it("withStockEntry returns new line with stockEntryId set", () => {
+        const product = createProduct();
+        const goodId = randomUUID();
+        const line = new OrderLine({ product, quantity: 2, goodId });
+        const stockEntryId = randomUUID();
+
+        const updated = line.withStockEntry(stockEntryId);
+
+        expect(updated.stockEntryId).toBe(stockEntryId);
+        expect(updated.goodId).toBe(goodId);
+        expect(updated.quantity).toBe(2);
+    });
+
     it("throws when quantity is negative", () => {
         const product = createProduct();
 
@@ -170,5 +219,51 @@ describe("OrderLines", () => {
         expect(updated.getLines().get(productA.id)?.goodId).toBe(goodId);
         expect(updated.getLines().get(productB.id)?.goodId).toBeUndefined();
         expect(updated.getLines().get(productB.id)?.quantity).toBe(3);
+    });
+
+    it("assignStockEntry sets stock entry on specific line", () => {
+        const product = createProduct();
+        const lines = new OrderLines().addProduct(product, 2);
+        const stockEntryId = randomUUID();
+
+        const updated = lines.assignStockEntry(product.id, stockEntryId);
+
+        expect(updated.getLines().get(product.id)?.stockEntryId).toBe(stockEntryId);
+        expect(lines.getLines().get(product.id)?.stockEntryId).toBeUndefined();
+    });
+
+    it("assignStockEntry throws when product not found", () => {
+        const lines = new OrderLines();
+
+        expect(() => lines.assignStockEntry(generateEntityId(), randomUUID())).toThrow("Order line not found");
+    });
+
+    it("allLinesHaveStockEntry returns true when all lines have stockEntryId", () => {
+        const productA = createProduct();
+        const productB = createProduct();
+        const lines = new OrderLines()
+            .addProduct(productA, 1)
+            .addProduct(productB, 1)
+            .assignStockEntry(productA.id, randomUUID())
+            .assignStockEntry(productB.id, randomUUID());
+
+        expect(lines.allLinesHaveStockEntry()).toBe(true);
+    });
+
+    it("allLinesHaveStockEntry returns false when some lines lack stockEntryId", () => {
+        const productA = createProduct();
+        const productB = createProduct();
+        const lines = new OrderLines()
+            .addProduct(productA, 1)
+            .addProduct(productB, 1)
+            .assignStockEntry(productA.id, randomUUID());
+
+        expect(lines.allLinesHaveStockEntry()).toBe(false);
+    });
+
+    it("allLinesHaveStockEntry returns false when empty", () => {
+        const lines = new OrderLines();
+
+        expect(lines.allLinesHaveStockEntry()).toBe(false);
     });
 });

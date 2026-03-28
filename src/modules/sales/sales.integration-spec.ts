@@ -49,9 +49,13 @@ import { ListOrdersQuery } from "./queries/list-orders/list-orders.query";
 import {
     CannotAssignStockEntryError,
     StockEntryAlreadyAssignedError,
+    StockEntryGoodMismatchError,
     StockEntryNotFoundForAssignmentError,
     CannotChangeQuantityOfPlacedOrderError,
 } from "./domain/order.errors";
+import { RemoveProductFromOrderCommand } from "./commands/remove-product-from-order/remove-product-from-order.command";
+import { GetCustomerOrdersQuery, type GetCustomerOrdersResponse } from "../../shared/queries/get-customer-orders.query";
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry";
 
 describe("Sales Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -648,6 +652,155 @@ describe("Sales Module — Integration Tests", () => {
             expect(result.data.every((o: { status: string }) => o.status === (OrderStatus.DRAFTED as string))).toBe(
                 true,
             );
+        });
+    });
+
+    // ─── Remove Product from Draft ────────────────────────────
+
+    describe("Remove Product from Draft", () => {
+        let secondProductId: string;
+        let secondPriceId: string;
+
+        beforeAll(async () => {
+            secondProductId = randomUUID();
+            secondPriceId = randomUUID();
+
+            await em.insert(Product, {
+                id: secondProductId,
+                name: "Removable Product",
+                category: categoryId,
+                vatRate: "23",
+                availableFrom: new Date(),
+                availableTo: null,
+            });
+            await em.insert(Price, {
+                id: secondPriceId,
+                amount: "5.00",
+                currency: "PLN",
+                validFrom: new Date("2020-01-01"),
+                validTo: null,
+                product: secondProductId,
+                priceType: null,
+            });
+        });
+
+        it("removes a product from a draft order", async () => {
+            const orderId = await draftOrder();
+
+            // Add second product so we can remove the first without emptying the order
+            await commandBus.execute(
+                new AddProductToOrderCommand({ orderId, itemId: secondProductId, quantity: 1, priceId: secondPriceId }),
+            );
+
+            await commandBus.execute(new RemoveProductFromOrderCommand({ orderId, itemId: productId, priceId }));
+
+            const order = await findOrder(orderId);
+            expect(order!.orderLines).toHaveLength(1);
+        });
+
+        it("throws when removing from a placed order", async () => {
+            const orderId = await draftOrder();
+            await commandBus.execute(new PlaceOrderCommand({ orderId }));
+
+            await expect(
+                commandBus.execute(new RemoveProductFromOrderCommand({ orderId, itemId: productId, priceId })),
+            ).rejects.toThrow(CannotChangeQuantityOfPlacedOrderError);
+        });
+    });
+
+    // ─── Stock Entry Good Mismatch ────────────────────────────
+
+    describe("Stock Entry Good Mismatch", () => {
+        async function createGoodAndEntry(): Promise<{ goodId: string; stockEntryId: string }> {
+            const goodId: string = await commandBus.execute(
+                new CreateGoodCommand({
+                    name: `Good ${randomUUID().slice(0, 8)}`,
+                    weightValue: 1,
+                    weightUnit: WeightUnit.KG,
+                    dimensionLength: 10,
+                    dimensionWidth: 10,
+                    dimensionHeight: 10,
+                    dimensionUnit: DimensionUnit.CM,
+                }),
+            );
+
+            const warehouseId: string = await commandBus.execute(
+                new CreateWarehouseCommand({
+                    name: `WH ${randomUUID().slice(0, 8)}`,
+                    address: { country: "PL", postalCode: "00-001", state: "Maz", city: "Warszawa", street: "Test 1" },
+                }),
+            );
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+
+            await commandBus.execute(new SetGoodsReceiptLinesCommand({ receiptId, lines: [{ goodId, quantity: 10 }] }));
+
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+
+            const stockEntryEm = em.fork();
+            const entry = await stockEntryEm.findOne(StockEntry, { goodId });
+
+            return { goodId, stockEntryId: entry!.id };
+        }
+
+        it("throws StockEntryGoodMismatchError when stock entry good differs from order line good", async () => {
+            const orderId = await draftOrder();
+            const { goodId: goodA } = await createGoodAndEntry();
+            const { stockEntryId: entryFromB } = await createGoodAndEntry();
+
+            await commandBus.execute(new PlaceOrderCommand({ orderId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId: goodA }));
+
+            // Assign stock entry from good B to a line that has good A
+            await expect(
+                commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId: entryFromB })),
+            ).rejects.toThrow(StockEntryGoodMismatchError);
+        });
+    });
+
+    // ─── GetCustomerOrders (shared query contract) ────────────
+
+    describe("GetCustomerOrders", () => {
+        it("returns orders for a customer via shared query", async () => {
+            const orderId = await draftOrder();
+
+            const orders: GetCustomerOrdersResponse = await queryBus.execute(new GetCustomerOrdersQuery(customerId));
+
+            expect(orders.length).toBeGreaterThanOrEqual(1);
+            const found = orders.find((o) => o.id === orderId);
+            expect(found).toBeDefined();
+            expect(found!.status).toBe(OrderStatus.DRAFTED);
+            expect(found!.currency).toBe("PLN");
+        });
+
+        it("returns empty array for customer with no orders", async () => {
+            const orders: GetCustomerOrdersResponse = await queryBus.execute(new GetCustomerOrdersQuery(randomUUID()));
+
+            expect(orders).toEqual([]);
+        });
+    });
+
+    // ─── Permissions Registration ─────────────────────────────
+
+    describe("Permissions", () => {
+        it("registers sales permissions in the registry", () => {
+            const registry = moduleRef.get<PermissionRegistry>(PERMISSION_REGISTRY);
+            const salesPermissions = registry.getByModule("sales");
+
+            expect(salesPermissions).toBeDefined();
+            expect(salesPermissions.length).toBe(8);
+
+            const keys = salesPermissions.map((p) => p.fullKey);
+            expect(keys).toContain("sales:draft-order");
+            expect(keys).toContain("sales:edit-draft");
+            expect(keys).toContain("sales:place-order");
+            expect(keys).toContain("sales:cancel-order");
+            expect(keys).toContain("sales:complete-order");
+            expect(keys).toContain("sales:assign-good");
+            expect(keys).toContain("sales:assign-stock-entry");
+            expect(keys).toContain("sales:view-orders");
         });
     });
 });
