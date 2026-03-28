@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method */
 import Decimal from "decimal.js";
 import { randomUUID } from "crypto";
 import { AssignGoodCommandHandler } from "./assign-good.command-handler.js";
@@ -56,7 +57,7 @@ describe("AssignGoodCommandHandler", () => {
         await handler.execute(new AssignGoodCommand({ orderId: order.id as string, productId, goodId }));
 
         expect(orderRepo.save).toHaveBeenCalledOnce();
-        // eslint-disable-next-line @typescript-eslint/unbound-method
+
         expect(uow.commit).toHaveBeenCalledOnce();
         expect(eventBus.publishAll).toHaveBeenCalledOnce();
     });

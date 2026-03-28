@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method */
 import Decimal from "decimal.js";
 import { randomUUID } from "crypto";
 import { AssignStockEntryCommandHandler } from "./assign-stock-entry.command-handler.js";
@@ -82,7 +83,7 @@ describe("AssignStockEntryCommandHandler", () => {
         );
 
         expect(orderRepo.save).toHaveBeenCalledOnce();
-        // eslint-disable-next-line @typescript-eslint/unbound-method
+
         expect(uow.commit).toHaveBeenCalledOnce();
         expect(eventBus.publishAll).toHaveBeenCalledOnce();
     });
