@@ -4,6 +4,7 @@ import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/reposit
 import { OrderAggregate } from "../domain/order.aggregate.js";
 import { OrderStatus } from "../domain/order-status.enum.js";
 import { Order } from "./order.entity.js";
+import { Product } from "./product.entity.js";
 import { OrderMapper } from "./order.mapper.js";
 import { OrderRepositoryPort } from "./order.repository.port.js";
 
@@ -13,13 +14,38 @@ export class OrderRepository implements OrderRepositoryPort {
 
     constructor(private readonly em: EntityManager) {}
 
+    /**
+     * Populates order line products separately to avoid MikroORM's JSONB
+     * embedded relation join which causes a text-to-uuid type mismatch in PostgreSQL.
+     */
+    private async populateOrderLineProducts(orders: Order[]): Promise<void> {
+        const productIds = orders.flatMap((o) => o.orderLines.map((l) => l.product.id));
+        if (productIds.length === 0) return;
+
+        const products = await this.em.find(Product, { id: { $in: productIds } }, { populate: ["prices"] });
+        const productMap = new Map(products.map((p) => [p.id, p]));
+
+        for (const order of orders) {
+            for (const line of order.orderLines) {
+                const product = productMap.get(line.product.id);
+                if (product) {
+                    line.product = product;
+                }
+            }
+        }
+    }
+
     async findOneById(id: string): Promise<OrderAggregate | null> {
-        const record = await this.em.findOne(Order, { id }, { populate: ["orderLines.product.prices"] as const });
-        return record ? this.mapper.toDomain(record) : null;
+        const record = await this.em.findOne(Order, { id });
+        if (!record) return null;
+
+        await this.populateOrderLineProducts([record]);
+        return this.mapper.toDomain(record);
     }
 
     async findAll(): Promise<OrderAggregate[]> {
-        const records = await this.em.find(Order, {}, { populate: ["orderLines.product.prices"] as const });
+        const records = await this.em.find(Order, {});
+        await this.populateOrderLineProducts(records);
         return records.map((r) => this.mapper.toDomain(r));
     }
 
@@ -28,12 +54,13 @@ export class OrderRepository implements OrderRepositoryPort {
             Order,
             {},
             {
-                populate: ["orderLines.product.prices"] as const,
                 limit: params.limit,
                 offset: params.offset,
                 orderBy: { [params.orderBy.field === true ? "id" : params.orderBy.field]: params.orderBy.direction },
             },
         );
+
+        await this.populateOrderLineProducts(records);
 
         return new Paginated({
             data: records.map((r) => this.mapper.toDomain(r)),
@@ -45,15 +72,14 @@ export class OrderRepository implements OrderRepositoryPort {
 
     /**
      * Persists the order to the MikroORM unit of work without flushing.
+     * Uses upsert to handle both new orders and updates to existing orders.
      * em.flush() is called by MikroOrmUnitOfWork.commit() at the end of the use case.
      */
     async save(entity: OrderAggregate | OrderAggregate[]): Promise<void> {
         const orders = Array.isArray(entity) ? entity : [entity];
         for (const order of orders) {
-            this.em.persist(this.em.create(Order, this.mapper.toPersistence(order)));
+            await this.em.upsert(Order, this.mapper.toPersistence(order) as Order);
         }
-
-        return Promise.resolve();
     }
 
     async delete(order: OrderAggregate): Promise<boolean> {
@@ -77,7 +103,7 @@ export class OrderRepository implements OrderRepositoryPort {
                 WHERE status NOT IN (?, ?)
                 AND "order_lines"::jsonb @> ?::jsonb
             ) AS "exists"`,
-            [OrderStatus.CANCELLED, OrderStatus.COMPLETED, JSON.stringify([{ stockEntryId }])],
+            [OrderStatus.CANCELLED, OrderStatus.COMPLETED, JSON.stringify([{ stock_entry_id: stockEntryId }])],
         );
 
         return result[0]?.exists === true;
