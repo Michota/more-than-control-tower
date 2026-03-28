@@ -1,12 +1,13 @@
 import { Injectable } from "@nestjs/common";
 import { EntityManager } from "@mikro-orm/core";
+import { type FilterQuery } from "@mikro-orm/core";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
 import { OrderAggregate } from "../domain/order.aggregate.js";
 import { OrderStatus } from "../domain/order-status.enum.js";
 import { Order } from "./order.entity.js";
 import { Product } from "./product.entity.js";
 import { OrderMapper } from "./order.mapper.js";
-import { OrderRepositoryPort } from "./order.repository.port.js";
+import { type FindFilteredParams, OrderRepositoryPort } from "./order.repository.port.js";
 
 @Injectable()
 export class OrderRepository implements OrderRepositoryPort {
@@ -91,6 +92,41 @@ export class OrderRepository implements OrderRepositoryPort {
 
     async transaction<T>(handler: () => Promise<T>): Promise<T> {
         return this.em.transactional(handler);
+    }
+
+    async findByCustomerId(customerId: string): Promise<OrderAggregate[]> {
+        const records = await this.em.find(Order, { customerId });
+        await this.populateOrderLineProducts(records);
+        return records.map((r) => this.mapper.toDomain(r));
+    }
+
+    async findFilteredPaginated(params: FindFilteredParams): Promise<Paginated<OrderAggregate>> {
+        const where: FilterQuery<Order> = {};
+
+        if (params.customerId) {
+            where.customerId = params.customerId;
+        }
+
+        if (params.status) {
+            where.status = params.status as OrderStatus;
+        }
+
+        const offset = (params.page - 1) * params.limit;
+
+        const [records, count] = await this.em.findAndCount(Order, where, {
+            limit: params.limit,
+            offset,
+            orderBy: { id: "ASC" },
+        });
+
+        await this.populateOrderLineProducts(records);
+
+        return new Paginated({
+            data: records.map((r) => this.mapper.toDomain(r)),
+            count,
+            limit: params.limit,
+            page: params.page,
+        });
     }
 
     async isStockEntryAssigned(stockEntryId: string): Promise<boolean> {

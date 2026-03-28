@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Param, Patch, Post } from "@nestjs/common";
-import { CommandBus } from "@nestjs/cqrs";
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { AddProductToOrderCommand } from "./commands/add-product-to-order/add-product-to-order.command.js";
 import {
     AddProductToOrderBody,
@@ -27,10 +27,28 @@ import {
     AssignStockEntryBody,
     AssignStockEntryParams,
 } from "./commands/assign-stock-entry/assign-stock-entry.request.dto.js";
+import { GetOrderQuery, type OrderResponse } from "./queries/get-order/get-order.query.js";
+import { ListOrdersQuery, type ListOrdersResponse } from "./queries/list-orders/list-orders.query.js";
+import { ListOrdersRequestDto } from "./queries/list-orders/list-orders.request.dto.js";
 
 @Controller("order")
 export class SalesHttpController {
-    constructor(private readonly commandBus: CommandBus) {}
+    constructor(
+        private readonly commandBus: CommandBus,
+        private readonly queryBus: QueryBus,
+    ) {}
+
+    @Get()
+    async listOrders(@Query() query: ListOrdersRequestDto): Promise<ListOrdersResponse> {
+        return this.queryBus.execute(
+            new ListOrdersQuery(query.page ?? 1, query.limit ?? 20, query.customerId, query.status),
+        );
+    }
+
+    @Get(":id")
+    async getOrder(@Param("id", ParseUUIDPipe) id: string): Promise<OrderResponse> {
+        return this.queryBus.execute(new GetOrderQuery(id));
+    }
 
     @Post("draft")
     async draftOrder(@Body() body: DraftOrderRequest): Promise<{ orderId: string }> {
