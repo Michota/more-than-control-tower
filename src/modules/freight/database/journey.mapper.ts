@@ -6,6 +6,7 @@ import { JourneyAggregate } from "../domain/journey.aggregate.js";
 import { JourneyStatus } from "../domain/journey-status.enum.js";
 import { JourneyStop } from "../domain/journey-stop.value-object.js";
 import { CrewMember } from "../domain/crew-member.value-object.js";
+import { CrewMemberRole } from "../domain/crew-member-role.enum.js";
 import { Journey } from "./journey.entity.js";
 
 @Injectable()
@@ -24,7 +25,7 @@ export class JourneyMapper implements Mapper<JourneyAggregate, RequiredEntityDat
                         new CrewMember({
                             employeeId: m.employeeId,
                             employeeName: m.employeeName,
-                            role: m.role,
+                            role: m.role as CrewMemberRole,
                         }),
                 ),
                 stops: (record.stops ?? []).map(

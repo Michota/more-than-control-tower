@@ -7,6 +7,7 @@ import { RouteStatus } from "../domain/route-status.enum.js";
 import { RouteSchedule, ScheduleType } from "../domain/route-schedule.value-object.js";
 import { RouteStop } from "../domain/route-stop.value-object.js";
 import { CrewMember } from "../domain/crew-member.value-object.js";
+import { CrewMemberRole } from "../domain/crew-member-role.enum.js";
 import { Route } from "./route.entity.js";
 
 @Injectable()
@@ -33,7 +34,7 @@ export class RouteMapper implements Mapper<RouteAggregate, RequiredEntityData<Ro
                         new CrewMember({
                             employeeId: m.employeeId,
                             employeeName: m.employeeName,
-                            role: m.role,
+                            role: m.role as CrewMemberRole,
                         }),
                 ),
                 stops: (record.stops ?? []).map(
