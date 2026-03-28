@@ -22,6 +22,11 @@ import { CompleteOrderCommand } from "./commands/complete-order/complete-order.c
 import { CompleteOrderParams } from "./commands/complete-order/complete-order.request.dto.js";
 import { AssignGoodCommand } from "./commands/assign-good/assign-good.command.js";
 import { AssignGoodBody, AssignGoodParams } from "./commands/assign-good/assign-good.request.dto.js";
+import { AssignStockEntryCommand } from "./commands/assign-stock-entry/assign-stock-entry.command.js";
+import {
+    AssignStockEntryBody,
+    AssignStockEntryParams,
+} from "./commands/assign-stock-entry/assign-stock-entry.request.dto.js";
 
 @Controller("order")
 export class SalesHttpController {
@@ -103,6 +108,17 @@ export class SalesHttpController {
                 orderId: params.id,
                 productId: params.productId,
                 goodId: body.goodId,
+            }),
+        );
+    }
+
+    @Post(":id/lines/:productId/assign-stock-entry")
+    async assignStockEntry(@Param() params: AssignStockEntryParams, @Body() body: AssignStockEntryBody): Promise<void> {
+        await this.commandBus.execute(
+            new AssignStockEntryCommand({
+                orderId: params.id,
+                productId: params.productId,
+                stockEntryId: body.stockEntryId,
             }),
         );
     }

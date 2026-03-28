@@ -6,6 +6,7 @@ import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-o
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
 import { AddProductToOrderCommandHandler } from "./commands/add-product-to-order/add-product-to-order.command-handler.js";
 import { AssignGoodCommandHandler } from "./commands/assign-good/assign-good.command-handler.js";
+import { AssignStockEntryCommandHandler } from "./commands/assign-stock-entry/assign-stock-entry.command-handler.js";
 import { CancelOrderCommandHandler } from "./commands/cancel-order/cancel-order.command-handler.js";
 import { ChangeProductQuantityCommandHandler } from "./commands/change-product-quantity/change-product-quantity.command-handler.js";
 import { CompleteOrderCommandHandler } from "./commands/complete-order/complete-order.command-handler.js";
@@ -47,6 +48,7 @@ import { Product } from "./database/product.entity.js";
         CancelOrderCommandHandler,
         CompleteOrderCommandHandler,
         AssignGoodCommandHandler,
+        AssignStockEntryCommandHandler,
         {
             provide: ORDER_REPOSITORY_PORT,
             useFactory: (config: ConfigService, em: EntityManager) => {

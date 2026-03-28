@@ -13,13 +13,17 @@ import { OrderPlacedDomainEvent } from "./events/order-placed.domain-event.js";
 import { OrderCancelledDomainEvent } from "./events/order-cancelled.domain-event.js";
 import { OrderCompletedDomainEvent } from "./events/order-completed.domain-event.js";
 import { GoodAssignedToOrderDomainEvent } from "./events/good-assigned-to-order.domain-event.js";
+import { StockEntryAssignedToOrderDomainEvent } from "./events/stock-entry-assigned-to-order.domain-event.js";
+import { OrderInProgressDomainEvent } from "./events/order-in-progress.domain-event.js";
 import {
+    CannotAssignStockEntryError,
     CannotChangeQuantityOfPlacedOrderError,
     OrderCannotBeCancelledError,
     OrderCannotBeCompletedError,
     OrderCannotBePlacedError,
     OrderHasOrderLinesWithoutItems,
     OrderIsNotEditableError,
+    OrderLineHasNoGoodError,
     OrderLineNotFoundError,
 } from "./order.errors.js";
 
@@ -326,5 +330,121 @@ describe("OrderAggregate.assignGood()", () => {
         const nonExistentProductId = randomUUID();
 
         expect(() => order.assignGood(nonExistentProductId, randomUUID())).toThrow(OrderLineNotFoundError);
+    });
+});
+
+// ── assignStockEntry + IN_PROGRESS ───────────────────────
+
+describe("OrderAggregate.assignStockEntry()", () => {
+    function placedOrderWithGood(product: OrderItemEntity): OrderAggregate {
+        const order = draftOrder([product]);
+        order.place();
+        order.assignGood(product.id as string, randomUUID());
+        order.clearEvents();
+        return order;
+    }
+
+    it("assigns a stock entry to a PLACED order line with a good", () => {
+        const product = createProduct();
+        const order = placedOrderWithGood(product);
+        const stockEntryId = randomUUID();
+
+        order.assignStockEntry(product.id as string, stockEntryId);
+
+        const line = order.getOrderLines().getLines().get(product.id);
+        expect(line?.stockEntryId).toBe(stockEntryId);
+    });
+
+    it("emits StockEntryAssignedToOrderDomainEvent", () => {
+        const product = createProduct();
+        const order = placedOrderWithGood(product);
+
+        order.assignStockEntry(product.id as string, randomUUID());
+
+        expect(order.domainEvents[0]).toBeInstanceOf(StockEntryAssignedToOrderDomainEvent);
+    });
+
+    it("auto-transitions to IN_PROGRESS when all lines have stock entries", () => {
+        const product = createProduct();
+        const order = placedOrderWithGood(product);
+
+        order.assignStockEntry(product.id as string, randomUUID());
+
+        expect(order.properties.status).toBe(OrderStatus.IN_PROGRESS);
+    });
+
+    it("emits OrderInProgressDomainEvent on auto-transition", () => {
+        const product = createProduct();
+        const order = placedOrderWithGood(product);
+
+        order.assignStockEntry(product.id as string, randomUUID());
+
+        expect(order.domainEvents).toHaveLength(2);
+        expect(order.domainEvents[1]).toBeInstanceOf(OrderInProgressDomainEvent);
+    });
+
+    it("stays PLACED when not all lines have stock entries", () => {
+        const productA = createProduct();
+        const productB = createProduct();
+        const order = draftOrder([productA, productB]);
+        order.place();
+        order.assignGood(productA.id as string, randomUUID());
+        order.assignGood(productB.id as string, randomUUID());
+        order.clearEvents();
+
+        order.assignStockEntry(productA.id as string, randomUUID());
+
+        expect(order.properties.status).toBe(OrderStatus.PLACED);
+    });
+
+    it("throws when order is DRAFTED", () => {
+        const product = createProduct();
+        const order = draftOrder([product]);
+        order.assignGood(product.id as string, randomUUID());
+
+        expect(() => order.assignStockEntry(product.id as string, randomUUID())).toThrow(CannotAssignStockEntryError);
+    });
+
+    it("throws when order line has no good assigned", () => {
+        const product = createProduct();
+        const order = draftOrder([product]);
+        order.place();
+
+        expect(() => order.assignStockEntry(product.id as string, randomUUID())).toThrow(OrderLineHasNoGoodError);
+    });
+
+    it("throws when order is CANCELLED", () => {
+        const product = createProduct();
+        const order = draftOrder([product]);
+        order.cancel();
+
+        expect(() => order.assignStockEntry(product.id as string, randomUUID())).toThrow(CannotAssignStockEntryError);
+    });
+});
+
+// ── IN_PROGRESS cancel guard ─────────────────────────────
+
+describe("IN_PROGRESS order", () => {
+    it("cannot be cancelled", () => {
+        const product = createProduct();
+        const order = draftOrder([product]);
+        order.place();
+        order.assignGood(product.id as string, randomUUID());
+        order.assignStockEntry(product.id as string, randomUUID());
+
+        expect(order.properties.status).toBe(OrderStatus.IN_PROGRESS);
+        expect(() => order.cancel()).toThrow(OrderCannotBeCancelledError);
+    });
+
+    it("can be completed", () => {
+        const product = createProduct();
+        const order = draftOrder([product]);
+        order.place();
+        order.assignGood(product.id as string, randomUUID());
+        order.assignStockEntry(product.id as string, randomUUID());
+
+        order.complete();
+
+        expect(order.properties.status).toBe(OrderStatus.COMPLETED);
     });
 });

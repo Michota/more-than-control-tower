@@ -6,6 +6,7 @@ export interface OrderLineProperties {
     readonly product: OrderItemEntity;
     readonly quantity: number;
     readonly goodId?: string;
+    readonly stockEntryId?: string;
 }
 
 export class OrderLine extends ValueObject<OrderLineProperties> {
@@ -29,6 +30,10 @@ export class OrderLine extends ValueObject<OrderLineProperties> {
         return this.properties.goodId;
     }
 
+    get stockEntryId(): string | undefined {
+        return this.properties.stockEntryId;
+    }
+
     get subtotal(): Money {
         return new Money(
             this.properties.product.price.amount.mul(this.properties.quantity),
@@ -41,6 +46,7 @@ export class OrderLine extends ValueObject<OrderLineProperties> {
             product: this.properties.product,
             quantity,
             goodId: this.properties.goodId,
+            stockEntryId: this.properties.stockEntryId,
         });
     }
 
@@ -49,6 +55,16 @@ export class OrderLine extends ValueObject<OrderLineProperties> {
             product: this.properties.product,
             quantity: this.properties.quantity,
             goodId,
+            stockEntryId: this.properties.stockEntryId,
+        });
+    }
+
+    withStockEntry(stockEntryId: string): OrderLine {
+        return new OrderLine({
+            product: this.properties.product,
+            quantity: this.properties.quantity,
+            goodId: this.properties.goodId,
+            stockEntryId,
         });
     }
 }

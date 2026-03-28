@@ -8,6 +8,7 @@ const OrderLineSchema = defineEntity({
         product: () => p.manyToOne(Product),
         quantity: p.integer(),
         goodId: p.uuid().nullable(),
+        stockEntryId: p.uuid().nullable(),
     },
 });
 

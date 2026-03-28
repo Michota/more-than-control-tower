@@ -64,6 +64,23 @@ export class OrderLines extends ValueObject<OrderLinesProperties> {
         return this.properties.items;
     }
 
+    allLinesHaveStockEntry(): boolean {
+        if (!this.hasItems()) return false;
+        return Array.from(this.properties.items.values()).every((line) => line.stockEntryId !== undefined);
+    }
+
+    assignStockEntry(productId: ProductId, stockEntryId: string): OrderLines {
+        const line = this.properties.items.get(productId);
+
+        if (!line) {
+            throw new Error(`Order line not found for productId: ${productId}`);
+        }
+
+        const updated = OrderLines.createLinesMap(this.properties.items);
+        updated.set(productId, line.withStockEntry(stockEntryId));
+        return new OrderLines(updated);
+    }
+
     assignGood(productId: ProductId, goodId: string): OrderLines {
         const line = this.properties.items.get(productId);
 

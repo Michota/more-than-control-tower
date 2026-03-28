@@ -40,6 +40,7 @@ import { ListSectorsQueryHandler } from "./queries/list-sectors/list-sectors.que
 import { GetSectorQueryHandler } from "./queries/get-sector/get-sector.query-handler.js";
 import { GetSectorLoadQueryHandler } from "./queries/get-sector-load/get-sector-load.query-handler.js";
 import { GetGoodExistsQueryHandler } from "./queries/get-good-exists/get-good-exists.query-handler.js";
+import { GetStockEntryQueryHandler } from "./queries/get-stock-entry/get-stock-entry.query-handler.js";
 import { FindGoodByCodeQueryHandler } from "./queries/find-good-by-code/find-good-by-code.query-handler.js";
 import { ListCodesForGoodQueryHandler } from "./queries/list-codes-for-good/list-codes-for-good.query-handler.js";
 import { Code } from "./database/code.entity.js";
@@ -98,6 +99,7 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         GetSectorQueryHandler,
         GetSectorLoadQueryHandler,
         GetGoodExistsQueryHandler,
+        GetStockEntryQueryHandler,
         FindGoodByCodeQueryHandler,
         ListCodesForGoodQueryHandler,
         {

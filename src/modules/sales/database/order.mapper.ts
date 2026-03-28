@@ -34,6 +34,7 @@ export class OrderMapper implements Mapper<OrderAggregate, RequiredEntityData<Or
                         product: orderItem,
                         quantity: line.quantity,
                         goodId: line.goodId ?? undefined,
+                        stockEntryId: line.stockEntryId ?? undefined,
                     }),
                 ];
             }),
@@ -60,6 +61,7 @@ export class OrderMapper implements Mapper<OrderAggregate, RequiredEntityData<Or
             product: { id: itemId as string },
             quantity: line.quantity,
             goodId: line.goodId ?? null,
+            stockEntryId: line.stockEntryId ?? null,
         })) as unknown as OrmOrderLine[];
 
         return {

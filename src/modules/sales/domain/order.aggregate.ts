@@ -12,13 +12,17 @@ import { OrderPlacedDomainEvent } from "./events/order-placed.domain-event.js";
 import { OrderCancelledDomainEvent } from "./events/order-cancelled.domain-event.js";
 import { OrderCompletedDomainEvent } from "./events/order-completed.domain-event.js";
 import { GoodAssignedToOrderDomainEvent } from "./events/good-assigned-to-order.domain-event.js";
+import { StockEntryAssignedToOrderDomainEvent } from "./events/stock-entry-assigned-to-order.domain-event.js";
+import { OrderInProgressDomainEvent } from "./events/order-in-progress.domain-event.js";
 import {
+    CannotAssignStockEntryError,
     CannotChangeQuantityOfPlacedOrderError,
     OrderCannotBeCancelledError,
     OrderCannotBeCompletedError,
     OrderCannotBePlacedError,
     OrderHasOrderLinesWithoutItems,
     OrderIsNotEditableError,
+    OrderLineHasNoGoodError,
     OrderLineNotFoundError,
 } from "./order.errors.js";
 
@@ -147,7 +151,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
     }
 
     complete(): void {
-        if (this.properties.status !== OrderStatus.PLACED) {
+        if (this.properties.status !== OrderStatus.PLACED && this.properties.status !== OrderStatus.IN_PROGRESS) {
             throw new OrderCannotBeCompletedError();
         }
 
@@ -182,5 +186,49 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
                 goodId,
             }),
         );
+    }
+
+    /**
+     * Assigns a physical stock entry to an order line.
+     * Only allowed on PLACED or IN_PROGRESS orders (stock is assigned after placement).
+     * The order line must already have a goodId assigned.
+     * When all lines have stock entries assigned, the order auto-transitions to IN_PROGRESS.
+     */
+    assignStockEntry(productId: string, stockEntryId: string): void {
+        if (this.properties.status !== OrderStatus.PLACED && this.properties.status !== OrderStatus.IN_PROGRESS) {
+            throw new CannotAssignStockEntryError();
+        }
+
+        const productEntityId = productId as EntityId;
+        const line = this.properties.orderLines.getLines().get(productEntityId);
+
+        if (!line) {
+            throw new OrderLineNotFoundError(productId);
+        }
+
+        if (!line.goodId) {
+            throw new OrderLineHasNoGoodError(productId);
+        }
+
+        this.properties.orderLines = this.properties.orderLines.assignStockEntry(productEntityId, stockEntryId);
+
+        this.addEvent(
+            new StockEntryAssignedToOrderDomainEvent({
+                aggregateId: this.id,
+                productId,
+                stockEntryId,
+            }),
+        );
+
+        if (this.properties.status === OrderStatus.PLACED && this.properties.orderLines.allLinesHaveStockEntry()) {
+            this.properties.status = OrderStatus.IN_PROGRESS;
+
+            this.addEvent(
+                new OrderInProgressDomainEvent({
+                    aggregateId: this.id,
+                    customerId: this.properties.customerId,
+                }),
+            );
+        }
     }
 }
