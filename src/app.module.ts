@@ -10,6 +10,7 @@ import { WarehouseModule } from "./modules/warehouse/warehouse.module.js";
 import { HrModule } from "./modules/hr/hr.module.js";
 import { SystemModule } from "./modules/system/system.module.js";
 import { AuthModule } from "./modules/auth/auth.module.js";
+import { FreightModule } from "./modules/freight/freight.module.js";
 import { CqrsModule } from "@nestjs/cqrs";
 import { PermissionRegistryModule } from "./shared/infrastructure/permission-registry.module.js";
 import { JwtAuthGuard } from "./shared/auth/guards/jwt-auth.guard.js";
@@ -33,6 +34,7 @@ import { JwtAuthGuard } from "./shared/auth/guards/jwt-auth.guard.js";
         CrmModule,
         SalesModule,
         WarehouseModule,
+        FreightModule,
         HrModule,
         SystemModule,
     ],
