@@ -23,3 +23,11 @@ export class NoPendingAvailabilityError extends BadRequestDomainException {
         super(`Availability entry "${entryId}" is not pending approval`);
     }
 }
+
+export class AvailabilityLockedError extends BadRequestDomainException {
+    public readonly code = "AVAILABILITY.LOCKED";
+
+    constructor(dates: string[]) {
+        super(`Availability for dates [${dates.join(", ")}] is locked because the time has already started`);
+    }
+}

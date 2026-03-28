@@ -3,6 +3,7 @@ import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
 import { EmployeeNotFoundError } from "../../domain/employee.errors.js";
+import { AvailabilityLockedError } from "../../domain/availability-entry.errors.js";
 import { AvailabilityEntryAggregate } from "../../domain/availability-entry.aggregate.js";
 import type { EmployeeRepositoryPort } from "../../database/employee.repository.port.js";
 import type { AvailabilityEntryRepositoryPort } from "../../database/availability-entry.repository.port.js";
@@ -31,6 +32,16 @@ export class SetAvailabilityCommandHandler implements ICommandHandler<SetAvailab
         }
 
         const dates = [...new Set(cmd.entries.map((e) => e.date))];
+
+        if (!cmd.setByManager) {
+            const existing = await this.availabilityRepo.findByEmployeeIdAndDates(cmd.employeeId, dates);
+            const now = new Date();
+            const lockedDates = existing.filter((e) => e.isLocked(now)).map((e) => e.date);
+            if (lockedDates.length > 0) {
+                throw new AvailabilityLockedError([...new Set(lockedDates)]);
+            }
+        }
+
         await this.availabilityRepo.deleteByEmployeeIdAndDates(cmd.employeeId, dates);
 
         const entries = cmd.entries.map((e) =>

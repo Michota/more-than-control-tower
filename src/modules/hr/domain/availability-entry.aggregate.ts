@@ -96,4 +96,9 @@ export class AvailabilityEntryAggregate extends AggregateRoot<AvailabilityEntryP
     get status(): AvailabilityEntryStatus {
         return this.properties.status;
     }
+
+    isLocked(now: Date): boolean {
+        const entryStart = new Date(`${this.properties.date}T${this.properties.startTime}:00`);
+        return now >= entryStart;
+    }
 }

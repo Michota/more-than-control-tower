@@ -129,6 +129,55 @@ describe("AvailabilityEntryAggregate.requirePendingApproval()", () => {
     });
 });
 
+describe("AvailabilityEntryAggregate.isLocked()", () => {
+    it("returns true when current time is past the entry start", () => {
+        const entry = AvailabilityEntryAggregate.create({
+            ...validProps(),
+            date: "2026-04-01",
+            startTime: "08:00",
+            setByManager: false,
+        });
+
+        const after = new Date("2026-04-01T08:00:01");
+        expect(entry.isLocked(after)).toBe(true);
+    });
+
+    it("returns true when current time equals the entry start", () => {
+        const entry = AvailabilityEntryAggregate.create({
+            ...validProps(),
+            date: "2026-04-01",
+            startTime: "08:00",
+            setByManager: false,
+        });
+
+        const exact = new Date("2026-04-01T08:00:00");
+        expect(entry.isLocked(exact)).toBe(true);
+    });
+
+    it("returns false when current time is before the entry start", () => {
+        const entry = AvailabilityEntryAggregate.create({
+            ...validProps(),
+            date: "2026-04-01",
+            startTime: "08:00",
+            setByManager: false,
+        });
+
+        const before = new Date("2026-04-01T07:59:59");
+        expect(entry.isLocked(before)).toBe(false);
+    });
+
+    it("returns false for a future date", () => {
+        const entry = AvailabilityEntryAggregate.create({
+            ...validProps(),
+            date: "2099-12-31",
+            startTime: "08:00",
+            setByManager: false,
+        });
+
+        expect(entry.isLocked(new Date())).toBe(false);
+    });
+});
+
 describe("AvailabilityEntryAggregate.reconstitute()", () => {
     it("reconstructs an entry with all properties", () => {
         const entry = AvailabilityEntryAggregate.reconstitute({

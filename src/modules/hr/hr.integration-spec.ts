@@ -29,7 +29,11 @@ import {
     PositionKeyAlreadyExistsError,
     UnknownPermissionError,
 } from "./domain/employee.errors";
-import { AvailabilityAlreadyConfirmedError, NoPendingAvailabilityError } from "./domain/availability-entry.errors";
+import {
+    AvailabilityAlreadyConfirmedError,
+    AvailabilityLockedError,
+    NoPendingAvailabilityError,
+} from "./domain/availability-entry.errors";
 import { ListPositionsQuery } from "./queries/list-positions/list-positions.query";
 import { type ListPositionsResponse } from "./queries/list-positions/list-positions.query-handler";
 import { GetEmployeeAvailabilityQuery } from "./queries/get-employee-availability/get-employee-availability.query";
@@ -484,6 +488,58 @@ describe("HR Module — Integration Tests", () => {
                     }),
                 ),
             ).rejects.toThrow(EmployeeNotFoundError);
+        });
+
+        it("rejects employee editing locked (past) availability", async () => {
+            const id = await createEmployee();
+
+            // Set availability in the past (already locked)
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2020-01-01", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            // Employee tries to modify it → should fail
+            await expect(
+                commandBus.execute(
+                    new SetAvailabilityCommand({
+                        employeeId: id,
+                        entries: [{ date: "2020-01-01", startTime: "10:00", endTime: "18:00" }],
+                        setByManager: false,
+                    }),
+                ),
+            ).rejects.toThrow(AvailabilityLockedError);
+        });
+
+        it("allows manager to edit locked (past) availability", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2020-02-01", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            // Manager modifies locked entry → should succeed
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2020-02-01", startTime: "10:00", endTime: "18:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id, "2020-02-01", "2020-02-01"),
+            );
+
+            expect(result.entries).toHaveLength(1);
+            expect(result.entries[0].startTime).toBe("10:00");
         });
     });
 
