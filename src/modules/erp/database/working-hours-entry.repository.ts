@@ -90,4 +90,9 @@ export class WorkingHoursEntryRepository implements WorkingHoursEntryRepositoryP
         const records = await this.em.find(WorkingHoursEntry, where, { orderBy: { date: "ASC" } });
         return records.map((r) => this.mapper.toDomain(r));
     }
+
+    async existsByActivityId(activityId: string): Promise<boolean> {
+        const count = await this.em.count(WorkingHoursEntry, { activityId });
+        return count > 0;
+    }
 }

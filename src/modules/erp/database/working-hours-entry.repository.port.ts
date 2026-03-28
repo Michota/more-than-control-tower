@@ -10,4 +10,5 @@ export interface FindByEmployeeAndDateRangeParams {
 export interface WorkingHoursEntryRepositoryPort extends RepositoryPort<WorkingHoursEntryAggregate> {
     findByEmployeeAndDateRange(params: FindByEmployeeAndDateRangeParams): Promise<WorkingHoursEntryAggregate[]>;
     findOpenByEmployeeAndDateRange(params: FindByEmployeeAndDateRangeParams): Promise<WorkingHoursEntryAggregate[]>;
+    existsByActivityId(activityId: string): Promise<boolean>;
 }

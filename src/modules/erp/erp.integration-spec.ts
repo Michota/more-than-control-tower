@@ -9,15 +9,23 @@ import { ErpModule } from "./erp.module";
 import { CreateActivityCommand } from "./commands/create-activity/create-activity.command";
 import { LogWorkingHoursCommand } from "./commands/log-working-hours/log-working-hours.command";
 import { EditWorkingHoursCommand } from "./commands/edit-working-hours/edit-working-hours.command";
+import { DeleteWorkingHoursCommand } from "./commands/delete-working-hours/delete-working-hours.command";
 import { LockWorkingHoursCommand } from "./commands/lock-working-hours/lock-working-hours.command";
+import { DeleteActivityCommand } from "./commands/delete-activity/delete-activity.command";
 import { ListActivitiesQuery, type ListActivitiesResponse } from "./queries/list-activities/list-activities.query";
 import {
     GetEmployeeWorkingHoursQuery,
     type GetEmployeeWorkingHoursResponse,
 } from "./queries/get-employee-working-hours/get-employee-working-hours.query";
+import {
+    GetEmployeeActivityLogQuery,
+    type GetEmployeeActivityLogResponse,
+} from "./queries/get-employee-activity-log/get-employee-activity-log.query";
 import { WorkingHoursStatus } from "./domain/working-hours-status.enum";
 import { WorkingHoursEntryLockedError, WorkingHoursEntryNotFoundError } from "./domain/working-hours-entry.errors";
-import { ActivityNotFoundError } from "./domain/activity.errors";
+import { ActivityNotFoundError, ActivityInUseError } from "./domain/activity.errors";
+import { ActivityLogService } from "./infrastructure/activity-log.service";
+import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cron";
 
 describe("ERP Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -252,6 +260,130 @@ describe("ERP Module — Integration Tests", () => {
                     }),
                 ),
             ).resolves.not.toThrow();
+        });
+    });
+
+    // ─── Delete Working Hours ─────────────────────────────────
+
+    describe("Delete Working Hours", () => {
+        it("deletes an open entry", async () => {
+            const empId = randomUUID();
+            const entryId: string = await commandBus.execute(
+                new LogWorkingHoursCommand({ employeeId: empId, date: "2026-05-01", hours: 3 }),
+            );
+
+            await commandBus.execute(new DeleteWorkingHoursCommand({ entryId }));
+
+            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
+                new GetEmployeeWorkingHoursQuery(empId, "2026-05-01", "2026-05-01"),
+            );
+            expect(entries).toHaveLength(0);
+        });
+
+        it("throws WorkingHoursEntryNotFoundError for non-existent entry", async () => {
+            await expect(commandBus.execute(new DeleteWorkingHoursCommand({ entryId: randomUUID() }))).rejects.toThrow(
+                WorkingHoursEntryNotFoundError,
+            );
+        });
+
+        it("throws WorkingHoursEntryLockedError when deleting a locked entry", async () => {
+            const empId = randomUUID();
+            const entryId: string = await commandBus.execute(
+                new LogWorkingHoursCommand({ employeeId: empId, date: "2026-05-02", hours: 4 }),
+            );
+
+            await commandBus.execute(
+                new LockWorkingHoursCommand({
+                    employeeId: empId,
+                    dateFrom: "2026-05-02",
+                    dateTo: "2026-05-02",
+                    lockedBy: managerId,
+                }),
+            );
+
+            await expect(commandBus.execute(new DeleteWorkingHoursCommand({ entryId }))).rejects.toThrow(
+                WorkingHoursEntryLockedError,
+            );
+        });
+    });
+
+    // ─── Delete Activity ─────────────────────────────────────
+
+    describe("Delete Activity", () => {
+        it("deletes an activity not assigned to any working hours", async () => {
+            const activityId: string = await commandBus.execute(
+                new CreateActivityCommand({ name: "Deletable activity" }),
+            );
+
+            await commandBus.execute(new DeleteActivityCommand({ activityId }));
+
+            const activities: ListActivitiesResponse = await queryBus.execute(new ListActivitiesQuery());
+            expect(activities.find((a) => a.id === activityId)).toBeUndefined();
+        });
+
+        it("throws ActivityNotFoundError for non-existent activity", async () => {
+            await expect(commandBus.execute(new DeleteActivityCommand({ activityId: randomUUID() }))).rejects.toThrow(
+                ActivityNotFoundError,
+            );
+        });
+
+        it("throws ActivityInUseError when activity is assigned to working hours", async () => {
+            const activityId: string = await commandBus.execute(new CreateActivityCommand({ name: "In-use activity" }));
+
+            await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: randomUUID(),
+                    date: "2026-05-10",
+                    hours: 2,
+                    activityId,
+                }),
+            );
+
+            await expect(commandBus.execute(new DeleteActivityCommand({ activityId }))).rejects.toThrow(
+                ActivityInUseError,
+            );
+        });
+    });
+
+    // ─── Activity Log ────────────────────────────────────────
+
+    describe("Activity Log", () => {
+        it("logs and queries activity log entries", async () => {
+            const empId = randomUUID();
+            const logService = moduleRef.get(ActivityLogService);
+
+            await logService.log(empId, "visit-completed", "Completed visit at Customer X");
+            await logService.log(empId, "payment-collected", "Collected 500 PLN");
+
+            const entries: GetEmployeeActivityLogResponse = await queryBus.execute(
+                new GetEmployeeActivityLogQuery(empId, "2026-03-01", "2026-12-31"),
+            );
+
+            expect(entries).toHaveLength(2);
+            expect(entries[0].action).toBe("payment-collected");
+            expect(entries[1].action).toBe("visit-completed");
+        });
+
+        it("cleanup cron deletes old entries", async () => {
+            const empId = randomUUID();
+            const logService = moduleRef.get(ActivityLogService);
+            const cleanupCron = moduleRef.get(ActivityLogCleanupCron);
+
+            await logService.log(empId, "old-action", "This is old");
+
+            // Manually set the entry's occurredAt to 10 days ago via raw SQL
+            const connection = orm.em.getConnection();
+            await connection.execute(
+                `UPDATE "activity_log_entry" SET "occurred_at" = NOW() - INTERVAL '10 days' WHERE "employee_id" = ?`,
+                [empId],
+            );
+
+            await cleanupCron.cleanup();
+
+            const entries: GetEmployeeActivityLogResponse = await queryBus.execute(
+                new GetEmployeeActivityLogQuery(empId, "2020-01-01", "2030-12-31"),
+            );
+            expect(entries).toHaveLength(0);
         });
     });
 

@@ -70,6 +70,105 @@
             "nativeEnums": {}
         },
         {
+            "name": "activity_log_entry",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "employee_id": {
+                    "name": "employee_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "action": {
+                    "name": "action",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "details": {
+                    "name": "details",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "occurred_at": {
+                    "name": "occurred_at",
+                    "type": "timestamptz",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 6,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "datetime"
+                }
+            },
+            "indexes": [
+                {
+                    "keyName": "activity_log_entry_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {},
+            "nativeEnums": {}
+        },
+        {
             "name": "employee_availability_entry",
             "schema": "public",
             "columns": {
@@ -168,6 +267,22 @@
                     "comment": null,
                     "enumItems": ["pending_approval", "confirmed"],
                     "mappedType": "enum"
+                },
+                "locked": {
+                    "name": "locked",
+                    "type": "boolean",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": "false",
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "boolean"
                 }
             },
             "indexes": [
@@ -1399,9 +1514,9 @@
                     "enumItems": [],
                     "mappedType": "array"
                 },
-                "representative_ids": {
-                    "name": "representative_ids",
-                    "type": "text[]",
+                "crew_members": {
+                    "name": "crew_members",
+                    "type": "jsonb",
                     "unsigned": false,
                     "autoincrement": false,
                     "primary": false,
@@ -1410,10 +1525,10 @@
                     "length": null,
                     "precision": null,
                     "scale": null,
-                    "default": "'{}'",
+                    "default": "'[]'",
                     "comment": null,
                     "enumItems": [],
-                    "mappedType": "array"
+                    "mappedType": "json"
                 },
                 "stops": {
                     "name": "stops",
@@ -2332,9 +2447,9 @@
                     "enumItems": [],
                     "mappedType": "array"
                 },
-                "representative_ids": {
-                    "name": "representative_ids",
-                    "type": "text[]",
+                "crew_members": {
+                    "name": "crew_members",
+                    "type": "jsonb",
                     "unsigned": false,
                     "autoincrement": false,
                     "primary": false,
@@ -2343,10 +2458,10 @@
                     "length": null,
                     "precision": null,
                     "scale": null,
-                    "default": "'{}'",
+                    "default": "'[]'",
                     "comment": null,
                     "enumItems": [],
-                    "mappedType": "array"
+                    "mappedType": "json"
                 },
                 "stops": {
                     "name": "stops",

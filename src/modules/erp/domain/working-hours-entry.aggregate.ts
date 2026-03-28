@@ -91,6 +91,12 @@ export class WorkingHoursEntryAggregate extends AggregateRoot<WorkingHoursEntryP
         );
     }
 
+    ensureDeletable(): void {
+        if (this.isLocked) {
+            throw new WorkingHoursEntryLockedError(this.id as string);
+        }
+    }
+
     lock(lockedBy: string): void {
         if (this.isLocked) {
             throw new WorkingHoursEntryAlreadyLockedError(this.id as string);

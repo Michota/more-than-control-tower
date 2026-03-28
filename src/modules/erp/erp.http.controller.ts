@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
 import { CreateActivityCommand } from "./commands/create-activity/create-activity.command.js";
 import { CreateActivityRequest } from "./commands/create-activity/create-activity.request.dto.js";
+import { DeleteActivityCommand } from "./commands/delete-activity/delete-activity.command.js";
+import { DeleteActivityParams } from "./commands/delete-activity/delete-activity.request.dto.js";
 import { LogWorkingHoursCommand } from "./commands/log-working-hours/log-working-hours.command.js";
 import { LogWorkingHoursRequest } from "./commands/log-working-hours/log-working-hours.request.dto.js";
 import { EditWorkingHoursCommand } from "./commands/edit-working-hours/edit-working-hours.command.js";
@@ -10,6 +12,8 @@ import {
     EditWorkingHoursParams,
     EditWorkingHoursRequest,
 } from "./commands/edit-working-hours/edit-working-hours.request.dto.js";
+import { DeleteWorkingHoursCommand } from "./commands/delete-working-hours/delete-working-hours.command.js";
+import { DeleteWorkingHoursParams } from "./commands/delete-working-hours/delete-working-hours.request.dto.js";
 import { LockWorkingHoursCommand } from "./commands/lock-working-hours/lock-working-hours.command.js";
 import { LockWorkingHoursRequest } from "./commands/lock-working-hours/lock-working-hours.request.dto.js";
 import { ListActivitiesQuery, type ListActivitiesResponse } from "./queries/list-activities/list-activities.query.js";
@@ -21,6 +25,14 @@ import {
     GetEmployeeWorkingHoursParams,
     GetEmployeeWorkingHoursQueryDto,
 } from "./queries/get-employee-working-hours/get-employee-working-hours.request.dto.js";
+import {
+    GetEmployeeActivityLogQuery,
+    type GetEmployeeActivityLogResponse,
+} from "./queries/get-employee-activity-log/get-employee-activity-log.query.js";
+import {
+    GetEmployeeActivityLogParams,
+    GetEmployeeActivityLogQueryDto,
+} from "./queries/get-employee-activity-log/get-employee-activity-log.request.dto.js";
 import { ErpPermission } from "./erp.permissions.js";
 
 @Controller("erp")
@@ -29,6 +41,8 @@ export class ErpHttpController {
         private readonly commandBus: CommandBus,
         private readonly queryBus: QueryBus,
     ) {}
+
+    // ─── Activities ──────────────────────────────────────────
 
     @RequirePermission(ErpPermission.VIEW_ACTIVITIES)
     @Get("activities")
@@ -47,6 +61,14 @@ export class ErpHttpController {
         );
         return { activityId };
     }
+
+    @RequirePermission(ErpPermission.DELETE_ACTIVITY)
+    @Delete("activities/:id")
+    async deleteActivity(@Param() params: DeleteActivityParams): Promise<void> {
+        await this.commandBus.execute(new DeleteActivityCommand({ activityId: params.id }));
+    }
+
+    // ─── Working Hours ───────────────────────────────────────
 
     @RequirePermission(ErpPermission.VIEW_WORKING_HOURS)
     @Get("working-hours/:employeeId")
@@ -88,6 +110,12 @@ export class ErpHttpController {
         );
     }
 
+    @RequirePermission(ErpPermission.DELETE_WORKING_HOURS)
+    @Delete("working-hours/:id")
+    async deleteWorkingHours(@Param() params: DeleteWorkingHoursParams): Promise<void> {
+        await this.commandBus.execute(new DeleteWorkingHoursCommand({ entryId: params.id }));
+    }
+
     @RequirePermission(ErpPermission.LOCK_WORKING_HOURS)
     @Post("working-hours/lock")
     async lockWorkingHours(@Body() body: LockWorkingHoursRequest): Promise<void> {
@@ -99,5 +127,16 @@ export class ErpHttpController {
                 lockedBy: body.lockedBy,
             }),
         );
+    }
+
+    // ─── Activity Log ────────────────────────────────────────
+
+    @RequirePermission(ErpPermission.VIEW_ACTIVITY_LOG)
+    @Get("activity-log/:employeeId")
+    async getEmployeeActivityLog(
+        @Param() params: GetEmployeeActivityLogParams,
+        @Query() query: GetEmployeeActivityLogQueryDto,
+    ): Promise<GetEmployeeActivityLogResponse> {
+        return this.queryBus.execute(new GetEmployeeActivityLogQuery(params.employeeId, query.dateFrom, query.dateTo));
     }
 }

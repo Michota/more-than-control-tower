@@ -98,6 +98,21 @@ describe("WorkingHoursEntryAggregate", () => {
         });
     });
 
+    describe("ensureDeletable", () => {
+        it("does not throw for an OPEN entry", () => {
+            const entry = logEntry();
+
+            expect(() => entry.ensureDeletable()).not.toThrow();
+        });
+
+        it("throws WorkingHoursEntryLockedError for a locked entry", () => {
+            const entry = logEntry();
+            entry.lock(randomUUID());
+
+            expect(() => entry.ensureDeletable()).toThrow(WorkingHoursEntryLockedError);
+        });
+    });
+
     describe("lock", () => {
         it("transitions entry to LOCKED status", () => {
             const managerId = randomUUID();
