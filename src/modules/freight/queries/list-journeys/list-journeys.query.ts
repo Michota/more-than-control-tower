@@ -1,5 +1,19 @@
 import { Query } from "@nestjs/cqrs";
 
+export interface JourneyStopItem {
+    customerId: string;
+    customerName: string;
+    address: {
+        country: string;
+        postalCode: string;
+        state: string;
+        city: string;
+        street: string;
+    };
+    orderIds: string[];
+    sequence: number;
+}
+
 export interface JourneyListItem {
     id: string;
     routeId: string;
@@ -8,7 +22,7 @@ export interface JourneyListItem {
     scheduledDate: string;
     vehicleIds: string[];
     representativeIds: string[];
-    visitPointIds: string[];
+    stops: JourneyStopItem[];
 }
 
 export type ListJourneysResponse = JourneyListItem[];

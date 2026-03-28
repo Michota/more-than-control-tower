@@ -8,12 +8,25 @@ export interface EditRouteScheduleProps {
     specificDates?: string[];
 }
 
+export interface EditRouteStopProps {
+    customerId: string;
+    customerName: string;
+    address: {
+        country: string;
+        postalCode: string;
+        state: string;
+        city: string;
+        street: string;
+    };
+    sequence: number;
+}
+
 export class EditRouteCommand extends Command<void> {
     readonly routeId: string;
     readonly name?: string;
     readonly vehicleIds?: string[];
     readonly representativeIds?: string[];
-    readonly visitPointIds?: string[];
+    readonly stops?: EditRouteStopProps[];
     readonly schedule?: EditRouteScheduleProps;
 
     constructor(props: CommandProps<EditRouteCommand>) {
@@ -22,7 +35,7 @@ export class EditRouteCommand extends Command<void> {
         this.name = props.name;
         this.vehicleIds = props.vehicleIds;
         this.representativeIds = props.representativeIds;
-        this.visitPointIds = props.visitPointIds;
+        this.stops = props.stops;
         this.schedule = props.schedule;
     }
 }

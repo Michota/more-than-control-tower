@@ -37,7 +37,7 @@ export class CreateJourneyCommandHandler implements ICommandHandler<CreateJourne
             scheduledDate: cmd.scheduledDate,
             vehicleIds: route.vehicleIds,
             representativeIds: route.representativeIds,
-            visitPointIds: route.visitPointIds,
+            stops: route.stops,
         });
 
         await this.journeyRepo.save(journey);

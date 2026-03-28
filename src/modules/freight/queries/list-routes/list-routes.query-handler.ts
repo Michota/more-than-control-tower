@@ -20,7 +20,12 @@ export class ListRoutesQueryHandler implements IQueryHandler<ListRoutesQuery, Li
             status: r.status,
             vehicleIds: r.vehicleIds,
             representativeIds: r.representativeIds,
-            visitPointIds: r.visitPointIds,
+            stops: r.stops.map((s) => ({
+                customerId: s.customerId,
+                customerName: s.customerName,
+                address: s.address,
+                sequence: s.sequence,
+            })),
             schedule: r.schedule
                 ? {
                       type: r.schedule.type,

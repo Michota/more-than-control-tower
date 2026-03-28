@@ -41,6 +41,53 @@ export class RouteScheduleDto {
     specificDates?: string[];
 }
 
+export class RouteStopAddressDto {
+    /** @example "PL" */
+    @IsString()
+    @IsNotEmpty()
+    country!: string;
+
+    /** @example "00-001" */
+    @IsString()
+    @IsNotEmpty()
+    postalCode!: string;
+
+    /** @example "Mazowieckie" */
+    @IsString()
+    @IsNotEmpty()
+    state!: string;
+
+    /** @example "Warszawa" */
+    @IsString()
+    @IsNotEmpty()
+    city!: string;
+
+    /** @example "Marszałkowska 1" */
+    @IsString()
+    @IsNotEmpty()
+    street!: string;
+}
+
+export class RouteStopDto {
+    /** @example "550e8400-e29b-41d4-a716-446655440000" */
+    @IsUUID()
+    customerId!: string;
+
+    /** @example "Sklep ABC" */
+    @IsString()
+    @IsNotEmpty()
+    customerName!: string;
+
+    @ValidateNested()
+    @Type(() => RouteStopAddressDto)
+    address!: RouteStopAddressDto;
+
+    /** @example 0 */
+    @IsNumber()
+    @Min(0)
+    sequence!: number;
+}
+
 export class EditRouteRequestDto {
     /** @example "Route North" */
     @IsString()
@@ -59,9 +106,10 @@ export class EditRouteRequestDto {
     representativeIds?: string[];
 
     @IsArray()
-    @IsUUID("all", { each: true })
+    @ValidateNested({ each: true })
+    @Type(() => RouteStopDto)
     @IsOptional()
-    visitPointIds?: string[];
+    stops?: RouteStopDto[];
 
     @ValidateNested()
     @Type(() => RouteScheduleDto)

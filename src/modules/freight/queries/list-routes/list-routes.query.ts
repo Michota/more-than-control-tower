@@ -7,13 +7,26 @@ export interface RouteScheduleItem {
     specificDates?: string[];
 }
 
+export interface RouteStopItem {
+    customerId: string;
+    customerName: string;
+    address: {
+        country: string;
+        postalCode: string;
+        state: string;
+        city: string;
+        street: string;
+    };
+    sequence: number;
+}
+
 export interface RouteListItem {
     id: string;
     name: string;
     status: string;
     vehicleIds: string[];
     representativeIds: string[];
-    visitPointIds: string[];
+    stops: RouteStopItem[];
     schedule?: RouteScheduleItem;
 }
 

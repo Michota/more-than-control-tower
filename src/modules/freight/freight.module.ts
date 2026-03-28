@@ -35,6 +35,12 @@ import { CancelJourneyCommandHandler } from "./commands/cancel-journey/cancel-jo
 import { ListJourneysQueryHandler } from "./queries/list-journeys/list-journeys.query-handler.js";
 import { GetJourneyQueryHandler } from "./queries/get-journey/get-journey.query-handler.js";
 import { ListEligibleDriversQueryHandler } from "./queries/list-eligible-drivers/list-eligible-drivers.query-handler.js";
+import { AddJourneyStopCommandHandler } from "./commands/add-journey-stop/add-journey-stop.command-handler.js";
+import { RemoveJourneyStopCommandHandler } from "./commands/remove-journey-stop/remove-journey-stop.command-handler.js";
+import { AssignOrderToStopCommandHandler } from "./commands/assign-order-to-stop/assign-order-to-stop.command-handler.js";
+import { UnassignOrderFromStopCommandHandler } from "./commands/unassign-order-from-stop/unassign-order-from-stop.command-handler.js";
+import { ReorderJourneyStopsCommandHandler } from "./commands/reorder-journey-stops/reorder-journey-stops.command-handler.js";
+import { CheckJourneyAvailabilityQueryHandler } from "./queries/check-journey-availability/check-journey-availability.query-handler.js";
 
 // Database
 import { Vehicle } from "./database/vehicle.entity.js";
@@ -73,8 +79,14 @@ import { FreightHttpController } from "./freight.http.controller.js";
         StartJourneyCommandHandler,
         CompleteJourneyCommandHandler,
         CancelJourneyCommandHandler,
+        AddJourneyStopCommandHandler,
+        RemoveJourneyStopCommandHandler,
+        AssignOrderToStopCommandHandler,
+        UnassignOrderFromStopCommandHandler,
+        ReorderJourneyStopsCommandHandler,
         ListJourneysQueryHandler,
         GetJourneyQueryHandler,
+        CheckJourneyAvailabilityQueryHandler,
 
         // Repositories
         {

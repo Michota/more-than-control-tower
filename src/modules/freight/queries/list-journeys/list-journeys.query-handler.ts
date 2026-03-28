@@ -22,7 +22,13 @@ export class ListJourneysQueryHandler implements IQueryHandler<ListJourneysQuery
             scheduledDate: j.scheduledDate,
             vehicleIds: j.vehicleIds,
             representativeIds: j.representativeIds,
-            visitPointIds: j.visitPointIds,
+            stops: j.stops.map((s) => ({
+                customerId: s.customerId,
+                customerName: s.customerName,
+                address: s.address,
+                orderIds: s.orderIds,
+                sequence: s.sequence,
+            })),
         }));
     }
 }

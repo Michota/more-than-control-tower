@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
@@ -40,9 +40,17 @@ import { CreateJourneyRequestDto } from "./commands/create-journey/create-journe
 import { StartJourneyCommand } from "./commands/start-journey/start-journey.command.js";
 import { CompleteJourneyCommand } from "./commands/complete-journey/complete-journey.command.js";
 import { CancelJourneyCommand } from "./commands/cancel-journey/cancel-journey.command.js";
+import { AddJourneyStopCommand } from "./commands/add-journey-stop/add-journey-stop.command.js";
+import { AddJourneyStopRequestDto } from "./commands/add-journey-stop/add-journey-stop.request.dto.js";
+import { RemoveJourneyStopCommand } from "./commands/remove-journey-stop/remove-journey-stop.command.js";
+import { AssignOrderToStopCommand } from "./commands/assign-order-to-stop/assign-order-to-stop.command.js";
+import { UnassignOrderFromStopCommand } from "./commands/unassign-order-from-stop/unassign-order-from-stop.command.js";
+import { ReorderJourneyStopsCommand } from "./commands/reorder-journey-stops/reorder-journey-stops.command.js";
+import { ReorderJourneyStopsRequestDto } from "./commands/reorder-journey-stops/reorder-journey-stops.request.dto.js";
 import { JourneyIdResponseDto, JourneyResponseDto } from "./dtos/journey.response.dto.js";
 import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query.js";
 import { GetJourneyQuery } from "./queries/get-journey/get-journey.query.js";
+import { CheckJourneyAvailabilityQuery } from "./queries/check-journey-availability/check-journey-availability.query.js";
 
 @ApiTags("Freight")
 @Controller("freight")
@@ -170,7 +178,7 @@ export class FreightHttpController {
                 name: body.name,
                 vehicleIds: body.vehicleIds,
                 representativeIds: body.representativeIds,
-                visitPointIds: body.visitPointIds,
+                stops: body.stops,
                 schedule: body.schedule,
             }),
         );
@@ -201,6 +209,26 @@ export class FreightHttpController {
     }
 
     // ─── Journeys ───────────────────────────────────────────
+
+    @Get("journeys/availability")
+    @RequirePermission(FreightPermission.VIEW_JOURNEYS)
+    @ApiOperation({ summary: "Check vehicle and representative availability for a date" })
+    @ApiResponse({ status: 200 })
+    async checkAvailability(
+        @Query("date") date: string,
+        @Query("vehicleIds") vehicleIds?: string,
+        @Query("representativeIds") representativeIds?: string,
+        @Query("excludeJourneyId") excludeJourneyId?: string,
+    ) {
+        return this.queryBus.execute(
+            new CheckJourneyAvailabilityQuery(
+                date,
+                vehicleIds ? vehicleIds.split(",") : [],
+                representativeIds ? representativeIds.split(",") : [],
+                excludeJourneyId,
+            ),
+        );
+    }
 
     @Get("journeys")
     @RequirePermission(FreightPermission.VIEW_JOURNEYS)
@@ -254,5 +282,71 @@ export class FreightHttpController {
     @ApiResponse({ status: 200 })
     async cancelJourney(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new CancelJourneyCommand({ journeyId: id }));
+    }
+
+    // ─── Journey Stop Management ────────────────────────────
+
+    @Post("journeys/:id/stops")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Add a stop to a planned journey" })
+    @ApiResponse({ status: 200 })
+    async addJourneyStop(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: AddJourneyStopRequestDto): Promise<void> {
+        await this.commandBus.execute(
+            new AddJourneyStopCommand({
+                journeyId: id,
+                customerId: body.customerId,
+                customerName: body.customerName,
+                address: body.address,
+                sequence: body.sequence,
+            }),
+        );
+    }
+
+    @Delete("journeys/:id/stops/:customerId")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Remove a stop from a planned journey" })
+    @ApiResponse({ status: 200 })
+    async removeJourneyStop(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Param("customerId", ParseUUIDPipe) customerId: UUID,
+    ): Promise<void> {
+        await this.commandBus.execute(new RemoveJourneyStopCommand({ journeyId: id, customerId }));
+    }
+
+    @Post("journeys/:id/stops/:customerId/orders/:orderId")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Assign an order to a journey stop" })
+    @ApiResponse({ status: 200 })
+    async assignOrderToStop(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Param("customerId", ParseUUIDPipe) customerId: UUID,
+        @Param("orderId", ParseUUIDPipe) orderId: UUID,
+    ): Promise<void> {
+        await this.commandBus.execute(new AssignOrderToStopCommand({ journeyId: id, customerId, orderId }));
+    }
+
+    @Delete("journeys/:id/stops/:customerId/orders/:orderId")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Unassign an order from a journey stop" })
+    @ApiResponse({ status: 200 })
+    async unassignOrderFromStop(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Param("customerId", ParseUUIDPipe) customerId: UUID,
+        @Param("orderId", ParseUUIDPipe) orderId: UUID,
+    ): Promise<void> {
+        await this.commandBus.execute(new UnassignOrderFromStopCommand({ journeyId: id, customerId, orderId }));
+    }
+
+    @Put("journeys/:id/stops/reorder")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Reorder stops on a planned journey" })
+    @ApiResponse({ status: 200 })
+    async reorderJourneyStops(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: ReorderJourneyStopsRequestDto,
+    ): Promise<void> {
+        await this.commandBus.execute(
+            new ReorderJourneyStopsCommand({ journeyId: id, stopSequences: body.stopSequences }),
+        );
     }
 }

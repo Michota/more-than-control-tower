@@ -26,7 +26,13 @@ export class GetJourneyQueryHandler implements IQueryHandler<GetJourneyQuery, Ge
             scheduledDate: journey.scheduledDate,
             vehicleIds: journey.vehicleIds,
             representativeIds: journey.representativeIds,
-            visitPointIds: journey.visitPointIds,
+            stops: journey.stops.map((s) => ({
+                customerId: s.customerId,
+                customerName: s.customerName,
+                address: s.address,
+                orderIds: s.orderIds,
+                sequence: s.sequence,
+            })),
         };
     }
 }

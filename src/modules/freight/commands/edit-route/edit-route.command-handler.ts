@@ -4,6 +4,7 @@ import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
 import type { RouteRepositoryPort } from "../../database/route.repository.port.js";
 import { RouteSchedule } from "../../domain/route-schedule.value-object.js";
+import { RouteStop } from "../../domain/route-stop.value-object.js";
 import { RouteNotFoundError } from "../../domain/route.errors.js";
 import { ROUTE_REPOSITORY_PORT } from "../../freight.di-tokens.js";
 import { EditRouteCommand } from "./edit-route.command.js";
@@ -28,7 +29,17 @@ export class EditRouteCommandHandler implements ICommandHandler<EditRouteCommand
             ...(cmd.name !== undefined && { name: cmd.name }),
             ...(cmd.vehicleIds !== undefined && { vehicleIds: cmd.vehicleIds }),
             ...(cmd.representativeIds !== undefined && { representativeIds: cmd.representativeIds }),
-            ...(cmd.visitPointIds !== undefined && { visitPointIds: cmd.visitPointIds }),
+            ...(cmd.stops !== undefined && {
+                stops: cmd.stops.map(
+                    (s) =>
+                        new RouteStop({
+                            customerId: s.customerId,
+                            customerName: s.customerName,
+                            address: s.address,
+                            sequence: s.sequence,
+                        }),
+                ),
+            }),
             ...(cmd.schedule !== undefined && {
                 schedule: new RouteSchedule({
                     type: cmd.schedule.type,
