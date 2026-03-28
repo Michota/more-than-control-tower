@@ -3,7 +3,9 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
+import { STOCK_RESERVATION_CHECKERS } from "../../shared/infrastructure/stock-reservation-checker.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
+import { OrderStockReservationChecker } from "./infrastructure/order-stock-reservation-checker.js";
 import { AddProductToOrderCommandHandler } from "./commands/add-product-to-order/add-product-to-order.command-handler.js";
 import { AssignGoodCommandHandler } from "./commands/assign-good/assign-good.command-handler.js";
 import { AssignStockEntryCommandHandler } from "./commands/assign-stock-entry/assign-stock-entry.command-handler.js";
@@ -49,6 +51,10 @@ import { Product } from "./database/product.entity.js";
         CompleteOrderCommandHandler,
         AssignGoodCommandHandler,
         AssignStockEntryCommandHandler,
+        {
+            provide: STOCK_RESERVATION_CHECKERS,
+            useClass: OrderStockReservationChecker,
+        },
         {
             provide: ORDER_REPOSITORY_PORT,
             useFactory: (config: ConfigService, em: EntityManager) => {
