@@ -12,6 +12,7 @@ import { AssignGoodCommand } from "./commands/assign-good/assign-good.command";
 import { OrderSource } from "./domain/order-source.enum";
 import { OrderStatus } from "./domain/order-status.enum";
 import {
+    CustomerNotFoundForOrderError,
     OrderCannotBePlacedError,
     OrderCannotBeCancelledError,
     OrderCannotBeCompletedError,
@@ -27,7 +28,10 @@ import { Price } from "./database/price.entity";
 import { ItemCategory } from "./database/item-category.entity";
 import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
 import { SalesModule } from "./sales.module";
+import { CrmModule } from "../crm/crm.module";
 import { WarehouseModule } from "../warehouse/warehouse.module";
+import { Customer } from "../crm/database/customer.entity";
+import { CustomerType } from "../crm/domain/customer-type.enum";
 import { CreateGoodCommand } from "../warehouse/commands/create-good/create-good.command";
 import { DimensionUnit } from "../warehouse/domain/good-dimensions.value-object";
 import { WeightUnit } from "../warehouse/domain/good-weight.value-object";
@@ -52,6 +56,7 @@ describe("Sales Module — Integration Tests", () => {
                 CqrsModule.forRoot(),
                 PermissionRegistryModule,
                 SalesModule,
+                CrmModule,
                 WarehouseModule,
             ],
         }).compile();
@@ -68,6 +73,15 @@ describe("Sales Module — Integration Tests", () => {
         categoryId = randomUUID();
         productId = randomUUID();
         priceId = randomUUID();
+
+        // Seed CRM customer
+        await em.insert(Customer, {
+            id: customerId,
+            name: "Test Customer",
+            customerType: CustomerType.B2C,
+            firstName: "Jan",
+            lastName: "Kowalski",
+        });
 
         await em.insertMany(ItemCategory, [{ id: categoryId, name: "Test Category" }]);
         await em.insert(Product, {
@@ -138,6 +152,10 @@ describe("Sales Module — Integration Tests", () => {
 
         it("throws PriceNotFoundForOrderLineError when price doesn't exist", async () => {
             await expect(draftOrder({ priceId: randomUUID() })).rejects.toThrow(PriceNotFoundForOrderLineError);
+        });
+
+        it("throws CustomerNotFoundForOrderError when customer doesn't exist in CRM", async () => {
+            await expect(draftOrder({ customerId: randomUUID() })).rejects.toThrow(CustomerNotFoundForOrderError);
         });
     });
 
