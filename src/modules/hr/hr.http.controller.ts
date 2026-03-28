@@ -44,6 +44,10 @@ import { type ListPositionsResponse } from "./queries/list-positions/list-positi
 import { GetEmployeeAvailabilityQuery } from "./queries/get-employee-availability/get-employee-availability.query.js";
 import { GetEmployeeAvailabilityRequestDto } from "./queries/get-employee-availability/get-employee-availability.request.dto.js";
 import { type GetEmployeeAvailabilityResponse } from "./queries/get-employee-availability/get-employee-availability.query-handler.js";
+import {
+    GetEmployeePermissionsQuery,
+    type GetEmployeePermissionsResponse,
+} from "../../shared/queries/get-employee-permissions.query.js";
 
 @Controller("employees")
 export class HrHttpController {
@@ -194,12 +198,17 @@ export class HrHttpController {
         @Body() body: SetAvailabilityRequest,
         @CurrentUser() user: RequestUser,
     ): Promise<void> {
-        const isManager = user.userId !== id;
+        const permissions = await this.queryBus.execute<
+            GetEmployeePermissionsQuery,
+            GetEmployeePermissionsResponse | null
+        >(new GetEmployeePermissionsQuery(user.userId));
+        const canManage = permissions?.effectivePermissions.includes("hr:manage-availability") ?? false;
+
         await this.commandBus.execute(
             new SetAvailabilityCommand({
                 employeeId: id,
                 entries: body.entries,
-                setByManager: isManager,
+                setByManager: canManage,
             }),
         );
     }
