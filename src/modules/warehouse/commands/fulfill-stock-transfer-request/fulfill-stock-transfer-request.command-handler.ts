@@ -27,11 +27,11 @@ export class FulfillStockTransferRequestCommandHandler implements ICommandHandle
             throw new StockTransferRequestNotFoundError(cmd.requestId);
         }
 
+        // Guard status before attempting transfer
         request.fulfill();
 
-        await this.requestRepo.save(request);
-        await this.uow.commit();
-
+        // Transfer stock first — if it fails (e.g. InsufficientStockError),
+        // the request status change is never persisted
         await this.commandBus.execute(
             new TransferStockCommand({
                 goodId: request.goodId,
@@ -41,6 +41,9 @@ export class FulfillStockTransferRequestCommandHandler implements ICommandHandle
                 note: `Fulfilled transfer request ${request.id}`,
             }),
         );
+
+        await this.requestRepo.save(request);
+        await this.uow.commit();
 
         for (const event of request.domainEvents) {
             await this.eventBus.publish(event);

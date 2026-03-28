@@ -1569,6 +1569,25 @@ describe("Warehouse Module — Integration Tests", () => {
             );
         });
 
+        it("fails to fulfill when source warehouse has insufficient stock", async () => {
+            const goodId = await createGood({ name: "Insufficient Good" });
+            const fromId = await createWarehouse("Empty Source");
+            const toId = await createWarehouse("Insuf Dest");
+
+            // No stock received — source warehouse is empty
+            const requestId: string = await commandBus.execute(
+                new RequestStockTransferCommand({ goodId, quantity: 5, fromWarehouseId: fromId, toWarehouseId: toId }),
+            );
+
+            await expect(commandBus.execute(new FulfillStockTransferRequestCommand({ requestId }))).rejects.toThrow(
+                StockEntryNotFoundError,
+            );
+
+            // Request should still be PENDING (not stuck as FULFILLED)
+            const result = await queryBus.execute(new GetStockTransferRequestQuery(requestId));
+            expect(result.status).toEqual(StockTransferRequestStatus.PENDING);
+        });
+
         it("throws StockTransferRequestNotFoundError for non-existent request", async () => {
             await expect(
                 commandBus.execute(

@@ -3,6 +3,73 @@
     "namespaces": ["public"],
     "tables": [
         {
+            "name": "activity",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "description": {
+                    "name": "description",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                }
+            },
+            "indexes": [
+                {
+                    "keyName": "activity_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [],
+            "foreignKeys": {},
+            "nativeEnums": {}
+        },
+        {
             "name": "employee_availability_entry",
             "schema": "public",
             "columns": {
@@ -1363,6 +1430,22 @@
                     "comment": null,
                     "enumItems": [],
                     "mappedType": "json"
+                },
+                "loading_deadline": {
+                    "name": "loading_deadline",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
                 }
             },
             "indexes": [
@@ -3421,6 +3504,160 @@
                     "expression": "\"type\" in ('REGULAR', 'MOBILE')",
                     "definition": "check (\"type\" in ('REGULAR', 'MOBILE'))",
                     "columnName": "type"
+                }
+            ],
+            "foreignKeys": {},
+            "nativeEnums": {}
+        },
+        {
+            "name": "working_hours_entry",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "employee_id": {
+                    "name": "employee_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "date": {
+                    "name": "date",
+                    "type": "date",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 0,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "date"
+                },
+                "hours": {
+                    "name": "hours",
+                    "type": "numeric(10,0)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": 10,
+                    "scale": 0,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "decimal"
+                },
+                "note": {
+                    "name": "note",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "activity_id": {
+                    "name": "activity_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": ["OPEN", "LOCKED"],
+                    "mappedType": "enum"
+                },
+                "locked_by": {
+                    "name": "locked_by",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                }
+            },
+            "indexes": [
+                {
+                    "keyName": "working_hours_entry_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [
+                {
+                    "name": "working_hours_entry_status_check",
+                    "expression": "\"status\" in ('OPEN', 'LOCKED')",
+                    "definition": "check (\"status\" in ('OPEN', 'LOCKED'))",
+                    "columnName": "status"
                 }
             ],
             "foreignKeys": {},
