@@ -198,7 +198,7 @@ describe("Freight Module — Integration Tests", () => {
             expect(route.status).toBe(RouteStatus.ACTIVE);
             expect(route.vehicleIds).toEqual([]);
             expect(route.representativeIds).toEqual([]);
-            expect(route.visitPointIds).toEqual([]);
+            expect(route.stops).toEqual([]);
             expect(route.schedule).toBeUndefined();
         });
 
@@ -217,7 +217,32 @@ describe("Freight Module — Integration Tests", () => {
                     name: "Route Edited",
                     vehicleIds: [vehicleId],
                     representativeIds: ["rep-1"],
-                    visitPointIds: ["vp-1", "vp-2"],
+                    stops: [
+                        {
+                            customerId: "c1",
+                            customerName: "Sklep ABC",
+                            address: {
+                                country: "PL",
+                                postalCode: "00-001",
+                                state: "Mazowieckie",
+                                city: "Warszawa",
+                                street: "Marszałkowska 1",
+                            },
+                            sequence: 0,
+                        },
+                        {
+                            customerId: "c2",
+                            customerName: "Sklep XYZ",
+                            address: {
+                                country: "PL",
+                                postalCode: "00-002",
+                                state: "Mazowieckie",
+                                city: "Warszawa",
+                                street: "Nowy Świat 5",
+                            },
+                            sequence: 1,
+                        },
+                    ],
                     schedule: {
                         type: ScheduleType.DAYS_OF_WEEK,
                         daysOfWeek: [1, 3, 5],
@@ -229,7 +254,9 @@ describe("Freight Module — Integration Tests", () => {
             expect(route.name).toBe("Route Edited");
             expect(route.vehicleIds).toEqual([vehicleId]);
             expect(route.representativeIds).toEqual(["rep-1"]);
-            expect(route.visitPointIds).toEqual(["vp-1", "vp-2"]);
+            expect(route.stops).toHaveLength(2);
+            expect(route.stops[0].customerId).toBe("c1");
+            expect(route.stops[1].customerId).toBe("c2");
             expect(route.schedule).toEqual({
                 type: ScheduleType.DAYS_OF_WEEK,
                 daysOfWeek: [1, 3, 5],
@@ -294,7 +321,20 @@ describe("Freight Module — Integration Tests", () => {
                     routeId,
                     vehicleIds: ["v1"],
                     representativeIds: ["r1"],
-                    visitPointIds: ["vp1"],
+                    stops: [
+                        {
+                            customerId: "c1",
+                            customerName: "Sklep ABC",
+                            address: {
+                                country: "PL",
+                                postalCode: "00-001",
+                                state: "Mazowieckie",
+                                city: "Warszawa",
+                                street: "Marszałkowska 1",
+                            },
+                            sequence: 0,
+                        },
+                    ],
                 }),
             );
 
@@ -307,7 +347,9 @@ describe("Freight Module — Integration Tests", () => {
             expect(journey.scheduledDate).toBe("2026-04-15");
             expect(journey.vehicleIds).toEqual(["v1"]);
             expect(journey.representativeIds).toEqual(["r1"]);
-            expect(journey.visitPointIds).toEqual(["vp1"]);
+            expect(journey.stops).toHaveLength(1);
+            expect(journey.stops[0].customerId).toBe("c1");
+            expect(journey.stops[0].orderIds).toEqual([]);
         });
 
         it("lists all journeys", async () => {

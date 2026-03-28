@@ -1,13 +1,13 @@
 import { Migration } from "@mikro-orm/migrations";
 
-export class Migration20260328102450 extends Migration {
+export class Migration20260328112642 extends Migration {
     override async up(): Promise<void> {
         this.addSql(
-            `create table "journey" ("id" uuid not null, "route_id" uuid not null, "route_name" varchar(255) not null, "status" text not null, "scheduled_date" varchar(255) not null, "vehicle_ids" text[] not null default '{}', "representative_ids" text[] not null default '{}', "visit_point_ids" text[] not null default '{}', primary key ("id"));`,
+            `create table "journey" ("id" uuid not null, "route_id" uuid not null, "route_name" varchar(255) not null, "status" text not null, "scheduled_date" varchar(255) not null, "vehicle_ids" text[] not null default '{}', "representative_ids" text[] not null default '{}', "stops" jsonb not null default '[]', primary key ("id"));`,
         );
 
         this.addSql(
-            `create table "route" ("id" uuid not null, "name" varchar(255) not null, "status" text not null, "vehicle_ids" text[] not null default '{}', "representative_ids" text[] not null default '{}', "visit_point_ids" text[] not null default '{}', "schedule_type" text null, "schedule_days_of_week" text[] null, "schedule_days_of_month" text[] null, "schedule_specific_dates" text[] null, primary key ("id"));`,
+            `create table "route" ("id" uuid not null, "name" varchar(255) not null, "status" text not null, "vehicle_ids" text[] not null default '{}', "representative_ids" text[] not null default '{}', "stops" jsonb not null default '[]', "schedule_type" text null, "schedule_days_of_week" text[] null, "schedule_days_of_month" text[] null, "schedule_specific_dates" text[] null, primary key ("id"));`,
         );
 
         this.addSql(
