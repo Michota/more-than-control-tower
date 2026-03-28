@@ -106,6 +106,22 @@ The Shared Kernel contains no business logic, no services, and no database acces
 
 Significant architectural decisions are tracked in `architectural-decision-record.md` at the repo root.
 
+## Testing
+
+The project uses **Vitest** (not Jest). A dedicated test PostgreSQL database is available for integration tests.
+
+After completing any requested feature, always write tests at all relevant levels:
+
+- **Unit domain tests** — pure domain logic (aggregates, value objects, domain services). These live alongside the domain files (e.g. `order.aggregate.spec.ts`).
+- **Unit tests** — application layer (command/query handlers) with mocked ports.
+- **Integration tests** — test through the HTTP layer or full module bootstrap against the real test database. These use the `*.integration-spec.ts` suffix.
+
+Tests are not optional follow-up work — they are part of the feature.
+
+## Commits
+
+Prefer atomic commits — group logically related changes together rather than committing everything at once. For example, separate domain logic, infrastructure, and test commits when it makes sense. Don't over-split either; use judgment.
+
 ## Critical Integrity Rules
 
 These are non-negotiable constraints that must be enforced at the architecture level, not left to application logic:
