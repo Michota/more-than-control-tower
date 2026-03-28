@@ -36,6 +36,9 @@ The system is decomposed into the following modules:
 - **Accountancy**: All financial flows. Order pricing, payment collection (cash multi-currency and card/NFC), order closing, return processing, and sales document generation.
 - **Sales**: Product catalog and pricing tiers (base → segment → individual). Source of truth for product data consumed by other modules.
 - **CRM**: Client entity management. Client records are referenced across orders, visit points, and returns.
+- **HR**: Handles managing employees, their positions, permissions, etc.
+- **System** - IT-heart of the codebase. Makes it possible to manage users of the system.
+- **ERP** - costs, working-hours, etc.
 
 ## Per-Tenant Data Source Swappability
 
@@ -108,7 +111,7 @@ Significant architectural decisions are tracked in `architectural-decision-recor
 
 ## Testing
 
-The project uses **Vitest** (not Jest). A dedicated test PostgreSQL database is available for integration tests.
+The project uses **Vitest** (not Jest). A dedicated dockerized test PostgreSQL database is available for integration tests.
 
 After completing any requested feature, always write tests at all relevant levels:
 
