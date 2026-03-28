@@ -19,6 +19,7 @@ export class ListOrdersQuery extends Query<ListOrdersResponse> {
         public readonly limit: number,
         public readonly customerId?: string,
         public readonly status?: string,
+        public readonly search?: string,
     ) {
         super();
     }

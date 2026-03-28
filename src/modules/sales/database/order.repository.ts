@@ -111,6 +111,11 @@ export class OrderRepository implements OrderRepositoryPort {
             where.status = params.status as OrderStatus;
         }
 
+        if (params.search) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            where.id = { $like: `${params.search}%` } as any;
+        }
+
         const offset = (params.page - 1) * params.limit;
 
         const [records, count] = await this.em.findAndCount(Order, where, {

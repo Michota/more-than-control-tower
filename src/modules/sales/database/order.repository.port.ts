@@ -6,6 +6,7 @@ export interface FindFilteredParams {
     limit: number;
     customerId?: string;
     status?: string;
+    search?: string;
 }
 
 export interface OrderRepositoryPort extends RepositoryPort<OrderAggregate> {

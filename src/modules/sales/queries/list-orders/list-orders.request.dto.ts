@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsUUID, Min } from "class-validator";
+import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { OrderStatus } from "../../domain/order-status.enum.js";
 
@@ -22,4 +22,8 @@ export class ListOrdersRequestDto {
     @IsOptional()
     @IsEnum(OrderStatus)
     status?: OrderStatus;
+
+    @IsOptional()
+    @IsString()
+    search?: string;
 }

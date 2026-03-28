@@ -17,6 +17,7 @@ export class ListOrdersQueryHandler implements IQueryHandler<ListOrdersQuery, Li
             limit: query.limit,
             customerId: query.customerId,
             status: query.status,
+            search: query.search,
         });
 
         return {

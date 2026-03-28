@@ -44,7 +44,7 @@ export class SalesHttpController {
     @Get()
     async listOrders(@Query() query: ListOrdersRequestDto): Promise<ListOrdersResponse> {
         return this.queryBus.execute(
-            new ListOrdersQuery(query.page ?? 1, query.limit ?? 20, query.customerId, query.status),
+            new ListOrdersQuery(query.page ?? 1, query.limit ?? 20, query.customerId, query.status, query.search),
         );
     }
 
