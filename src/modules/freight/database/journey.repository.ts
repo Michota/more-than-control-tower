@@ -2,6 +2,7 @@ import { EntityManager } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
 import { JourneyAggregate } from "../domain/journey.aggregate.js";
+import { JourneyStatus } from "../domain/journey-status.enum.js";
 import { JourneyRepositoryPort } from "./journey.repository.port.js";
 import { Journey } from "./journey.entity.js";
 import { JourneyMapper } from "./journey.mapper.js";
@@ -20,6 +21,14 @@ export class JourneyRepository implements JourneyRepositoryPort {
     async findByRouteAndDate(routeId: string, scheduledDate: string): Promise<JourneyAggregate | null> {
         const record = await this.em.findOne(Journey, { routeId, scheduledDate });
         return record ? this.mapper.toDomain(record) : null;
+    }
+
+    async findActiveByDate(scheduledDate: string): Promise<JourneyAggregate[]> {
+        const records = await this.em.find(Journey, {
+            scheduledDate,
+            status: { $in: [JourneyStatus.PLANNED, JourneyStatus.IN_PROGRESS] },
+        });
+        return records.map((r) => this.mapper.toDomain(r));
     }
 
     async findAll(): Promise<JourneyAggregate[]> {

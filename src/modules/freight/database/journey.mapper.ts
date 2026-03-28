@@ -4,6 +4,7 @@ import { Mapper } from "../../../libs/ddd/mapper.interface.js";
 import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { JourneyAggregate } from "../domain/journey.aggregate.js";
 import { JourneyStatus } from "../domain/journey-status.enum.js";
+import { JourneyStop } from "../domain/journey-stop.value-object.js";
 import { Journey } from "./journey.entity.js";
 
 @Injectable()
@@ -18,7 +19,22 @@ export class JourneyMapper implements Mapper<JourneyAggregate, RequiredEntityDat
                 scheduledDate: record.scheduledDate,
                 vehicleIds: record.vehicleIds ?? [],
                 representativeIds: record.representativeIds ?? [],
-                visitPointIds: record.visitPointIds ?? [],
+                stops: (record.stops ?? []).map(
+                    (s) =>
+                        new JourneyStop({
+                            customerId: s.customerId,
+                            customerName: s.customerName,
+                            address: {
+                                country: s.addressCountry,
+                                postalCode: s.addressPostalCode,
+                                state: s.addressState,
+                                city: s.addressCity,
+                                street: s.addressStreet,
+                            },
+                            orderIds: s.orderIds ?? [],
+                            sequence: s.sequence,
+                        }),
+                ),
             },
         });
     }
@@ -32,7 +48,17 @@ export class JourneyMapper implements Mapper<JourneyAggregate, RequiredEntityDat
             scheduledDate: domain.scheduledDate,
             vehicleIds: domain.vehicleIds,
             representativeIds: domain.representativeIds,
-            visitPointIds: domain.visitPointIds,
+            stops: domain.stops.map((s) => ({
+                customerId: s.customerId,
+                customerName: s.customerName,
+                addressCountry: s.address.country,
+                addressPostalCode: s.address.postalCode,
+                addressState: s.address.state,
+                addressCity: s.address.city,
+                addressStreet: s.address.street,
+                orderIds: s.orderIds,
+                sequence: s.sequence,
+            })),
         };
     }
 

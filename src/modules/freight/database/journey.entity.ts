@@ -1,5 +1,6 @@
 import { defineEntity, p } from "@mikro-orm/core";
 import { JourneyStatus } from "../domain/journey-status.enum.js";
+import { JourneyStopRecord } from "./journey-stop.embeddable.js";
 
 const JourneySchema = defineEntity({
     name: "Journey",
@@ -12,7 +13,7 @@ const JourneySchema = defineEntity({
         scheduledDate: p.string(),
         vehicleIds: p.array().default([]),
         representativeIds: p.array().default([]),
-        visitPointIds: p.array().default([]),
+        stops: p.embedded(JourneyStopRecord).array().default([]),
     },
 });
 

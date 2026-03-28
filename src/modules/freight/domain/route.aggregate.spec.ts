@@ -1,6 +1,7 @@
 import { uuidRegex } from "src/shared/utils/uuid-regex";
 import { RouteSchedule, ScheduleType } from "./route-schedule.value-object";
 import { RouteStatus } from "./route-status.enum";
+import { RouteStop } from "./route-stop.value-object";
 import { RouteAggregate } from "./route.aggregate";
 import {
     RouteAlreadyActiveError,
@@ -22,7 +23,7 @@ describe("RouteAggregate", () => {
             expect(route.status).toBe(RouteStatus.ACTIVE);
             expect(route.vehicleIds).toEqual([]);
             expect(route.representativeIds).toEqual([]);
-            expect(route.visitPointIds).toEqual([]);
+            expect(route.stops).toEqual([]);
             expect(route.schedule).toBeUndefined();
         });
 
@@ -57,10 +58,38 @@ describe("RouteAggregate", () => {
             expect(route.representativeIds).toEqual(["r1"]);
         });
 
-        it("updates visit point IDs", () => {
+        it("updates stops", () => {
             const route = RouteAggregate.create({ name: "Route" });
-            route.update({ visitPointIds: ["vp1", "vp2", "vp3"] });
-            expect(route.visitPointIds).toEqual(["vp1", "vp2", "vp3"]);
+            const stops = [
+                new RouteStop({
+                    customerId: "c1",
+                    customerName: "Sklep ABC",
+                    address: {
+                        country: "PL",
+                        postalCode: "00-001",
+                        state: "Mazowieckie",
+                        city: "Warszawa",
+                        street: "Marszałkowska 1",
+                    },
+                    sequence: 0,
+                }),
+                new RouteStop({
+                    customerId: "c2",
+                    customerName: "Sklep XYZ",
+                    address: {
+                        country: "PL",
+                        postalCode: "00-002",
+                        state: "Mazowieckie",
+                        city: "Warszawa",
+                        street: "Nowy Świat 5",
+                    },
+                    sequence: 1,
+                }),
+            ];
+            route.update({ stops });
+            expect(route.stops).toHaveLength(2);
+            expect(route.stops[0].customerId).toBe("c1");
+            expect(route.stops[1].sequence).toBe(1);
         });
 
         it("updates schedule", () => {

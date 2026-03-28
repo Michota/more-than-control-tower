@@ -2,11 +2,18 @@ import z from "zod";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import { JourneyStatus } from "./journey-status.enum.js";
+import { JourneyStop } from "./journey-stop.value-object.js";
+import { RouteStop } from "./route-stop.value-object.js";
 import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
     JourneyCannotStartError,
     JourneyNotInProgressError,
+    JourneyNotPlannedError,
+    JourneyStopAlreadyExistsError,
+    JourneyStopNotFoundError,
+    OrderAlreadyAssignedToStopError,
+    OrderNotAssignedToStopError,
 } from "./journey.errors.js";
 import { JourneyCreatedDomainEvent } from "./events/journey-created.domain-event.js";
 import { JourneyStartedDomainEvent } from "./events/journey-started.domain-event.js";
@@ -19,7 +26,7 @@ const journeySchema = z.object({
     scheduledDate: z.string().date(),
     vehicleIds: z.array(z.string()),
     representativeIds: z.array(z.string()),
-    visitPointIds: z.array(z.string()),
+    stops: z.array(z.instanceof(JourneyStop)),
 });
 
 export type JourneyProperties = z.infer<typeof journeySchema>;
@@ -30,11 +37,22 @@ export interface CreateJourneyFromRouteProps {
     scheduledDate: string;
     vehicleIds: string[];
     representativeIds: string[];
-    visitPointIds: string[];
+    stops: RouteStop[];
 }
 
 export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     static createFromRoute(props: CreateJourneyFromRouteProps): JourneyAggregate {
+        const journeyStops = props.stops.map(
+            (s) =>
+                new JourneyStop({
+                    customerId: s.customerId,
+                    customerName: s.customerName,
+                    address: s.address,
+                    orderIds: [],
+                    sequence: s.sequence,
+                }),
+        );
+
         const journey = new JourneyAggregate({
             properties: {
                 routeId: props.routeId,
@@ -43,7 +61,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
                 scheduledDate: props.scheduledDate,
                 vehicleIds: props.vehicleIds,
                 representativeIds: props.representativeIds,
-                visitPointIds: props.visitPointIds,
+                stops: journeyStops,
             },
         });
 
@@ -92,9 +110,11 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
         return this.properties.representativeIds;
     }
 
-    get visitPointIds(): string[] {
-        return this.properties.visitPointIds;
+    get stops(): JourneyStop[] {
+        return this.properties.stops;
     }
+
+    // ─── Guards ─────────────────────────────────────────────
 
     private ensureNotTerminal(): void {
         if (this.status === JourneyStatus.COMPLETED) {
@@ -104,6 +124,18 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
             throw new JourneyAlreadyCancelledError(this.id as string);
         }
     }
+
+    private ensurePlanned(): void {
+        if (this.status !== JourneyStatus.PLANNED) {
+            throw new JourneyNotPlannedError(this.id as string);
+        }
+    }
+
+    private findStopIndex(customerId: string): number {
+        return this.stops.findIndex((s) => s.customerId === customerId);
+    }
+
+    // ─── Lifecycle ──────────────────────────────────────────
 
     start(): void {
         this.ensureNotTerminal();
@@ -134,5 +166,64 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     cancel(): void {
         this.ensureNotTerminal();
         this.properties.status = JourneyStatus.CANCELLED;
+    }
+
+    // ─── Stop management (PLANNED only) ─────────────────────
+
+    addStop(stop: JourneyStop): void {
+        this.ensurePlanned();
+        const existing = this.findStopIndex(stop.customerId);
+        if (existing !== -1) {
+            throw new JourneyStopAlreadyExistsError(this.id as string, stop.customerId);
+        }
+        this.properties.stops.push(stop);
+        this.validate();
+    }
+
+    removeStop(customerId: string): void {
+        this.ensurePlanned();
+        const idx = this.findStopIndex(customerId);
+        if (idx === -1) {
+            throw new JourneyStopNotFoundError(this.id as string, customerId);
+        }
+        this.properties.stops.splice(idx, 1);
+    }
+
+    assignOrderToStop(customerId: string, orderId: string): void {
+        this.ensurePlanned();
+        const idx = this.findStopIndex(customerId);
+        if (idx === -1) {
+            throw new JourneyStopNotFoundError(this.id as string, customerId);
+        }
+        const stop = this.stops[idx];
+        if (stop.orderIds.includes(orderId)) {
+            throw new OrderAlreadyAssignedToStopError(orderId, customerId);
+        }
+        this.properties.stops[idx] = stop.withOrders([...stop.orderIds, orderId]);
+    }
+
+    unassignOrderFromStop(customerId: string, orderId: string): void {
+        this.ensurePlanned();
+        const idx = this.findStopIndex(customerId);
+        if (idx === -1) {
+            throw new JourneyStopNotFoundError(this.id as string, customerId);
+        }
+        const stop = this.stops[idx];
+        if (!stop.orderIds.includes(orderId)) {
+            throw new OrderNotAssignedToStopError(orderId, customerId);
+        }
+        this.properties.stops[idx] = stop.withOrders(stop.orderIds.filter((id) => id !== orderId));
+    }
+
+    reorderStops(stopSequences: { customerId: string; sequence: number }[]): void {
+        this.ensurePlanned();
+        for (const { customerId, sequence } of stopSequences) {
+            const idx = this.findStopIndex(customerId);
+            if (idx === -1) {
+                throw new JourneyStopNotFoundError(this.id as string, customerId);
+            }
+            this.properties.stops[idx] = this.stops[idx].withSequence(sequence);
+        }
+        this.validate();
     }
 }

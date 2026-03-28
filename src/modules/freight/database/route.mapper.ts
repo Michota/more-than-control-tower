@@ -5,6 +5,7 @@ import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { RouteAggregate } from "../domain/route.aggregate.js";
 import { RouteStatus } from "../domain/route-status.enum.js";
 import { RouteSchedule, ScheduleType } from "../domain/route-schedule.value-object.js";
+import { RouteStop } from "../domain/route-stop.value-object.js";
 import { Route } from "./route.entity.js";
 
 @Injectable()
@@ -27,7 +28,21 @@ export class RouteMapper implements Mapper<RouteAggregate, RequiredEntityData<Ro
                 status: record.status as RouteStatus,
                 vehicleIds: record.vehicleIds ?? [],
                 representativeIds: record.representativeIds ?? [],
-                visitPointIds: record.visitPointIds ?? [],
+                stops: (record.stops ?? []).map(
+                    (s) =>
+                        new RouteStop({
+                            customerId: s.customerId,
+                            customerName: s.customerName,
+                            address: {
+                                country: s.addressCountry,
+                                postalCode: s.addressPostalCode,
+                                state: s.addressState,
+                                city: s.addressCity,
+                                street: s.addressStreet,
+                            },
+                            sequence: s.sequence,
+                        }),
+                ),
                 schedule,
             },
         });
@@ -40,7 +55,16 @@ export class RouteMapper implements Mapper<RouteAggregate, RequiredEntityData<Ro
             status: domain.status,
             vehicleIds: domain.vehicleIds,
             representativeIds: domain.representativeIds,
-            visitPointIds: domain.visitPointIds,
+            stops: domain.stops.map((s) => ({
+                customerId: s.customerId,
+                customerName: s.customerName,
+                addressCountry: s.address.country,
+                addressPostalCode: s.address.postalCode,
+                addressState: s.address.state,
+                addressCity: s.address.city,
+                addressStreet: s.address.street,
+                sequence: s.sequence,
+            })),
             scheduleType: domain.schedule?.type ?? null,
             scheduleDaysOfWeek: domain.schedule?.daysOfWeek ?? null,
             scheduleDaysOfMonth: domain.schedule?.daysOfMonth ?? null,

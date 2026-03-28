@@ -3,6 +3,7 @@ import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import { RouteSchedule } from "./route-schedule.value-object.js";
 import { RouteStatus } from "./route-status.enum.js";
+import { RouteStop } from "./route-stop.value-object.js";
 import {
     RouteAlreadyActiveError,
     RouteAlreadyArchivedError,
@@ -17,7 +18,7 @@ const routeSchema = z.object({
     status: z.enum(RouteStatus),
     vehicleIds: z.array(z.string()),
     representativeIds: z.array(z.string()),
-    visitPointIds: z.array(z.string()),
+    stops: z.array(z.instanceof(RouteStop)),
     schedule: z.instanceof(RouteSchedule).optional(),
 });
 
@@ -35,7 +36,7 @@ export class RouteAggregate extends AggregateRoot<RouteProperties> {
                 status: RouteStatus.ACTIVE,
                 vehicleIds: [],
                 representativeIds: [],
-                visitPointIds: [],
+                stops: [],
                 schedule: undefined,
             },
         });
@@ -76,8 +77,8 @@ export class RouteAggregate extends AggregateRoot<RouteProperties> {
         return this.properties.representativeIds;
     }
 
-    get visitPointIds(): string[] {
-        return this.properties.visitPointIds;
+    get stops(): RouteStop[] {
+        return this.properties.stops;
     }
 
     get schedule(): RouteSchedule | undefined {
@@ -91,9 +92,7 @@ export class RouteAggregate extends AggregateRoot<RouteProperties> {
     }
 
     update(
-        props: Partial<
-            Pick<RouteProperties, "name" | "vehicleIds" | "representativeIds" | "visitPointIds" | "schedule">
-        >,
+        props: Partial<Pick<RouteProperties, "name" | "vehicleIds" | "representativeIds" | "stops" | "schedule">>,
     ): void {
         this.ensureNotArchived();
         Object.assign(this.properties, props);
