@@ -1,4 +1,5 @@
 import { Command, CommandProps } from "../../../../libs/cqrs/command.js";
+import { CrewMemberRole } from "../../domain/crew-member-role.enum.js";
 import { ScheduleType } from "../../domain/route-schedule.value-object.js";
 
 export interface EditRouteScheduleProps {
@@ -25,7 +26,7 @@ export class EditRouteCommand extends Command<void> {
     readonly routeId: string;
     readonly name?: string;
     readonly vehicleIds?: string[];
-    readonly representativeIds?: string[];
+    readonly crewMembers?: { employeeId: string; employeeName: string; role: CrewMemberRole }[];
     readonly stops?: EditRouteStopProps[];
     readonly schedule?: EditRouteScheduleProps;
 
@@ -34,7 +35,7 @@ export class EditRouteCommand extends Command<void> {
         this.routeId = props.routeId;
         this.name = props.name;
         this.vehicleIds = props.vehicleIds;
-        this.representativeIds = props.representativeIds;
+        this.crewMembers = props.crewMembers;
         this.stops = props.stops;
         this.schedule = props.schedule;
     }

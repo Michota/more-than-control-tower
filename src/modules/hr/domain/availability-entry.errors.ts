@@ -1,4 +1,8 @@
-import { BadRequestDomainException, NotFoundDomainException } from "../../../libs/exceptions/http-domain.exceptions.js";
+import {
+    BadRequestDomainException,
+    ForbiddenDomainException,
+    NotFoundDomainException,
+} from "../../../libs/exceptions/http-domain.exceptions.js";
 
 export class AvailabilityEntryNotFoundError extends NotFoundDomainException {
     public readonly code = "AVAILABILITY.NOT_FOUND";
@@ -29,6 +33,14 @@ export class AvailabilityAlreadyLockedError extends BadRequestDomainException {
 
     constructor(entryId: string) {
         super(`Availability entry "${entryId}" is already locked`);
+    }
+}
+
+export class AvailabilityNotOwnedError extends ForbiddenDomainException {
+    public readonly code = "AVAILABILITY.NOT_OWNED";
+
+    constructor(employeeId: string) {
+        super(`You can only manage your own availability, not employee "${employeeId}"`);
     }
 }
 

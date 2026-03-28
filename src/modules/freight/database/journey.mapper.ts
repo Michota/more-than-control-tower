@@ -5,6 +5,7 @@ import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { JourneyAggregate } from "../domain/journey.aggregate.js";
 import { JourneyStatus } from "../domain/journey-status.enum.js";
 import { JourneyStop } from "../domain/journey-stop.value-object.js";
+import { CrewMember } from "../domain/crew-member.value-object.js";
 import { Journey } from "./journey.entity.js";
 
 @Injectable()
@@ -18,7 +19,14 @@ export class JourneyMapper implements Mapper<JourneyAggregate, RequiredEntityDat
                 status: record.status as JourneyStatus,
                 scheduledDate: record.scheduledDate,
                 vehicleIds: record.vehicleIds ?? [],
-                representativeIds: record.representativeIds ?? [],
+                crewMembers: (record.crewMembers ?? []).map(
+                    (m) =>
+                        new CrewMember({
+                            employeeId: m.employeeId,
+                            employeeName: m.employeeName,
+                            role: m.role,
+                        }),
+                ),
                 stops: (record.stops ?? []).map(
                     (s) =>
                         new JourneyStop({
@@ -48,7 +56,11 @@ export class JourneyMapper implements Mapper<JourneyAggregate, RequiredEntityDat
             status: domain.status,
             scheduledDate: domain.scheduledDate,
             vehicleIds: domain.vehicleIds,
-            representativeIds: domain.representativeIds,
+            crewMembers: domain.crewMembers.map((m) => ({
+                employeeId: m.employeeId,
+                employeeName: m.employeeName,
+                role: m.role,
+            })),
             stops: domain.stops.map((s) => ({
                 customerId: s.customerId,
                 customerName: s.customerName,

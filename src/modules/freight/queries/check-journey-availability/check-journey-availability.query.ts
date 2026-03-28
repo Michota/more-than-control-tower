@@ -6,23 +6,25 @@ export interface VehicleAvailabilityItem {
     conflictingJourneyId?: string;
 }
 
-export interface RepresentativeAvailabilityItem {
-    representativeId: string;
+export interface CrewAvailabilityItem {
+    employeeId: string;
     available: boolean;
     conflictingJourneyId?: string;
+    hrAvailable?: boolean;
+    hrReason?: string;
 }
 
 export interface CheckJourneyAvailabilityResponse {
     date: string;
     vehicles: VehicleAvailabilityItem[];
-    representatives: RepresentativeAvailabilityItem[];
+    crew: CrewAvailabilityItem[];
 }
 
 export class CheckJourneyAvailabilityQuery extends Query<CheckJourneyAvailabilityResponse> {
     constructor(
         public readonly date: string,
         public readonly vehicleIds: string[],
-        public readonly representativeIds: string[],
+        public readonly employeeIds: string[],
         public readonly excludeJourneyId?: string,
     ) {
         super();

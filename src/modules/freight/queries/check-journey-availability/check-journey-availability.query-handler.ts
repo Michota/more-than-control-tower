@@ -1,11 +1,15 @@
 import { Inject } from "@nestjs/common";
-import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
+import { IQueryHandler, QueryBus, QueryHandler } from "@nestjs/cqrs";
+import {
+    CheckEmployeeAvailabilityQuery,
+    CheckEmployeeAvailabilityResponse,
+} from "../../../../shared/queries/check-employee-availability.query.js";
 import type { JourneyRepositoryPort } from "../../database/journey.repository.port.js";
 import { JOURNEY_REPOSITORY_PORT } from "../../freight.di-tokens.js";
 import {
     CheckJourneyAvailabilityQuery,
     CheckJourneyAvailabilityResponse,
-    RepresentativeAvailabilityItem,
+    CrewAvailabilityItem,
     VehicleAvailabilityItem,
 } from "./check-journey-availability.query.js";
 
@@ -17,6 +21,8 @@ export class CheckJourneyAvailabilityQueryHandler implements IQueryHandler<
     constructor(
         @Inject(JOURNEY_REPOSITORY_PORT)
         private readonly journeyRepo: JourneyRepositoryPort,
+
+        private readonly queryBus: QueryBus,
     ) {}
 
     async execute(query: CheckJourneyAvailabilityQuery): Promise<CheckJourneyAvailabilityResponse> {
@@ -34,19 +40,37 @@ export class CheckJourneyAvailabilityQueryHandler implements IQueryHandler<
             };
         });
 
-        const representatives: RepresentativeAvailabilityItem[] = query.representativeIds.map((representativeId) => {
-            const conflict = otherJourneys.find((j) => j.representativeIds.includes(representativeId));
-            return {
-                representativeId,
-                available: !conflict,
-                conflictingJourneyId: conflict ? (conflict.id as string) : undefined,
-            };
-        });
+        const crew: CrewAvailabilityItem[] = await Promise.all(
+            query.employeeIds.map(async (employeeId) => {
+                const conflict = otherJourneys.find((j) => j.crewMembers.map((m) => m.employeeId).includes(employeeId));
+
+                let hrAvailable: boolean | undefined;
+                let hrReason: string | undefined;
+                try {
+                    const hrResult = await this.queryBus.execute<
+                        CheckEmployeeAvailabilityQuery,
+                        CheckEmployeeAvailabilityResponse
+                    >(new CheckEmployeeAvailabilityQuery(employeeId, query.date));
+                    hrAvailable = hrResult.available;
+                    hrReason = hrResult.reason;
+                } catch {
+                    // HR module may not have a handler registered — treat as unknown
+                }
+
+                return {
+                    employeeId,
+                    available: !conflict,
+                    conflictingJourneyId: conflict ? (conflict.id as string) : undefined,
+                    hrAvailable,
+                    hrReason,
+                };
+            }),
+        );
 
         return {
             date: query.date,
             vehicles,
-            representatives,
+            crew,
         };
     }
 }

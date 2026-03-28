@@ -23,7 +23,11 @@ export class GetRouteQueryHandler implements IQueryHandler<GetRouteQuery, GetRou
             name: route.name,
             status: route.status,
             vehicleIds: route.vehicleIds,
-            representativeIds: route.representativeIds,
+            crewMembers: route.crewMembers.map((m) => ({
+                employeeId: m.employeeId,
+                employeeName: m.employeeName,
+                role: m.role,
+            })),
             stops: route.stops.map((s) => ({
                 customerId: s.customerId,
                 customerName: s.customerName,

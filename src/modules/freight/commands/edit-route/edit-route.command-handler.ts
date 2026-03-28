@@ -3,6 +3,7 @@ import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
 import type { RouteRepositoryPort } from "../../database/route.repository.port.js";
+import { CrewMember } from "../../domain/crew-member.value-object.js";
 import { RouteSchedule } from "../../domain/route-schedule.value-object.js";
 import { RouteStop } from "../../domain/route-stop.value-object.js";
 import { RouteNotFoundError } from "../../domain/route.errors.js";
@@ -28,7 +29,16 @@ export class EditRouteCommandHandler implements ICommandHandler<EditRouteCommand
         route.update({
             ...(cmd.name !== undefined && { name: cmd.name }),
             ...(cmd.vehicleIds !== undefined && { vehicleIds: cmd.vehicleIds }),
-            ...(cmd.representativeIds !== undefined && { representativeIds: cmd.representativeIds }),
+            ...(cmd.crewMembers !== undefined && {
+                crewMembers: cmd.crewMembers.map(
+                    (m) =>
+                        new CrewMember({
+                            employeeId: m.employeeId,
+                            employeeName: m.employeeName,
+                            role: m.role,
+                        }),
+                ),
+            }),
             ...(cmd.stops !== undefined && {
                 stops: cmd.stops.map(
                     (s) =>

@@ -21,7 +21,11 @@ export class ListJourneysQueryHandler implements IQueryHandler<ListJourneysQuery
             status: j.status,
             scheduledDate: j.scheduledDate,
             vehicleIds: j.vehicleIds,
-            representativeIds: j.representativeIds,
+            crewMembers: j.crewMembers.map((m) => ({
+                employeeId: m.employeeId,
+                employeeName: m.employeeName,
+                role: m.role,
+            })),
             stops: j.stops.map((s) => ({
                 customerId: s.customerId,
                 customerName: s.customerName,

@@ -1,4 +1,6 @@
 import { uuidRegex } from "src/shared/utils/uuid-regex";
+import { CrewMember } from "./crew-member.value-object";
+import { CrewMemberRole } from "./crew-member-role.enum";
 import { JourneyStatus } from "./journey-status.enum";
 import { JourneyStop } from "./journey-stop.value-object";
 import { RouteStop } from "./route-stop.value-object";
@@ -7,6 +9,8 @@ import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
     JourneyCannotStartError,
+    JourneyMissingDriverError,
+    JourneyMissingRsrError,
     JourneyNotAwaitingLoadingError,
     JourneyNotInProgressError,
     JourneyNotModifiableError,
@@ -49,7 +53,10 @@ function createJourney(overrides: Partial<Parameters<typeof JourneyAggregate.cre
         routeName: "Route North",
         scheduledDate: "2026-04-01",
         vehicleIds: ["v1"],
-        representativeIds: ["r1"],
+        crewMembers: [
+            new CrewMember({ employeeId: "d1", employeeName: "Adam Nowak", role: CrewMemberRole.DRIVER }),
+            new CrewMember({ employeeId: "r1", employeeName: "Jan Kowalski", role: CrewMemberRole.RSR }),
+        ],
         stops: [makeRouteStop("c1", 0), makeRouteStop("c2", 1)],
         ...overrides,
     });
@@ -67,7 +74,9 @@ describe("JourneyAggregate", () => {
             expect(journey.status).toBe(JourneyStatus.PLANNED);
             expect(journey.scheduledDate).toBe("2026-04-01");
             expect(journey.vehicleIds).toEqual(["v1"]);
-            expect(journey.representativeIds).toEqual(["r1"]);
+            expect(journey.crewMembers).toHaveLength(2);
+            expect(journey.crewMembers[0].role).toBe(CrewMemberRole.DRIVER);
+            expect(journey.crewMembers[1].role).toBe(CrewMemberRole.RSR);
             expect(journey.stops).toHaveLength(2);
             expect(journey.stops[0].customerId).toBe("c1");
             expect(journey.stops[0].orderIds).toEqual([]);
@@ -224,6 +233,75 @@ describe("JourneyAggregate", () => {
             const journey = createJourney();
             journey.cancel();
             expect(() => journey.cancel()).toThrow(JourneyAlreadyCancelledError);
+        });
+    });
+
+    // ─── Crew validation ─────────────────────────────────────
+
+    describe("crew validation on start()", () => {
+        it("throws when no DRIVER in crew", () => {
+            const journey = createJourney({
+                crewMembers: [
+                    new CrewMember({ employeeId: "r1", employeeName: "Jan Kowalski", role: CrewMemberRole.RSR }),
+                ],
+            });
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            expect(() => journey.start()).toThrow(JourneyMissingDriverError);
+        });
+
+        it("throws when no RSR in crew", () => {
+            const journey = createJourney({
+                crewMembers: [
+                    new CrewMember({ employeeId: "d1", employeeName: "Adam Nowak", role: CrewMemberRole.DRIVER }),
+                ],
+            });
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            expect(() => journey.start()).toThrow(JourneyMissingRsrError);
+        });
+
+        it("allows start when same person is both DRIVER and RSR", () => {
+            const journey = createJourney({
+                crewMembers: [
+                    new CrewMember({ employeeId: "e1", employeeName: "Jan Nowak", role: CrewMemberRole.DRIVER }),
+                    new CrewMember({ employeeId: "e1", employeeName: "Jan Nowak", role: CrewMemberRole.RSR }),
+                ],
+            });
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.start();
+            expect(journey.status).toBe(JourneyStatus.IN_PROGRESS);
+        });
+    });
+
+    // ─── Crew management ────────────────────────────────────
+
+    describe("setCrewMembers()", () => {
+        it("sets crew members on a PLANNED journey", () => {
+            const journey = createJourney();
+            journey.setCrewMembers([
+                new CrewMember({ employeeId: "e2", employeeName: "Piotr Zieliński", role: CrewMemberRole.DRIVER }),
+            ]);
+            expect(journey.crewMembers).toHaveLength(1);
+            expect(journey.crewMembers[0].employeeId).toBe("e2");
+        });
+
+        it("sets crew members during AWAITING_LOADING", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.setCrewMembers([
+                new CrewMember({ employeeId: "e3", employeeName: "Marek Wiśniewski", role: CrewMemberRole.RSR }),
+            ]);
+            expect(journey.crewMembers).toHaveLength(1);
+        });
+
+        it("throws when journey is IN_PROGRESS", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.start();
+            expect(() =>
+                journey.setCrewMembers([
+                    new CrewMember({ employeeId: "e2", employeeName: "Piotr Zieliński", role: CrewMemberRole.DRIVER }),
+                ]),
+            ).toThrow(JourneyNotModifiableError);
         });
     });
 

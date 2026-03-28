@@ -25,7 +25,7 @@ export interface RouteListItem {
     name: string;
     status: string;
     vehicleIds: string[];
-    representativeIds: string[];
+    crewMembers: { employeeId: string; employeeName: string; role: string }[];
     stops: RouteStopItem[];
     schedule?: RouteScheduleItem;
 }

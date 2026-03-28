@@ -1,6 +1,8 @@
 import z from "zod";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
+import { CrewMember } from "./crew-member.value-object.js";
+import { CrewMemberRole } from "./crew-member-role.enum.js";
 import { JourneyStatus } from "./journey-status.enum.js";
 import { JourneyStop } from "./journey-stop.value-object.js";
 import { RouteStop } from "./route-stop.value-object.js";
@@ -8,6 +10,8 @@ import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
     JourneyCannotStartError,
+    JourneyMissingDriverError,
+    JourneyMissingRsrError,
     JourneyNotAwaitingLoadingError,
     JourneyNotInProgressError,
     JourneyNotModifiableError,
@@ -28,7 +32,7 @@ const journeySchema = z.object({
     status: z.enum(JourneyStatus),
     scheduledDate: z.string().date(),
     vehicleIds: z.array(z.string()),
-    representativeIds: z.array(z.string()),
+    crewMembers: z.array(z.instanceof(CrewMember)),
     stops: z.array(z.instanceof(JourneyStop)),
     loadingDeadline: z.string().datetime().optional(),
 });
@@ -40,7 +44,7 @@ export interface CreateJourneyFromRouteProps {
     routeName: string;
     scheduledDate: string;
     vehicleIds: string[];
-    representativeIds: string[];
+    crewMembers: CrewMember[];
     stops: RouteStop[];
 }
 
@@ -64,7 +68,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
                 status: JourneyStatus.PLANNED,
                 scheduledDate: props.scheduledDate,
                 vehicleIds: props.vehicleIds,
-                representativeIds: props.representativeIds,
+                crewMembers: props.crewMembers,
                 stops: journeyStops,
                 loadingDeadline: undefined,
             },
@@ -111,8 +115,8 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
         return this.properties.vehicleIds;
     }
 
-    get representativeIds(): string[] {
-        return this.properties.representativeIds;
+    get crewMembers(): CrewMember[] {
+        return this.properties.crewMembers;
     }
 
     get stops(): JourneyStop[] {
@@ -137,6 +141,17 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     private ensureModifiable(): void {
         if (this.status !== JourneyStatus.PLANNED && this.status !== JourneyStatus.AWAITING_LOADING) {
             throw new JourneyNotModifiableError(this.id as string);
+        }
+    }
+
+    private ensureCrewComplete(): void {
+        const hasDriver = this.crewMembers.some((m) => m.role === CrewMemberRole.DRIVER);
+        if (!hasDriver) {
+            throw new JourneyMissingDriverError(this.id as string);
+        }
+        const hasRsr = this.crewMembers.some((m) => m.role === CrewMemberRole.RSR);
+        if (!hasRsr) {
+            throw new JourneyMissingRsrError(this.id as string);
         }
     }
 
@@ -173,6 +188,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
         if (this.status !== JourneyStatus.AWAITING_LOADING) {
             throw new JourneyCannotStartError(this.id as string);
         }
+        this.ensureCrewComplete();
         this.properties.status = JourneyStatus.IN_PROGRESS;
         this.addEvent(
             new JourneyStartedDomainEvent({
@@ -197,6 +213,14 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     cancel(): void {
         this.ensureNotTerminal();
         this.properties.status = JourneyStatus.CANCELLED;
+    }
+
+    // ─── Crew management (PLANNED or AWAITING_LOADING) ──────
+
+    setCrewMembers(crewMembers: CrewMember[]): void {
+        this.ensureModifiable();
+        this.properties.crewMembers = crewMembers;
+        this.validate();
     }
 
     // ─── Stop management (PLANNED or AWAITING_LOADING) ──────

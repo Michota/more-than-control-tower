@@ -36,7 +36,7 @@ export class CreateJourneyCommandHandler implements ICommandHandler<CreateJourne
             routeName: route.name,
             scheduledDate: cmd.scheduledDate,
             vehicleIds: route.vehicleIds,
-            representativeIds: route.representativeIds,
+            crewMembers: route.crewMembers,
             stops: route.stops,
         });
 

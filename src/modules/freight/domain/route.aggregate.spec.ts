@@ -1,4 +1,6 @@
 import { uuidRegex } from "src/shared/utils/uuid-regex";
+import { CrewMember } from "./crew-member.value-object";
+import { CrewMemberRole } from "./crew-member-role.enum";
 import { RouteSchedule, ScheduleType } from "./route-schedule.value-object";
 import { RouteStatus } from "./route-status.enum";
 import { RouteStop } from "./route-stop.value-object";
@@ -22,7 +24,7 @@ describe("RouteAggregate", () => {
             expect(route.name).toBe("Route North");
             expect(route.status).toBe(RouteStatus.ACTIVE);
             expect(route.vehicleIds).toEqual([]);
-            expect(route.representativeIds).toEqual([]);
+            expect(route.crewMembers).toEqual([]);
             expect(route.stops).toEqual([]);
             expect(route.schedule).toBeUndefined();
         });
@@ -52,10 +54,16 @@ describe("RouteAggregate", () => {
             expect(route.vehicleIds).toEqual(["v1", "v2"]);
         });
 
-        it("updates representative IDs", () => {
+        it("updates crew members", () => {
             const route = RouteAggregate.create({ name: "Route" });
-            route.update({ representativeIds: ["r1"] });
-            expect(route.representativeIds).toEqual(["r1"]);
+            const member = new CrewMember({
+                employeeId: "r1",
+                employeeName: "Jan Kowalski",
+                role: CrewMemberRole.DRIVER,
+            });
+            route.update({ crewMembers: [member] });
+            expect(route.crewMembers).toHaveLength(1);
+            expect(route.crewMembers[0].employeeId).toBe("r1");
         });
 
         it("updates stops", () => {

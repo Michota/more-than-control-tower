@@ -1,6 +1,7 @@
 import { defineEntity, p } from "@mikro-orm/core";
 import { RouteStatus } from "../domain/route-status.enum.js";
 import { ScheduleType } from "../domain/route-schedule.value-object.js";
+import { CrewMemberRecord } from "./crew-member.embeddable.js";
 import { RouteStopRecord } from "./route-stop.embeddable.js";
 
 const RouteSchema = defineEntity({
@@ -11,7 +12,7 @@ const RouteSchema = defineEntity({
         name: p.string(),
         status: p.enum(() => RouteStatus),
         vehicleIds: p.array().default([]),
-        representativeIds: p.array().default([]),
+        crewMembers: p.embedded(CrewMemberRecord).array().default([]),
         stops: p.embedded(RouteStopRecord).array().default([]),
         scheduleType: p.enum(() => ScheduleType).nullable(),
         scheduleDaysOfWeek: p.array().nullable(),

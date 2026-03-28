@@ -11,6 +11,7 @@ import {
     Min,
     ValidateNested,
 } from "class-validator";
+import { CrewMemberRole } from "../../domain/crew-member-role.enum.js";
 import { ScheduleType } from "../../domain/route-schedule.value-object.js";
 
 export class RouteScheduleDto {
@@ -88,6 +89,21 @@ export class RouteStopDto {
     sequence!: number;
 }
 
+export class CrewMemberDto {
+    /** @example "550e8400-e29b-41d4-a716-446655440000" */
+    @IsUUID()
+    employeeId!: string;
+
+    /** @example "Jan Kowalski" */
+    @IsString()
+    @IsNotEmpty()
+    employeeName!: string;
+
+    /** @example "DRIVER" */
+    @IsEnum(CrewMemberRole)
+    role!: CrewMemberRole;
+}
+
 export class EditRouteRequestDto {
     /** @example "Route North" */
     @IsString()
@@ -101,9 +117,10 @@ export class EditRouteRequestDto {
     vehicleIds?: string[];
 
     @IsArray()
-    @IsUUID("all", { each: true })
+    @ValidateNested({ each: true })
+    @Type(() => CrewMemberDto)
     @IsOptional()
-    representativeIds?: string[];
+    crewMembers?: CrewMemberDto[];
 
     @IsArray()
     @ValidateNested({ each: true })

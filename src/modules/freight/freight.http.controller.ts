@@ -183,7 +183,7 @@ export class FreightHttpController {
                 routeId: id,
                 name: body.name,
                 vehicleIds: body.vehicleIds,
-                representativeIds: body.representativeIds,
+                crewMembers: body.crewMembers,
                 stops: body.stops,
                 schedule: body.schedule,
             }),
@@ -218,19 +218,19 @@ export class FreightHttpController {
 
     @Get("journeys/availability")
     @RequirePermission(FreightPermission.VIEW_JOURNEYS)
-    @ApiOperation({ summary: "Check vehicle and representative availability for a date" })
+    @ApiOperation({ summary: "Check vehicle and crew member availability for a date" })
     @ApiResponse({ status: 200 })
     async checkAvailability(
         @Query("date") date: string,
         @Query("vehicleIds") vehicleIds?: string,
-        @Query("representativeIds") representativeIds?: string,
+        @Query("employeeIds") employeeIds?: string,
         @Query("excludeJourneyId") excludeJourneyId?: string,
     ) {
         return this.queryBus.execute(
             new CheckJourneyAvailabilityQuery(
                 date,
                 vehicleIds ? vehicleIds.split(",") : [],
-                representativeIds ? representativeIds.split(",") : [],
+                employeeIds ? employeeIds.split(",") : [],
                 excludeJourneyId,
             ),
         );

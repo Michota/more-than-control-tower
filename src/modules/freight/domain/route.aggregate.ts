@@ -1,6 +1,7 @@
 import z from "zod";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
+import { CrewMember } from "./crew-member.value-object.js";
 import { RouteSchedule } from "./route-schedule.value-object.js";
 import { RouteStatus } from "./route-status.enum.js";
 import { RouteStop } from "./route-stop.value-object.js";
@@ -17,7 +18,7 @@ const routeSchema = z.object({
     name: z.string().min(1),
     status: z.enum(RouteStatus),
     vehicleIds: z.array(z.string()),
-    representativeIds: z.array(z.string()),
+    crewMembers: z.array(z.instanceof(CrewMember)),
     stops: z.array(z.instanceof(RouteStop)),
     schedule: z.instanceof(RouteSchedule).optional(),
 });
@@ -35,7 +36,7 @@ export class RouteAggregate extends AggregateRoot<RouteProperties> {
                 name: props.name,
                 status: RouteStatus.ACTIVE,
                 vehicleIds: [],
-                representativeIds: [],
+                crewMembers: [],
                 stops: [],
                 schedule: undefined,
             },
@@ -73,8 +74,8 @@ export class RouteAggregate extends AggregateRoot<RouteProperties> {
         return this.properties.vehicleIds;
     }
 
-    get representativeIds(): string[] {
-        return this.properties.representativeIds;
+    get crewMembers(): CrewMember[] {
+        return this.properties.crewMembers;
     }
 
     get stops(): RouteStop[] {
@@ -91,9 +92,7 @@ export class RouteAggregate extends AggregateRoot<RouteProperties> {
         }
     }
 
-    update(
-        props: Partial<Pick<RouteProperties, "name" | "vehicleIds" | "representativeIds" | "stops" | "schedule">>,
-    ): void {
+    update(props: Partial<Pick<RouteProperties, "name" | "vehicleIds" | "crewMembers" | "stops" | "schedule">>): void {
         this.ensureNotArchived();
         Object.assign(this.properties, props);
         this.validate();

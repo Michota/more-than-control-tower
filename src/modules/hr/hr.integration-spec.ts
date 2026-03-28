@@ -33,6 +33,7 @@ import {
 import {
     AvailabilityAlreadyConfirmedError,
     AvailabilityAlreadyLockedError,
+    AvailabilityNotOwnedError,
     AvailabilityLockedError,
     NoPendingAvailabilityError,
 } from "./domain/availability-entry.errors";
@@ -97,6 +98,17 @@ describe("HR Module — Integration Tests", () => {
                 skipUniquenessCheck: overrides.skipUniquenessCheck,
             }),
         );
+    }
+
+    let linkedUserCounter = 0;
+
+    async function createLinkedEmployee(): Promise<{ employeeId: string; userId: string }> {
+        linkedUserCounter++;
+        const userId = `test-user-${linkedUserCounter}`;
+        const employeeId = await createEmployee({ skipUniquenessCheck: true });
+        await orm.em.nativeUpdate("Employee", { id: employeeId }, { userId });
+        orm.em.clear();
+        return { employeeId, userId };
     }
 
     async function getEmployee(id: string): Promise<GetEmployeeResponse | null> {
@@ -409,7 +421,7 @@ describe("HR Module — Integration Tests", () => {
 
     describe("Set Availability", () => {
         it("sets availability entries for an employee (by employee → PENDING_APPROVAL)", async () => {
-            const id = await createEmployee();
+            const { employeeId: id, userId } = await createLinkedEmployee();
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
@@ -419,6 +431,7 @@ describe("HR Module — Integration Tests", () => {
                         { date: "2026-04-02", startTime: "09:00", endTime: "17:00" },
                     ],
                     setByManager: false,
+                    requestedByUserId: userId,
                 }),
             );
 
@@ -440,6 +453,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-04-03", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -452,13 +466,14 @@ describe("HR Module — Integration Tests", () => {
         });
 
         it("replaces existing entries for the same dates", async () => {
-            const id = await createEmployee();
+            const { employeeId: id, userId } = await createLinkedEmployee();
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-04-05", startTime: "08:00", endTime: "12:00" }],
                     setByManager: false,
+                    requestedByUserId: userId,
                 }),
             );
 
@@ -467,6 +482,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-04-05", startTime: "10:00", endTime: "18:00" }],
                     setByManager: false,
+                    requestedByUserId: userId,
                 }),
             );
 
@@ -487,13 +503,29 @@ describe("HR Module — Integration Tests", () => {
                         employeeId: "00000000-0000-0000-0000-000000000000",
                         entries: [{ date: "2026-04-01", startTime: "08:00", endTime: "16:00" }],
                         setByManager: false,
+                        requestedByUserId: "test-user",
                     }),
                 ),
             ).rejects.toThrow(EmployeeNotFoundError);
         });
 
+        it("rejects employee editing another employee's availability", async () => {
+            const { employeeId: id } = await createLinkedEmployee();
+
+            await expect(
+                commandBus.execute(
+                    new SetAvailabilityCommand({
+                        employeeId: id,
+                        entries: [{ date: "2026-04-10", startTime: "08:00", endTime: "16:00" }],
+                        setByManager: false,
+                        requestedByUserId: "someone-else",
+                    }),
+                ),
+            ).rejects.toThrow(AvailabilityNotOwnedError);
+        });
+
         it("rejects employee editing locked (past) availability", async () => {
-            const id = await createEmployee();
+            const { employeeId: id, userId } = await createLinkedEmployee();
 
             // Set availability in the past (already locked)
             await commandBus.execute(
@@ -501,6 +533,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2020-01-01", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -511,6 +544,7 @@ describe("HR Module — Integration Tests", () => {
                         employeeId: id,
                         entries: [{ date: "2020-01-01", startTime: "10:00", endTime: "18:00" }],
                         setByManager: false,
+                        requestedByUserId: userId,
                     }),
                 ),
             ).rejects.toThrow(AvailabilityLockedError);
@@ -524,6 +558,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2020-02-01", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -533,6 +568,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2020-02-01", startTime: "10:00", endTime: "18:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -547,13 +583,14 @@ describe("HR Module — Integration Tests", () => {
 
     describe("Confirm Availability", () => {
         it("confirms pending entries", async () => {
-            const id = await createEmployee();
+            const { employeeId: id, userId } = await createLinkedEmployee();
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-05-01", startTime: "08:00", endTime: "16:00" }],
                     setByManager: false,
+                    requestedByUserId: userId,
                 }),
             );
 
@@ -576,6 +613,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-05-02", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -587,13 +625,14 @@ describe("HR Module — Integration Tests", () => {
 
     describe("Reject Availability", () => {
         it("removes pending entries", async () => {
-            const id = await createEmployee();
+            const { employeeId: id, userId } = await createLinkedEmployee();
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-06-01", startTime: "08:00", endTime: "16:00" }],
                     setByManager: false,
+                    requestedByUserId: userId,
                 }),
             );
 
@@ -615,6 +654,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-06-02", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -633,6 +673,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-10-01", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -646,13 +687,14 @@ describe("HR Module — Integration Tests", () => {
         });
 
         it("employee cannot modify manually locked entries", async () => {
-            const id = await createEmployee();
+            const { employeeId: id, userId } = await createLinkedEmployee();
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-10-02", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -664,6 +706,7 @@ describe("HR Module — Integration Tests", () => {
                         employeeId: id,
                         entries: [{ date: "2026-10-02", startTime: "10:00", endTime: "18:00" }],
                         setByManager: false,
+                        requestedByUserId: userId,
                     }),
                 ),
             ).rejects.toThrow(AvailabilityLockedError);
@@ -677,6 +720,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-10-03", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -687,6 +731,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-10-03", startTime: "10:00", endTime: "18:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -706,6 +751,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-10-04", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -730,6 +776,7 @@ describe("HR Module — Integration Tests", () => {
                         { date: "2026-08-01", startTime: "08:00", endTime: "16:00" },
                     ],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -751,6 +798,7 @@ describe("HR Module — Integration Tests", () => {
                     employeeId: id,
                     entries: [{ date: "2026-09-01", startTime: "08:00", endTime: "16:00" }],
                     setByManager: true,
+                    requestedByUserId: "test-user",
                 }),
             );
 
@@ -762,13 +810,14 @@ describe("HR Module — Integration Tests", () => {
         });
 
         it("returns available=false for pending date", async () => {
-            const id = await createEmployee();
+            const { employeeId: id, userId } = await createLinkedEmployee();
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-09-02", startTime: "08:00", endTime: "16:00" }],
                     setByManager: false,
+                    requestedByUserId: userId,
                 }),
             );
 

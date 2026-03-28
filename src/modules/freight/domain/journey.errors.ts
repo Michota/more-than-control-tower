@@ -99,3 +99,19 @@ export class OrderNotAssignedToStopError extends NotFoundDomainException {
         super(`Order ${orderId} is not assigned to stop for customer ${customerId}`);
     }
 }
+
+export class JourneyMissingDriverError extends ConflictDomainException {
+    public readonly code = "JOURNEY.MISSING_DRIVER";
+
+    constructor(id: string) {
+        super(`Journey ${id} requires at least one crew member with DRIVER role`);
+    }
+}
+
+export class JourneyMissingRsrError extends ConflictDomainException {
+    public readonly code = "JOURNEY.MISSING_RSR";
+
+    constructor(id: string) {
+        super(`Journey ${id} requires at least one crew member with RSR role`);
+    }
+}

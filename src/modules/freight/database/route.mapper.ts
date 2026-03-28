@@ -6,6 +6,7 @@ import { RouteAggregate } from "../domain/route.aggregate.js";
 import { RouteStatus } from "../domain/route-status.enum.js";
 import { RouteSchedule, ScheduleType } from "../domain/route-schedule.value-object.js";
 import { RouteStop } from "../domain/route-stop.value-object.js";
+import { CrewMember } from "../domain/crew-member.value-object.js";
 import { Route } from "./route.entity.js";
 
 @Injectable()
@@ -27,7 +28,14 @@ export class RouteMapper implements Mapper<RouteAggregate, RequiredEntityData<Ro
                 name: record.name,
                 status: record.status as RouteStatus,
                 vehicleIds: record.vehicleIds ?? [],
-                representativeIds: record.representativeIds ?? [],
+                crewMembers: (record.crewMembers ?? []).map(
+                    (m) =>
+                        new CrewMember({
+                            employeeId: m.employeeId,
+                            employeeName: m.employeeName,
+                            role: m.role,
+                        }),
+                ),
                 stops: (record.stops ?? []).map(
                     (s) =>
                         new RouteStop({
@@ -54,7 +62,11 @@ export class RouteMapper implements Mapper<RouteAggregate, RequiredEntityData<Ro
             name: domain.name,
             status: domain.status,
             vehicleIds: domain.vehicleIds,
-            representativeIds: domain.representativeIds,
+            crewMembers: domain.crewMembers.map((m) => ({
+                employeeId: m.employeeId,
+                employeeName: m.employeeName,
+                role: m.role,
+            })),
             stops: domain.stops.map((s) => ({
                 customerId: s.customerId,
                 customerName: s.customerName,

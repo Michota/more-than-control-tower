@@ -211,6 +211,7 @@ export class HrHttpController {
                 employeeId: id,
                 entries: body.entries,
                 setByManager: canManage,
+                requestedByUserId: user.userId,
             }),
         );
     }

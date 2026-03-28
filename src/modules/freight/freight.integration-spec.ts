@@ -6,6 +6,7 @@ import { DriverLicenseCategory } from "./domain/driver-license-category.enum";
 import { VehicleStatus } from "./domain/vehicle-status.enum";
 import { RouteStatus } from "./domain/route-status.enum";
 import { JourneyStatus } from "./domain/journey-status.enum";
+import { CrewMemberRole } from "./domain/crew-member-role.enum";
 import { ScheduleType } from "./domain/route-schedule.value-object";
 import { VehicleAlreadyActiveError, VehicleAlreadyInactiveError, VehicleNotFoundError } from "./domain/vehicle.errors";
 import {
@@ -95,6 +96,20 @@ describe("Freight Module — Integration Tests", () => {
 
     async function createRoute(name = "Test Route"): Promise<string> {
         return commandBus.execute(new CreateRouteCommand({ name }));
+    }
+
+    async function createRouteWithCrew(name = "Test Route"): Promise<string> {
+        const routeId = await createRoute(name);
+        await commandBus.execute(
+            new EditRouteCommand({
+                routeId,
+                crewMembers: [
+                    { employeeId: "d1", employeeName: "Adam Nowak", role: CrewMemberRole.DRIVER },
+                    { employeeId: "r1", employeeName: "Jan Kowalski", role: CrewMemberRole.RSR },
+                ],
+            }),
+        );
+        return routeId;
     }
 
     async function createJourney(routeId: string, scheduledDate = "2026-04-01"): Promise<string> {
@@ -200,7 +215,7 @@ describe("Freight Module — Integration Tests", () => {
             expect(route.name).toBe("Route North");
             expect(route.status).toBe(RouteStatus.ACTIVE);
             expect(route.vehicleIds).toEqual([]);
-            expect(route.representativeIds).toEqual([]);
+            expect(route.crewMembers).toEqual([]);
             expect(route.stops).toEqual([]);
             expect(route.schedule).toBeUndefined();
         });
@@ -219,7 +234,10 @@ describe("Freight Module — Integration Tests", () => {
                     routeId,
                     name: "Route Edited",
                     vehicleIds: [vehicleId],
-                    representativeIds: ["rep-1"],
+                    crewMembers: [
+                        { employeeId: "d1", employeeName: "Adam Nowak", role: CrewMemberRole.DRIVER },
+                        { employeeId: "r1", employeeName: "Jan Kowalski", role: CrewMemberRole.RSR },
+                    ],
                     stops: [
                         {
                             customerId: "c1",
@@ -256,7 +274,9 @@ describe("Freight Module — Integration Tests", () => {
             const route = await queryBus.execute(new GetRouteQuery(routeId));
             expect(route.name).toBe("Route Edited");
             expect(route.vehicleIds).toEqual([vehicleId]);
-            expect(route.representativeIds).toEqual(["rep-1"]);
+            expect(route.crewMembers).toHaveLength(2);
+            expect(route.crewMembers[0].role).toBe(CrewMemberRole.DRIVER);
+            expect(route.crewMembers[1].role).toBe(CrewMemberRole.RSR);
             expect(route.stops).toHaveLength(2);
             expect(route.stops[0].customerId).toBe("c1");
             expect(route.stops[1].customerId).toBe("c2");
@@ -323,7 +343,10 @@ describe("Freight Module — Integration Tests", () => {
                 new EditRouteCommand({
                     routeId,
                     vehicleIds: ["v1"],
-                    representativeIds: ["r1"],
+                    crewMembers: [
+                        { employeeId: "d1", employeeName: "Adam Nowak", role: CrewMemberRole.DRIVER },
+                        { employeeId: "r1", employeeName: "Jan Kowalski", role: CrewMemberRole.RSR },
+                    ],
                     stops: [
                         {
                             customerId: "c1",
@@ -349,7 +372,9 @@ describe("Freight Module — Integration Tests", () => {
             expect(journey.status).toBe(JourneyStatus.PLANNED);
             expect(journey.scheduledDate).toBe("2026-04-15");
             expect(journey.vehicleIds).toEqual(["v1"]);
-            expect(journey.representativeIds).toEqual(["r1"]);
+            expect(journey.crewMembers).toHaveLength(2);
+            expect(journey.crewMembers[0].role).toBe(CrewMemberRole.DRIVER);
+            expect(journey.crewMembers[1].role).toBe(CrewMemberRole.RSR);
             expect(journey.stops).toHaveLength(1);
             expect(journey.stops[0].customerId).toBe("c1");
             expect(journey.stops[0].orderIds).toEqual([]);
@@ -405,7 +430,7 @@ describe("Freight Module — Integration Tests", () => {
         });
 
         it("starts an awaiting-loading journey", async () => {
-            const routeId = await createRoute();
+            const routeId = await createRouteWithCrew();
             const journeyId = await createJourney(routeId);
             await commandBus.execute(
                 new RequestJourneyLoadingCommand({
@@ -422,7 +447,7 @@ describe("Freight Module — Integration Tests", () => {
         });
 
         it("completes an in-progress journey", async () => {
-            const routeId = await createRoute();
+            const routeId = await createRouteWithCrew();
             const journeyId = await createJourney(routeId);
             await commandBus.execute(
                 new RequestJourneyLoadingCommand({
@@ -468,7 +493,7 @@ describe("Freight Module — Integration Tests", () => {
         });
 
         it("throws when completing an already completed journey", async () => {
-            const routeId = await createRoute();
+            const routeId = await createRouteWithCrew();
             const journeyId = await createJourney(routeId);
             await commandBus.execute(
                 new RequestJourneyLoadingCommand({
