@@ -1,5 +1,17 @@
-import { Body, Controller, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Param, Patch, Post } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
+import { AddProductToOrderCommand } from "./commands/add-product-to-order/add-product-to-order.command.js";
+import {
+    AddProductToOrderBody,
+    AddProductToOrderParams,
+} from "./commands/add-product-to-order/add-product-to-order.request.dto.js";
+import { ChangeProductQuantityCommand } from "./commands/change-product-quantity/change-product-quantity.command.js";
+import {
+    ChangeProductQuantityBody,
+    ChangeProductQuantityParams,
+} from "./commands/change-product-quantity/change-product-quantity.request.dto.js";
+import { RemoveProductFromOrderCommand } from "./commands/remove-product-from-order/remove-product-from-order.command.js";
+import { RemoveProductFromOrderParams } from "./commands/remove-product-from-order/remove-product-from-order.request.dto.js";
 import { DraftOrderCommand } from "./commands/draft-order/draft-order.command.js";
 import { DraftOrderRequest } from "./commands/draft-order/draft-order.request.dto.js";
 import { PlaceOrderCommand } from "./commands/place-order/place-order.command.js";
@@ -43,6 +55,45 @@ export class SalesHttpController {
     @Post(":id/complete")
     async completeOrder(@Param() params: CompleteOrderParams): Promise<void> {
         await this.commandBus.execute(new CompleteOrderCommand({ orderId: params.id }));
+    }
+
+    @Post(":id/lines")
+    async addProduct(@Param() params: AddProductToOrderParams, @Body() body: AddProductToOrderBody): Promise<void> {
+        await this.commandBus.execute(
+            new AddProductToOrderCommand({
+                orderId: params.id,
+                itemId: body.itemId,
+                quantity: body.quantity,
+                priceId: body.priceId,
+                buyerPriceTypeId: body.buyerPriceTypeId,
+            }),
+        );
+    }
+
+    @Patch(":id/lines/:productId")
+    async changeProductQuantity(
+        @Param() params: ChangeProductQuantityParams,
+        @Body() body: ChangeProductQuantityBody,
+    ): Promise<void> {
+        await this.commandBus.execute(
+            new ChangeProductQuantityCommand({
+                orderId: params.id,
+                itemId: params.productId,
+                quantity: body.quantity,
+                priceId: body.priceId,
+                buyerPriceTypeId: body.buyerPriceTypeId,
+            }),
+        );
+    }
+
+    @Delete(":id/lines/:productId")
+    async removeProduct(@Param() params: RemoveProductFromOrderParams): Promise<void> {
+        await this.commandBus.execute(
+            new RemoveProductFromOrderCommand({
+                orderId: params.id,
+                itemId: params.productId,
+            }),
+        );
     }
 
     @Post(":id/lines/:productId/assign-good")

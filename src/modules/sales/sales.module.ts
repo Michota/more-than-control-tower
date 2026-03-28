@@ -4,11 +4,14 @@ import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
+import { AddProductToOrderCommandHandler } from "./commands/add-product-to-order/add-product-to-order.command-handler.js";
 import { AssignGoodCommandHandler } from "./commands/assign-good/assign-good.command-handler.js";
 import { CancelOrderCommandHandler } from "./commands/cancel-order/cancel-order.command-handler.js";
+import { ChangeProductQuantityCommandHandler } from "./commands/change-product-quantity/change-product-quantity.command-handler.js";
 import { CompleteOrderCommandHandler } from "./commands/complete-order/complete-order.command-handler.js";
 import { DraftOrderCommandHandler } from "./commands/draft-order/draft-order.command-handler.js";
 import { PlaceOrderCommandHandler } from "./commands/place-order/place-order.command-handler.js";
+import { RemoveProductFromOrderCommandHandler } from "./commands/remove-product-from-order/remove-product-from-order.command-handler.js";
 import { SalesHttpController } from "./sales.http.controller.js";
 import { ITEM_PRICE_REPOSITORY_PORT, ORDER_REPOSITORY_PORT } from "./sales.di-tokens.js";
 import { ItemPriceRepository } from "./database/item-price.repository.js";
@@ -37,6 +40,9 @@ import { Product } from "./database/product.entity.js";
     controllers: [SalesHttpController],
     providers: [
         DraftOrderCommandHandler,
+        AddProductToOrderCommandHandler,
+        ChangeProductQuantityCommandHandler,
+        RemoveProductFromOrderCommandHandler,
         PlaceOrderCommandHandler,
         CancelOrderCommandHandler,
         CompleteOrderCommandHandler,
