@@ -3,6 +3,128 @@
     "namespaces": ["public"],
     "tables": [
         {
+            "name": "employee_availability_entry",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "employee_id": {
+                    "name": "employee_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "date": {
+                    "name": "date",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "start_time": {
+                    "name": "start_time",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "end_time": {
+                    "name": "end_time",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": ["pending_approval", "confirmed"],
+                    "mappedType": "enum"
+                }
+            },
+            "indexes": [
+                {
+                    "keyName": "employee_availability_entry_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [
+                {
+                    "name": "employee_availability_entry_status_check",
+                    "expression": "\"status\" in ('pending_approval', 'confirmed')",
+                    "definition": "check (\"status\" in ('pending_approval', 'confirmed'))",
+                    "columnName": "status"
+                }
+            ],
+            "foreignKeys": {},
+            "nativeEnums": {}
+        },
+        {
             "name": "code",
             "schema": "public",
             "columns": {
@@ -1175,7 +1297,7 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": ["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
+                    "enumItems": ["PLANNED", "AWAITING_LOADING", "IN_PROGRESS", "COMPLETED", "CANCELLED"],
                     "mappedType": "enum"
                 },
                 "scheduled_date": {
@@ -1256,8 +1378,8 @@
             "checks": [
                 {
                     "name": "journey_status_check",
-                    "expression": "\"status\" in ('PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')",
-                    "definition": "check (\"status\" in ('PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'))",
+                    "expression": "\"status\" in ('PLANNED', 'AWAITING_LOADING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')",
+                    "definition": "check (\"status\" in ('PLANNED', 'AWAITING_LOADING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'))",
                     "columnName": "status"
                 }
             ],
@@ -2581,6 +2703,176 @@
                 }
             ],
             "checks": [],
+            "foreignKeys": {},
+            "nativeEnums": {}
+        },
+        {
+            "name": "stock_transfer_request",
+            "schema": "public",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": true,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "good_id": {
+                    "name": "good_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "quantity": {
+                    "name": "quantity",
+                    "type": "int",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "integer"
+                },
+                "from_warehouse_id": {
+                    "name": "from_warehouse_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "to_warehouse_id": {
+                    "name": "to_warehouse_id",
+                    "type": "uuid",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "uuid"
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": false,
+                    "unique": false,
+                    "length": null,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": ["PENDING", "FULFILLED", "CANCELLED", "REJECTED"],
+                    "mappedType": "enum"
+                },
+                "note": {
+                    "name": "note",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "requested_by": {
+                    "name": "requested_by",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                },
+                "rejection_reason": {
+                    "name": "rejection_reason",
+                    "type": "varchar(255)",
+                    "unsigned": false,
+                    "autoincrement": false,
+                    "primary": false,
+                    "nullable": true,
+                    "unique": false,
+                    "length": 255,
+                    "precision": null,
+                    "scale": null,
+                    "default": null,
+                    "comment": null,
+                    "enumItems": [],
+                    "mappedType": "string"
+                }
+            },
+            "indexes": [
+                {
+                    "keyName": "stock_transfer_request_pkey",
+                    "columnNames": ["id"],
+                    "composite": false,
+                    "constraint": true,
+                    "primary": true,
+                    "unique": true
+                }
+            ],
+            "checks": [
+                {
+                    "name": "stock_transfer_request_status_check",
+                    "expression": "\"status\" in ('PENDING', 'FULFILLED', 'CANCELLED', 'REJECTED')",
+                    "definition": "check (\"status\" in ('PENDING', 'FULFILLED', 'CANCELLED', 'REJECTED'))",
+                    "columnName": "status"
+                }
+            ],
             "foreignKeys": {},
             "nativeEnums": {}
         },

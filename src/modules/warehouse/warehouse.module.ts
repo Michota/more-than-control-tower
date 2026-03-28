@@ -30,6 +30,10 @@ import {
 } from "./commands/change-sector-status/change-sector-status.command-handler.js";
 import { AttachCodeToGoodCommandHandler } from "./commands/attach-code-to-good/attach-code-to-good.command-handler.js";
 import { DetachCodeFromGoodCommandHandler } from "./commands/detach-code-from-good/detach-code-from-good.command-handler.js";
+import { RequestStockTransferCommandHandler } from "./commands/request-stock-transfer/request-stock-transfer.command-handler.js";
+import { FulfillStockTransferRequestCommandHandler } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command-handler.js";
+import { CancelStockTransferRequestCommandHandler } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command-handler.js";
+import { RejectStockTransferRequestCommandHandler } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.command-handler.js";
 import { GetGoodQueryHandler } from "./queries/get-good/get-good.query-handler.js";
 import { GetGoodsReceiptQueryHandler } from "./queries/get-goods-receipt/get-goods-receipt.query-handler.js";
 import { ListGoodsReceiptsQueryHandler } from "./queries/list-goods-receipts/list-goods-receipts.query-handler.js";
@@ -43,8 +47,12 @@ import { GetGoodExistsQueryHandler } from "./queries/get-good-exists/get-good-ex
 import { GetStockEntryQueryHandler } from "./queries/get-stock-entry/get-stock-entry.query-handler.js";
 import { FindGoodByCodeQueryHandler } from "./queries/find-good-by-code/find-good-by-code.query-handler.js";
 import { ListCodesForGoodQueryHandler } from "./queries/list-codes-for-good/list-codes-for-good.query-handler.js";
+import { ListStockTransferRequestsQueryHandler } from "./queries/list-stock-transfer-requests/list-stock-transfer-requests.query-handler.js";
+import { GetStockTransferRequestQueryHandler } from "./queries/get-stock-transfer-request/get-stock-transfer-request.query-handler.js";
 import { Code } from "./database/code.entity.js";
 import { CodeRepository } from "./database/code.repository.js";
+import { StockTransferRequest } from "./database/stock-transfer-request.entity.js";
+import { StockTransferRequestRepository } from "./database/stock-transfer-request.repository.js";
 import { Good } from "./database/good.entity.js";
 import { GoodRepository } from "./database/good.repository.js";
 import { GoodsReceipt } from "./database/goods-receipt.entity.js";
@@ -61,12 +69,15 @@ import {
     GOODS_RECEIPT_REPOSITORY_PORT,
     SECTOR_REPOSITORY_PORT,
     STOCK_ENTRY_REPOSITORY_PORT,
+    STOCK_TRANSFER_REQUEST_REPOSITORY_PORT,
     WAREHOUSE_REPOSITORY_PORT,
 } from "./warehouse.di-tokens.js";
 import { WarehouseHttpController } from "./warehouse.http.controller.js";
 
 @Module({
-    imports: [MikroOrmModule.forFeature([Good, Warehouse, GoodsReceipt, StockEntry, Sector, Code])],
+    imports: [
+        MikroOrmModule.forFeature([Good, Warehouse, GoodsReceipt, StockEntry, Sector, Code, StockTransferRequest]),
+    ],
     controllers: [WarehouseHttpController],
     providers: [
         CreateGoodCommandHandler,
@@ -89,6 +100,10 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         DeactivateSectorCommandHandler,
         AttachCodeToGoodCommandHandler,
         DetachCodeFromGoodCommandHandler,
+        RequestStockTransferCommandHandler,
+        FulfillStockTransferRequestCommandHandler,
+        CancelStockTransferRequestCommandHandler,
+        RejectStockTransferRequestCommandHandler,
         GetGoodQueryHandler,
         GetGoodsReceiptQueryHandler,
         ListGoodsReceiptsQueryHandler,
@@ -102,6 +117,8 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         GetStockEntryQueryHandler,
         FindGoodByCodeQueryHandler,
         ListCodesForGoodQueryHandler,
+        ListStockTransferRequestsQueryHandler,
+        GetStockTransferRequestQueryHandler,
         {
             provide: CODE_REPOSITORY_PORT,
             useFactory: (em: EntityManager) => new CodeRepository(em),
@@ -130,6 +147,11 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         {
             provide: SECTOR_REPOSITORY_PORT,
             useFactory: (em: EntityManager) => new SectorRepository(em),
+            inject: [EntityManager],
+        },
+        {
+            provide: STOCK_TRANSFER_REQUEST_REPOSITORY_PORT,
+            useFactory: (em: EntityManager) => new StockTransferRequestRepository(em),
             inject: [EntityManager],
         },
         {
@@ -172,6 +194,10 @@ export class WarehouseModule implements OnModuleInit {
             { key: "confirm-goods-receipt", name: "Confirm Goods Receipt" },
             { key: "delete-goods-receipt", name: "Delete Goods Receipt" },
             { key: "view-goods-receipts", name: "View Goods Receipts" },
+            { key: "view-transfer-requests", name: "View Transfer Requests" },
+            { key: "fulfill-transfer-request", name: "Fulfill Transfer Request" },
+            { key: "cancel-transfer-request", name: "Cancel Transfer Request" },
+            { key: "reject-transfer-request", name: "Reject Transfer Request" },
             { key: "transfer-stock", name: "Transfer Stock" },
             { key: "remove-stock", name: "Remove Stock" },
             { key: "view-stock", name: "View Stock" },

@@ -46,6 +46,17 @@ import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-
 import { CodeType } from "./domain/code-type.enum";
 import { CodeNotFoundError, CodeValueAlreadyExistsError } from "./domain/code.errors";
 import { uuidRegex } from "src/shared/utils/uuid-regex";
+import { RequestStockTransferCommand } from "../../shared/commands/request-stock-transfer.command";
+import { FulfillStockTransferRequestCommand } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command";
+import { CancelStockTransferRequestCommand } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command";
+import { RejectStockTransferRequestCommand } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.command";
+import { GetStockTransferRequestQuery } from "./queries/get-stock-transfer-request/get-stock-transfer-request.query";
+import { ListStockTransferRequestsQuery } from "./queries/list-stock-transfer-requests/list-stock-transfer-requests.query";
+import { StockTransferRequestStatus } from "./domain/stock-transfer-request-status.enum";
+import {
+    StockTransferRequestNotFoundError,
+    StockTransferRequestNotPendingError,
+} from "./domain/stock-transfer-request.errors";
 
 describe("Warehouse Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -1403,9 +1414,9 @@ describe("Warehouse Module — Integration Tests", () => {
         });
 
         it("throws CodeNotFoundError when looking up a non-existent code value", async () => {
-            await expect(
-                queryBus.execute(new FindGoodByCodeQuery("NONEXISTENT-CODE")),
-            ).rejects.toThrow(CodeNotFoundError);
+            await expect(queryBus.execute(new FindGoodByCodeQuery("NONEXISTENT-CODE"))).rejects.toThrow(
+                CodeNotFoundError,
+            );
         });
 
         it("throws CodeNotFoundError when detaching a non-existent code", async () => {
@@ -1424,6 +1435,146 @@ describe("Warehouse Module — Integration Tests", () => {
                     }),
                 ),
             ).rejects.toThrow(GoodNotFoundError);
+        });
+    });
+
+    // ─── Transfer Requests ────────────────────────────────────
+
+    describe("Stock Transfer Requests", () => {
+        it("creates a transfer request via shared command and queries it", async () => {
+            const goodId = await createGood({ name: "Transfer Good" });
+            const fromWarehouseId = await createWarehouse("Source WH");
+            const toWarehouseId = await createWarehouse("Dest WH");
+
+            const requestId: string = await commandBus.execute(
+                new RequestStockTransferCommand({
+                    goodId,
+                    quantity: 5,
+                    fromWarehouseId,
+                    toWarehouseId,
+                    note: "Load for route",
+                    requestedBy: "freight",
+                }),
+            );
+
+            expect(requestId).toMatch(uuidRegex);
+
+            const result = await queryBus.execute(new GetStockTransferRequestQuery(requestId));
+            expect(result.status).toEqual(StockTransferRequestStatus.PENDING);
+            expect(result.goodId).toEqual(goodId);
+            expect(result.quantity).toEqual(5);
+            expect(result.fromWarehouseId).toEqual(fromWarehouseId);
+            expect(result.toWarehouseId).toEqual(toWarehouseId);
+            expect(result.note).toEqual("Load for route");
+            expect(result.requestedBy).toEqual("freight");
+        });
+
+        it("lists transfer requests with status filter", async () => {
+            const goodId = await createGood({ name: "Filter Good" });
+            const fromId = await createWarehouse("Filter Source");
+            const toId = await createWarehouse("Filter Dest");
+
+            await commandBus.execute(
+                new RequestStockTransferCommand({ goodId, quantity: 1, fromWarehouseId: fromId, toWarehouseId: toId }),
+            );
+            const cancelId: string = await commandBus.execute(
+                new RequestStockTransferCommand({ goodId, quantity: 2, fromWarehouseId: fromId, toWarehouseId: toId }),
+            );
+            await commandBus.execute(new CancelStockTransferRequestCommand({ requestId: cancelId }));
+
+            const pending = await queryBus.execute(
+                new ListStockTransferRequestsQuery(StockTransferRequestStatus.PENDING, undefined, undefined, 1, 100),
+            );
+            const cancelled = await queryBus.execute(
+                new ListStockTransferRequestsQuery(StockTransferRequestStatus.CANCELLED, undefined, undefined, 1, 100),
+            );
+
+            expect(pending.data.every((r) => r.status === (StockTransferRequestStatus.PENDING as string))).toBe(true);
+            expect(cancelled.data.some((r) => r.id === cancelId)).toBe(true);
+        });
+
+        it("fulfills a request and transfers stock", async () => {
+            const goodId = await createGood({ name: "Fulfill Good" });
+            const fromWarehouseId = await createWarehouse("Fulfill Source");
+            const toWarehouseId = await createWarehouse("Fulfill Dest");
+
+            await receiveGoodsToWarehouse({ goodId, warehouseId: fromWarehouseId, quantity: 20 });
+
+            const requestId: string = await commandBus.execute(
+                new RequestStockTransferCommand({
+                    goodId,
+                    quantity: 8,
+                    fromWarehouseId,
+                    toWarehouseId,
+                }),
+            );
+
+            await commandBus.execute(new FulfillStockTransferRequestCommand({ requestId }));
+
+            const result = await queryBus.execute(new GetStockTransferRequestQuery(requestId));
+            expect(result.status).toEqual(StockTransferRequestStatus.FULFILLED);
+
+            const sourceStock = await getWarehouseStock(fromWarehouseId);
+            expect(sourceStock[0].quantity).toEqual(12);
+
+            const destStock = await getWarehouseStock(toWarehouseId);
+            expect(destStock[0].quantity).toEqual(8);
+        });
+
+        it("cancels a pending request", async () => {
+            const goodId = await createGood({ name: "Cancel Good" });
+            const fromId = await createWarehouse("Cancel Source");
+            const toId = await createWarehouse("Cancel Dest");
+
+            const requestId: string = await commandBus.execute(
+                new RequestStockTransferCommand({ goodId, quantity: 3, fromWarehouseId: fromId, toWarehouseId: toId }),
+            );
+
+            await commandBus.execute(new CancelStockTransferRequestCommand({ requestId }));
+
+            const result = await queryBus.execute(new GetStockTransferRequestQuery(requestId));
+            expect(result.status).toEqual(StockTransferRequestStatus.CANCELLED);
+        });
+
+        it("rejects a pending request with reason", async () => {
+            const goodId = await createGood({ name: "Reject Good" });
+            const fromId = await createWarehouse("Reject Source");
+            const toId = await createWarehouse("Reject Dest");
+
+            const requestId: string = await commandBus.execute(
+                new RequestStockTransferCommand({ goodId, quantity: 3, fromWarehouseId: fromId, toWarehouseId: toId }),
+            );
+
+            await commandBus.execute(
+                new RejectStockTransferRequestCommand({ requestId, reason: "Insufficient stock" }),
+            );
+
+            const result = await queryBus.execute(new GetStockTransferRequestQuery(requestId));
+            expect(result.status).toEqual(StockTransferRequestStatus.REJECTED);
+            expect(result.rejectionReason).toEqual("Insufficient stock");
+        });
+
+        it("throws when fulfilling a non-PENDING request", async () => {
+            const goodId = await createGood({ name: "Invalid Fulfill Good" });
+            const fromId = await createWarehouse("Inv Fulfill Source");
+            const toId = await createWarehouse("Inv Fulfill Dest");
+
+            const requestId: string = await commandBus.execute(
+                new RequestStockTransferCommand({ goodId, quantity: 1, fromWarehouseId: fromId, toWarehouseId: toId }),
+            );
+            await commandBus.execute(new CancelStockTransferRequestCommand({ requestId }));
+
+            await expect(commandBus.execute(new FulfillStockTransferRequestCommand({ requestId }))).rejects.toThrow(
+                StockTransferRequestNotPendingError,
+            );
+        });
+
+        it("throws StockTransferRequestNotFoundError for non-existent request", async () => {
+            await expect(
+                commandBus.execute(
+                    new FulfillStockTransferRequestCommand({ requestId: "00000000-0000-0000-0000-000000000000" }),
+                ),
+            ).rejects.toThrow(StockTransferRequestNotFoundError);
         });
     });
 });

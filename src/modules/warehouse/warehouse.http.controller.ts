@@ -73,6 +73,17 @@ import { DetachCodeFromGoodCommand } from "./commands/detach-code-from-good/deta
 import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-code.query.js";
 import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-for-good.query.js";
 import { CodeIdResponseDto, CodeResponseDto, FindGoodByCodeResponseDto } from "./dtos/code.response.dto.js";
+import { FulfillStockTransferRequestCommand } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command.js";
+import { CancelStockTransferRequestCommand } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command.js";
+import { RejectStockTransferRequestCommand } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.command.js";
+import { RejectStockTransferRequestDto } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.request.dto.js";
+import { ListStockTransferRequestsQuery } from "./queries/list-stock-transfer-requests/list-stock-transfer-requests.query.js";
+import { ListStockTransferRequestsRequestDto } from "./queries/list-stock-transfer-requests/list-stock-transfer-requests.request.dto.js";
+import { GetStockTransferRequestQuery } from "./queries/get-stock-transfer-request/get-stock-transfer-request.query.js";
+import {
+    PaginatedStockTransferRequestsResponseDto,
+    StockTransferRequestResponseDto,
+} from "./dtos/stock-transfer-request.response.dto.js";
 
 @ApiTags("Warehouse")
 @Controller("warehouse")
@@ -408,6 +419,61 @@ export class WarehouseHttpController {
     @ApiResponse({ status: 200 })
     async deactivateSector(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new DeactivateSectorCommand({ sectorId: id }));
+    }
+
+    // ─── Transfer Requests ────────────────────────────────────
+
+    @RequirePermission(WarehousePermission.VIEW_TRANSFER_REQUESTS)
+    @Get("transfer-requests")
+    @ApiOperation({ summary: "List stock transfer requests (filterable by status, warehouse)" })
+    @ApiResponse({ status: 200, type: PaginatedStockTransferRequestsResponseDto })
+    async listTransferRequests(
+        @Query() query: ListStockTransferRequestsRequestDto,
+    ): Promise<PaginatedStockTransferRequestsResponseDto> {
+        return this.queryBus.execute(
+            new ListStockTransferRequestsQuery(
+                query.status,
+                query.fromWarehouseId,
+                query.toWarehouseId,
+                query.page ?? 1,
+                query.limit ?? 20,
+            ),
+        );
+    }
+
+    @RequirePermission(WarehousePermission.VIEW_TRANSFER_REQUESTS)
+    @Get("transfer-requests/:id")
+    @ApiOperation({ summary: "Get stock transfer request details" })
+    @ApiResponse({ status: 200, type: StockTransferRequestResponseDto })
+    async getTransferRequest(@Param("id", ParseUUIDPipe) id: UUID): Promise<StockTransferRequestResponseDto> {
+        return this.queryBus.execute(new GetStockTransferRequestQuery(id));
+    }
+
+    @RequirePermission(WarehousePermission.FULFILL_TRANSFER_REQUEST)
+    @Post("transfer-requests/:id/fulfill")
+    @ApiOperation({ summary: "Fulfill a pending transfer request (triggers actual stock transfer)" })
+    @ApiResponse({ status: 200 })
+    async fulfillTransferRequest(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new FulfillStockTransferRequestCommand({ requestId: id }));
+    }
+
+    @RequirePermission(WarehousePermission.CANCEL_TRANSFER_REQUEST)
+    @Post("transfer-requests/:id/cancel")
+    @ApiOperation({ summary: "Cancel a pending transfer request" })
+    @ApiResponse({ status: 200 })
+    async cancelTransferRequest(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new CancelStockTransferRequestCommand({ requestId: id }));
+    }
+
+    @RequirePermission(WarehousePermission.REJECT_TRANSFER_REQUEST)
+    @Post("transfer-requests/:id/reject")
+    @ApiOperation({ summary: "Reject a pending transfer request with a reason" })
+    @ApiResponse({ status: 200 })
+    async rejectTransferRequest(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: RejectStockTransferRequestDto,
+    ): Promise<void> {
+        await this.commandBus.execute(new RejectStockTransferRequestCommand({ requestId: id, reason: body.reason }));
     }
 
     // ─── Stock Operations ────────────────────────────────────

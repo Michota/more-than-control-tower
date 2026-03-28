@@ -39,6 +39,12 @@ export const WarehousePermission = {
     DETACH_CODE: "warehouse:detach-code",
     VIEW_CODES: "warehouse:view-codes",
 
+    // Transfer Requests
+    VIEW_TRANSFER_REQUESTS: "warehouse:view-transfer-requests",
+    FULFILL_TRANSFER_REQUEST: "warehouse:fulfill-transfer-request",
+    CANCEL_TRANSFER_REQUEST: "warehouse:cancel-transfer-request",
+    REJECT_TRANSFER_REQUEST: "warehouse:reject-transfer-request",
+
     // Stock
     TRANSFER_STOCK: "warehouse:transfer-stock",
     REMOVE_STOCK: "warehouse:remove-stock",
