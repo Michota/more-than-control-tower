@@ -11,6 +11,7 @@ const AvailabilityEntrySchema = defineEntity({
         startTime: p.string(),
         endTime: p.string(),
         status: p.enum(() => AvailabilityEntryStatus),
+        locked: p.boolean().default(false),
     },
 });
 

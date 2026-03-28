@@ -24,6 +24,14 @@ export class NoPendingAvailabilityError extends BadRequestDomainException {
     }
 }
 
+export class AvailabilityAlreadyLockedError extends BadRequestDomainException {
+    public readonly code = "AVAILABILITY.ALREADY_LOCKED";
+
+    constructor(entryId: string) {
+        super(`Availability entry "${entryId}" is already locked`);
+    }
+}
+
 export class AvailabilityLockedError extends BadRequestDomainException {
     public readonly code = "AVAILABILITY.LOCKED";
 

@@ -33,6 +33,8 @@ import { ConfirmAvailabilityCommand } from "./commands/confirm-availability/conf
 import { ConfirmAvailabilityRequest } from "./commands/confirm-availability/confirm-availability.request.dto.js";
 import { RejectAvailabilityCommand } from "./commands/reject-availability/reject-availability.command.js";
 import { RejectAvailabilityRequest } from "./commands/reject-availability/reject-availability.request.dto.js";
+import { LockAvailabilityCommand } from "./commands/lock-availability/lock-availability.command.js";
+import { LockAvailabilityRequest } from "./commands/lock-availability/lock-availability.request.dto.js";
 import { CreatePositionCommand } from "./commands/create-position/create-position.command.js";
 import { CreatePositionRequest } from "./commands/create-position/create-position.request.dto.js";
 import { UpdatePositionCommand } from "./commands/update-position/update-position.command.js";
@@ -233,6 +235,16 @@ export class HrHttpController {
     ): Promise<void> {
         await this.commandBus.execute(
             new RejectAvailabilityCommand({
+                employeeId: id,
+                dates: body.dates,
+            }),
+        );
+    }
+
+    @Post(":id/availability/lock")
+    async lockAvailability(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: LockAvailabilityRequest): Promise<void> {
+        await this.commandBus.execute(
+            new LockAvailabilityCommand({
                 employeeId: id,
                 dates: body.dates,
             }),

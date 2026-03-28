@@ -3,7 +3,11 @@ import { uuidRegex } from "src/shared/utils/uuid-regex.js";
 import { ZodError } from "zod";
 import { AvailabilityEntryStatus } from "./availability-entry-status.enum.js";
 import { AvailabilityEntryAggregate } from "./availability-entry.aggregate.js";
-import { AvailabilityAlreadyConfirmedError, NoPendingAvailabilityError } from "./availability-entry.errors.js";
+import {
+    AvailabilityAlreadyConfirmedError,
+    AvailabilityAlreadyLockedError,
+    NoPendingAvailabilityError,
+} from "./availability-entry.errors.js";
 import { AvailabilitySetDomainEvent } from "./events/availability-set.domain-event.js";
 import { AvailabilityConfirmedDomainEvent } from "./events/availability-confirmed.domain-event.js";
 
@@ -176,6 +180,43 @@ describe("AvailabilityEntryAggregate.isLocked()", () => {
 
         expect(entry.isLocked(new Date())).toBe(false);
     });
+
+    it("returns true when manually locked even if time has not started", () => {
+        const entry = AvailabilityEntryAggregate.create({
+            ...validProps(),
+            date: "2099-12-31",
+            startTime: "08:00",
+            setByManager: false,
+        });
+
+        entry.lock();
+
+        const wayBefore = new Date("2026-01-01T00:00:00");
+        expect(entry.isLocked(wayBefore)).toBe(true);
+    });
+});
+
+describe("AvailabilityEntryAggregate.lock()", () => {
+    it("sets the locked flag", () => {
+        const entry = AvailabilityEntryAggregate.create({ ...validProps(), setByManager: false });
+
+        entry.lock();
+
+        expect(entry.locked).toBe(true);
+    });
+
+    it("throws when already locked", () => {
+        const entry = AvailabilityEntryAggregate.create({ ...validProps(), setByManager: false });
+        entry.lock();
+
+        expect(() => entry.lock()).toThrow(AvailabilityAlreadyLockedError);
+    });
+
+    it("new entries are not locked by default", () => {
+        const entry = AvailabilityEntryAggregate.create({ ...validProps(), setByManager: false });
+
+        expect(entry.locked).toBe(false);
+    });
 });
 
 describe("AvailabilityEntryAggregate.reconstitute()", () => {
@@ -188,12 +229,14 @@ describe("AvailabilityEntryAggregate.reconstitute()", () => {
                 startTime: "08:00",
                 endTime: "16:00",
                 status: AvailabilityEntryStatus.CONFIRMED,
+                locked: true,
             },
         });
 
         expect(entry.id).toBe("avail-001");
         expect(entry.employeeId).toBe("emp-001");
         expect(entry.status).toBe(AvailabilityEntryStatus.CONFIRMED);
+        expect(entry.locked).toBe(true);
         expect(entry.domainEvents).toHaveLength(0);
     });
 });

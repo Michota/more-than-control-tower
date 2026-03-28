@@ -17,6 +17,7 @@ import { UpdatePositionCommandHandler } from "./commands/update-position/update-
 import { SetAvailabilityCommandHandler } from "./commands/set-availability/set-availability.command-handler.js";
 import { ConfirmAvailabilityCommandHandler } from "./commands/confirm-availability/confirm-availability.command-handler.js";
 import { RejectAvailabilityCommandHandler } from "./commands/reject-availability/reject-availability.command-handler.js";
+import { LockAvailabilityCommandHandler } from "./commands/lock-availability/lock-availability.command-handler.js";
 import { GetEmployeeQueryHandler } from "./queries/get-employee/get-employee.query-handler.js";
 import { FindEmployeesByPermissionQueryHandler } from "./queries/find-employees-by-permission/find-employees-by-permission.query-handler.js";
 import { GetEmployeePermissionsQueryHandler } from "./queries/get-employee-permissions/get-employee-permissions.query-handler.js";
@@ -67,6 +68,7 @@ import {
         SetAvailabilityCommandHandler,
         ConfirmAvailabilityCommandHandler,
         RejectAvailabilityCommandHandler,
+        LockAvailabilityCommandHandler,
         // Queries
         GetEmployeeQueryHandler,
         FindEmployeesByPermissionQueryHandler,

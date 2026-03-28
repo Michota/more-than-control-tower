@@ -17,6 +17,7 @@ import { CreatePositionCommand } from "./commands/create-position/create-positio
 import { UpdatePositionCommand } from "./commands/update-position/update-position.command";
 import { SetPermissionOverrideCommand } from "./commands/set-permission-override/set-permission-override.command";
 import { SetAvailabilityCommand } from "./commands/set-availability/set-availability.command";
+import { LockAvailabilityCommand } from "./commands/lock-availability/lock-availability.command";
 import { ConfirmAvailabilityCommand } from "./commands/confirm-availability/confirm-availability.command";
 import { RejectAvailabilityCommand } from "./commands/reject-availability/reject-availability.command";
 import { PermissionOverrideState } from "./domain/permission-override-state.enum";
@@ -31,6 +32,7 @@ import {
 } from "./domain/employee.errors";
 import {
     AvailabilityAlreadyConfirmedError,
+    AvailabilityAlreadyLockedError,
     AvailabilityLockedError,
     NoPendingAvailabilityError,
 } from "./domain/availability-entry.errors";
@@ -619,6 +621,99 @@ describe("HR Module — Integration Tests", () => {
             await expect(
                 commandBus.execute(new RejectAvailabilityCommand({ employeeId: id, dates: ["2026-06-02"] })),
             ).rejects.toThrow(NoPendingAvailabilityError);
+        });
+    });
+
+    describe("Lock Availability", () => {
+        it("manually locks entries", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-10-01", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            await commandBus.execute(new LockAvailabilityCommand({ employeeId: id, dates: ["2026-10-01"] }));
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id, "2026-10-01", "2026-10-01"),
+            );
+
+            expect(result.entries[0].locked).toBe(true);
+        });
+
+        it("employee cannot modify manually locked entries", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-10-02", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            await commandBus.execute(new LockAvailabilityCommand({ employeeId: id, dates: ["2026-10-02"] }));
+
+            await expect(
+                commandBus.execute(
+                    new SetAvailabilityCommand({
+                        employeeId: id,
+                        entries: [{ date: "2026-10-02", startTime: "10:00", endTime: "18:00" }],
+                        setByManager: false,
+                    }),
+                ),
+            ).rejects.toThrow(AvailabilityLockedError);
+        });
+
+        it("manager can modify manually locked entries", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-10-03", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            await commandBus.execute(new LockAvailabilityCommand({ employeeId: id, dates: ["2026-10-03"] }));
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-10-03", startTime: "10:00", endTime: "18:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id, "2026-10-03", "2026-10-03"),
+            );
+
+            expect(result.entries).toHaveLength(1);
+            expect(result.entries[0].startTime).toBe("10:00");
+        });
+
+        it("throws when locking already locked entries", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-10-04", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            await commandBus.execute(new LockAvailabilityCommand({ employeeId: id, dates: ["2026-10-04"] }));
+
+            await expect(
+                commandBus.execute(new LockAvailabilityCommand({ employeeId: id, dates: ["2026-10-04"] })),
+            ).rejects.toThrow(AvailabilityAlreadyLockedError);
         });
     });
 

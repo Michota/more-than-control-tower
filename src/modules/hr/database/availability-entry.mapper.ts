@@ -12,6 +12,7 @@ export interface AvailabilityEntryResponse {
     startTime: string;
     endTime: string;
     status: string;
+    locked: boolean;
 }
 
 @Injectable()
@@ -25,6 +26,7 @@ export class AvailabilityEntryMapper {
                 startTime: record.startTime,
                 endTime: record.endTime,
                 status: record.status as AvailabilityEntryStatus,
+                locked: record.locked,
             },
         });
     }
@@ -37,6 +39,7 @@ export class AvailabilityEntryMapper {
             startTime: domain.startTime,
             endTime: domain.endTime,
             status: domain.status,
+            locked: domain.locked,
         };
     }
 
@@ -48,6 +51,7 @@ export class AvailabilityEntryMapper {
             startTime: domain.startTime,
             endTime: domain.endTime,
             status: domain.status,
+            locked: domain.locked,
         };
     }
 }
