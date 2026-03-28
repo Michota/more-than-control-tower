@@ -8,7 +8,7 @@ import { DraftOrderCommand } from "./commands/draft-order/draft-order.command";
 import { PlaceOrderCommand } from "./commands/place-order/place-order.command";
 import { CancelOrderCommand } from "./commands/cancel-order/cancel-order.command";
 import { CompleteOrderCommand } from "./commands/complete-order/complete-order.command";
-import { AssignStockEntryCommand } from "./commands/assign-stock-entry/assign-stock-entry.command";
+import { AssignGoodCommand } from "./commands/assign-good/assign-good.command";
 import { OrderStatus } from "./domain/order-status.enum";
 import {
     OrderCannotBePlacedError,
@@ -18,8 +18,7 @@ import {
     OrderLineNotFoundError,
     OrderNotFoundError,
     PriceNotFoundForOrderLineError,
-    StockEntryAlreadyAssignedError,
-    StockEntryNotFoundForAssignmentError,
+    GoodNotFoundForAssignmentError,
 } from "./domain/order.errors";
 import { Order } from "./database/order.entity";
 import { Product } from "./database/product.entity";
@@ -29,13 +28,8 @@ import { PermissionRegistryModule } from "../../shared/infrastructure/permission
 import { SalesModule } from "./sales.module";
 import { WarehouseModule } from "../warehouse/warehouse.module";
 import { CreateGoodCommand } from "../warehouse/commands/create-good/create-good.command";
-import { CreateWarehouseCommand } from "../warehouse/commands/create-warehouse/create-warehouse.command";
-import { OpenGoodsReceiptCommand } from "../warehouse/commands/open-goods-receipt/open-goods-receipt.command";
-import { SetGoodsReceiptLinesCommand } from "../warehouse/commands/set-goods-receipt-lines/set-goods-receipt-lines.command";
-import { ConfirmGoodsReceiptCommand } from "../warehouse/commands/confirm-goods-receipt/confirm-goods-receipt.command";
 import { DimensionUnit } from "../warehouse/domain/good-dimensions.value-object";
 import { WeightUnit } from "../warehouse/domain/good-weight.value-object";
-import { StockEntry } from "../warehouse/database/stock-entry.entity";
 
 describe("Sales Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -278,11 +272,11 @@ describe("Sales Module — Integration Tests", () => {
         });
     });
 
-    // ─── Assign Stock Entry ───────────────────────────────────
+    // ─── Assign Good ────────────────────────────────────────────
 
-    describe("Assign Stock Entry", () => {
-        async function createStockEntry(): Promise<string> {
-            const goodId: string = await commandBus.execute(
+    describe("Assign Good", () => {
+        async function createGood(): Promise<string> {
+            return commandBus.execute(
                 new CreateGoodCommand({
                     name: `Good ${randomUUID().slice(0, 8)}`,
                     weightValue: 1,
@@ -293,126 +287,82 @@ describe("Sales Module — Integration Tests", () => {
                     dimensionUnit: DimensionUnit.CM,
                 }),
             );
-
-            const warehouseId: string = await commandBus.execute(
-                new CreateWarehouseCommand({
-                    name: `WH ${randomUUID().slice(0, 8)}`,
-                    address: {
-                        country: "PL",
-                        postalCode: "00-001",
-                        state: "Mazowieckie",
-                        city: "Warszawa",
-                        street: "Test 1",
-                    },
-                }),
-            );
-
-            const receiptId: string = await commandBus.execute(
-                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
-            );
-
-            await commandBus.execute(
-                new SetGoodsReceiptLinesCommand({
-                    receiptId,
-                    lines: [{ goodId, quantity: 10 }],
-                }),
-            );
-
-            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
-
-            // Find the created stock entry ID
-            const stockEntryEm = em.fork();
-            const entry = await stockEntryEm.findOne(StockEntry, { goodId });
-            return entry!.id;
         }
 
-        it("assigns a stock entry to a DRAFTED order line", async () => {
+        it("assigns a good to a DRAFTED order line", async () => {
             const orderId = await draftOrder();
-            const stockEntryId = await createStockEntry();
+            const goodId = await createGood();
 
-            await commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }));
 
             const order = await findOrder(orderId);
-            const line = order!.orderLines[0];
-            expect(line.stockEntryId).toBe(stockEntryId);
+            expect(order!.orderLines[0].goodId).toBe(goodId);
         });
 
-        it("assigns a stock entry to a PLACED order line", async () => {
+        it("assigns a good to a PLACED order line", async () => {
             const orderId = await draftOrder();
             await commandBus.execute(new PlaceOrderCommand({ orderId }));
-            const stockEntryId = await createStockEntry();
+            const goodId = await createGood();
 
-            await commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }));
 
             const order = await findOrder(orderId);
-            expect(order!.orderLines[0].stockEntryId).toBe(stockEntryId);
+            expect(order!.orderLines[0].goodId).toBe(goodId);
         });
 
-        it("throws StockEntryAlreadyAssignedError when entry is taken by another active order", async () => {
-            const stockEntryId = await createStockEntry();
+        it("allows multiple orders to reference the same good", async () => {
+            const goodId = await createGood();
             const orderId1 = await draftOrder();
             const orderId2 = await draftOrder();
 
-            await commandBus.execute(new AssignStockEntryCommand({ orderId: orderId1, productId, stockEntryId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId: orderId1, productId, goodId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId: orderId2, productId, goodId }));
 
-            await expect(
-                commandBus.execute(new AssignStockEntryCommand({ orderId: orderId2, productId, stockEntryId })),
-            ).rejects.toThrow(StockEntryAlreadyAssignedError);
+            const order1 = await findOrder(orderId1);
+            const order2 = await findOrder(orderId2);
+            expect(order1!.orderLines[0].goodId).toBe(goodId);
+            expect(order2!.orderLines[0].goodId).toBe(goodId);
         });
 
-        it("allows assigning stock entry freed by cancelled order", async () => {
-            const stockEntryId = await createStockEntry();
-            const orderId1 = await draftOrder();
-            const orderId2 = await draftOrder();
-
-            await commandBus.execute(new AssignStockEntryCommand({ orderId: orderId1, productId, stockEntryId }));
-            await commandBus.execute(new CancelOrderCommand({ orderId: orderId1 }));
-
-            await commandBus.execute(new AssignStockEntryCommand({ orderId: orderId2, productId, stockEntryId }));
-
-            const order = await findOrder(orderId2);
-            expect(order!.orderLines[0].stockEntryId).toBe(stockEntryId);
-        });
-
-        it("throws StockEntryNotFoundForAssignmentError for non-existent stock entry", async () => {
+        it("throws GoodNotFoundForAssignmentError for non-existent good", async () => {
             const orderId = await draftOrder();
 
             await expect(
-                commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId: randomUUID() })),
-            ).rejects.toThrow(StockEntryNotFoundForAssignmentError);
+                commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId: randomUUID() })),
+            ).rejects.toThrow(GoodNotFoundForAssignmentError);
         });
 
         it("throws OrderIsNotEditableError when order is COMPLETED", async () => {
             const orderId = await draftOrder();
             await commandBus.execute(new PlaceOrderCommand({ orderId }));
             await commandBus.execute(new CompleteOrderCommand({ orderId }));
-            const stockEntryId = await createStockEntry();
+            const goodId = await createGood();
 
-            await expect(
-                commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId })),
-            ).rejects.toThrow(OrderIsNotEditableError);
+            await expect(commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }))).rejects.toThrow(
+                OrderIsNotEditableError,
+            );
         });
 
         it("throws OrderIsNotEditableError when order is CANCELLED", async () => {
             const orderId = await draftOrder();
             await commandBus.execute(new CancelOrderCommand({ orderId }));
-            const stockEntryId = await createStockEntry();
+            const goodId = await createGood();
 
-            await expect(
-                commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId })),
-            ).rejects.toThrow(OrderIsNotEditableError);
+            await expect(commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }))).rejects.toThrow(
+                OrderIsNotEditableError,
+            );
         });
 
         it("throws OrderLineNotFoundError for wrong productId", async () => {
             const orderId = await draftOrder();
-            const stockEntryId = await createStockEntry();
+            const goodId = await createGood();
 
             await expect(
                 commandBus.execute(
-                    new AssignStockEntryCommand({
+                    new AssignGoodCommand({
                         orderId,
                         productId: randomUUID(),
-                        stockEntryId,
+                        goodId,
                     }),
                 ),
             ).rejects.toThrow(OrderLineNotFoundError);

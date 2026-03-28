@@ -1,6 +1,6 @@
 import { IsUUID } from "class-validator";
 
-export class AssignStockEntryParams {
+export class AssignGoodParams {
     @IsUUID()
     id!: string;
 
@@ -8,7 +8,7 @@ export class AssignStockEntryParams {
     productId!: string;
 }
 
-export class AssignStockEntryBody {
+export class AssignGoodBody {
     @IsUUID()
-    stockEntryId!: string;
+    goodId!: string;
 }

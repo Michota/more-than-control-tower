@@ -64,7 +64,7 @@ export class OrderLines extends ValueObject<OrderLinesProperties> {
         return this.properties.items;
     }
 
-    assignStockEntry(productId: ProductId, stockEntryId: string): OrderLines {
+    assignGood(productId: ProductId, goodId: string): OrderLines {
         const line = this.properties.items.get(productId);
 
         if (!line) {
@@ -72,7 +72,7 @@ export class OrderLines extends ValueObject<OrderLinesProperties> {
         }
 
         const updated = OrderLines.createLinesMap(this.properties.items);
-        updated.set(productId, line.withStockEntry(stockEntryId));
+        updated.set(productId, line.withGood(goodId));
         return new OrderLines(updated);
     }
 }

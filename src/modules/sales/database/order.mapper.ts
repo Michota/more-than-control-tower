@@ -32,7 +32,7 @@ export class OrderMapper implements Mapper<OrderAggregate, RequiredEntityData<Or
                     new DomainOrderLine({
                         product: orderItem,
                         quantity: line.quantity,
-                        stockEntryId: line.stockEntryId ?? undefined,
+                        goodId: line.goodId ?? undefined,
                     }),
                 ];
             }),
@@ -56,7 +56,7 @@ export class OrderMapper implements Mapper<OrderAggregate, RequiredEntityData<Or
         const orderLines = Array.from(props.orderLines.getLines().entries()).map(([itemId, line]) => ({
             product: { id: itemId as string },
             quantity: line.quantity,
-            stockEntryId: line.stockEntryId ?? null,
+            goodId: line.goodId ?? null,
         })) as unknown as OrmOrderLine[];
 
         return {

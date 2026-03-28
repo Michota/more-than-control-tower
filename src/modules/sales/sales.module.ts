@@ -4,7 +4,7 @@ import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
-import { AssignStockEntryCommandHandler } from "./commands/assign-stock-entry/assign-stock-entry.command-handler.js";
+import { AssignGoodCommandHandler } from "./commands/assign-good/assign-good.command-handler.js";
 import { CancelOrderCommandHandler } from "./commands/cancel-order/cancel-order.command-handler.js";
 import { CompleteOrderCommandHandler } from "./commands/complete-order/complete-order.command-handler.js";
 import { DraftOrderCommandHandler } from "./commands/draft-order/draft-order.command-handler.js";
@@ -40,7 +40,7 @@ import { Product } from "./database/product.entity.js";
         PlaceOrderCommandHandler,
         CancelOrderCommandHandler,
         CompleteOrderCommandHandler,
-        AssignStockEntryCommandHandler,
+        AssignGoodCommandHandler,
         {
             provide: ORDER_REPOSITORY_PORT,
             useFactory: (config: ConfigService, em: EntityManager) => {

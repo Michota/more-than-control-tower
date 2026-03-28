@@ -10,7 +10,7 @@ import { OrderStatus } from "./order-status.enum.js";
 import { OrderPlacedDomainEvent } from "./events/order-placed.domain-event.js";
 import { OrderCancelledDomainEvent } from "./events/order-cancelled.domain-event.js";
 import { OrderCompletedDomainEvent } from "./events/order-completed.domain-event.js";
-import { StockEntryAssignedToOrderDomainEvent } from "./events/stock-entry-assigned-to-order.domain-event.js";
+import { GoodAssignedToOrderDomainEvent } from "./events/good-assigned-to-order.domain-event.js";
 import {
     CannotChangeQuantityOfPlacedOrderError,
     OrderCannotBeCancelledError,
@@ -146,7 +146,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
         );
     }
 
-    assignStockEntry(productId: string, stockEntryId: string): void {
+    assignGood(productId: string, goodId: string): void {
         if (this.properties.status === OrderStatus.CANCELLED || this.properties.status === OrderStatus.COMPLETED) {
             throw new OrderIsNotEditableError();
         }
@@ -158,13 +158,13 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
             throw new OrderLineNotFoundError(productId);
         }
 
-        this.properties.orderLines = this.properties.orderLines.assignStockEntry(productEntityId, stockEntryId);
+        this.properties.orderLines = this.properties.orderLines.assignGood(productEntityId, goodId);
 
         this.addEvent(
-            new StockEntryAssignedToOrderDomainEvent({
+            new GoodAssignedToOrderDomainEvent({
                 aggregateId: this.id,
                 productId,
-                stockEntryId,
+                goodId,
             }),
         );
     }

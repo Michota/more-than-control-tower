@@ -11,7 +11,7 @@ import { OrderDraftedDomainEvent } from "./events/order-drafted.domain-event.js"
 import { OrderPlacedDomainEvent } from "./events/order-placed.domain-event.js";
 import { OrderCancelledDomainEvent } from "./events/order-cancelled.domain-event.js";
 import { OrderCompletedDomainEvent } from "./events/order-completed.domain-event.js";
-import { StockEntryAssignedToOrderDomainEvent } from "./events/stock-entry-assigned-to-order.domain-event.js";
+import { GoodAssignedToOrderDomainEvent } from "./events/good-assigned-to-order.domain-event.js";
 import {
     CannotChangeQuantityOfPlacedOrderError,
     OrderCannotBeCancelledError,
@@ -253,42 +253,42 @@ describe("OrderAggregate line modification guards", () => {
     });
 });
 
-// ── assignStockEntry ─────────────────────────────────────────
+// ── assignGood ─────────────────────────────────────────
 
-describe("OrderAggregate.assignStockEntry()", () => {
-    it("assigns a stock entry to an order line when DRAFTED", () => {
+describe("OrderAggregate.assignGood()", () => {
+    it("assigns a good to an order line when DRAFTED", () => {
         const product = createProduct();
         const order = draftOrder([product]);
-        const stockEntryId = randomUUID();
+        const goodId = randomUUID();
 
-        order.assignStockEntry(product.id as string, stockEntryId);
+        order.assignGood(product.id as string, goodId);
 
         const line = order.getOrderLines().getLines().get(product.id);
-        expect(line?.stockEntryId).toBe(stockEntryId);
+        expect(line?.goodId).toBe(goodId);
     });
 
-    it("assigns a stock entry to an order line when PLACED", () => {
+    it("assigns a good to an order line when PLACED", () => {
         const product = createProduct();
         const order = draftOrder([product]);
         order.place();
-        const stockEntryId = randomUUID();
+        const goodId = randomUUID();
 
-        order.assignStockEntry(product.id as string, stockEntryId);
+        order.assignGood(product.id as string, goodId);
 
         const line = order.getOrderLines().getLines().get(product.id);
-        expect(line?.stockEntryId).toBe(stockEntryId);
+        expect(line?.goodId).toBe(goodId);
     });
 
-    it("emits StockEntryAssignedToOrderDomainEvent", () => {
+    it("emits GoodAssignedToOrderDomainEvent", () => {
         const product = createProduct();
         const order = draftOrder([product]);
         order.clearEvents();
-        const stockEntryId = randomUUID();
+        const goodId = randomUUID();
 
-        order.assignStockEntry(product.id as string, stockEntryId);
+        order.assignGood(product.id as string, goodId);
 
         expect(order.domainEvents).toHaveLength(1);
-        expect(order.domainEvents[0]).toBeInstanceOf(StockEntryAssignedToOrderDomainEvent);
+        expect(order.domainEvents[0]).toBeInstanceOf(GoodAssignedToOrderDomainEvent);
     });
 
     it("throws when order is CANCELLED", () => {
@@ -296,7 +296,7 @@ describe("OrderAggregate.assignStockEntry()", () => {
         const order = draftOrder([product]);
         order.cancel();
 
-        expect(() => order.assignStockEntry(product.id as string, randomUUID())).toThrow(OrderIsNotEditableError);
+        expect(() => order.assignGood(product.id as string, randomUUID())).toThrow(OrderIsNotEditableError);
     });
 
     it("throws when order is COMPLETED", () => {
@@ -305,13 +305,13 @@ describe("OrderAggregate.assignStockEntry()", () => {
         order.place();
         order.complete();
 
-        expect(() => order.assignStockEntry(product.id as string, randomUUID())).toThrow(OrderIsNotEditableError);
+        expect(() => order.assignGood(product.id as string, randomUUID())).toThrow(OrderIsNotEditableError);
     });
 
     it("throws when product is not in order", () => {
         const order = draftOrder();
         const nonExistentProductId = randomUUID();
 
-        expect(() => order.assignStockEntry(nonExistentProductId, randomUUID())).toThrow(OrderLineNotFoundError);
+        expect(() => order.assignGood(nonExistentProductId, randomUUID())).toThrow(OrderLineNotFoundError);
     });
 });

@@ -26,40 +26,40 @@ describe("OrderLine", () => {
         expect(line.subtotal.amount.toNumber()).toBe(45);
     });
 
-    it("creates without stockEntryId by default", () => {
+    it("creates without goodId by default", () => {
         const product = createProduct();
         const line = new OrderLine({ product, quantity: 1 });
 
-        expect(line.stockEntryId).toBeUndefined();
+        expect(line.goodId).toBeUndefined();
     });
 
-    it("preserves stockEntryId when created with one", () => {
+    it("preserves goodId when created with one", () => {
         const product = createProduct();
-        const stockEntryId = randomUUID();
-        const line = new OrderLine({ product, quantity: 1, stockEntryId });
+        const goodId = randomUUID();
+        const line = new OrderLine({ product, quantity: 1, goodId });
 
-        expect(line.stockEntryId).toBe(stockEntryId);
+        expect(line.goodId).toBe(goodId);
     });
 
-    it("withQuantity preserves stockEntryId", () => {
+    it("withQuantity preserves goodId", () => {
         const product = createProduct();
-        const stockEntryId = randomUUID();
-        const line = new OrderLine({ product, quantity: 1, stockEntryId });
+        const goodId = randomUUID();
+        const line = new OrderLine({ product, quantity: 1, goodId });
 
         const updated = line.withQuantity(5);
 
         expect(updated.quantity).toBe(5);
-        expect(updated.stockEntryId).toBe(stockEntryId);
+        expect(updated.goodId).toBe(goodId);
     });
 
-    it("withStockEntry returns new line with stock entry set", () => {
+    it("withGood returns new line with good set", () => {
         const product = createProduct();
         const line = new OrderLine({ product, quantity: 2 });
-        const stockEntryId = randomUUID();
+        const goodId = randomUUID();
 
-        const updated = line.withStockEntry(stockEntryId);
+        const updated = line.withGood(goodId);
 
-        expect(updated.stockEntryId).toBe(stockEntryId);
+        expect(updated.goodId).toBe(goodId);
         expect(updated.quantity).toBe(2);
         expect(updated.product).toBe(product);
     });
@@ -141,34 +141,34 @@ describe("OrderLines", () => {
         expect(total.amount.toNumber()).toBe(80);
     });
 
-    it("assignStockEntry sets stock entry on specific line", () => {
+    it("assignGood sets good on specific line", () => {
         const product = createProduct();
         const lines = new OrderLines().addProduct(product, 2);
-        const stockEntryId = randomUUID();
+        const goodId = randomUUID();
 
-        const updated = lines.assignStockEntry(product.id, stockEntryId);
+        const updated = lines.assignGood(product.id, goodId);
 
-        expect(updated.getLines().get(product.id)?.stockEntryId).toBe(stockEntryId);
+        expect(updated.getLines().get(product.id)?.goodId).toBe(goodId);
         // original unchanged
-        expect(lines.getLines().get(product.id)?.stockEntryId).toBeUndefined();
+        expect(lines.getLines().get(product.id)?.goodId).toBeUndefined();
     });
 
-    it("assignStockEntry throws when product not found", () => {
+    it("assignGood throws when product not found", () => {
         const lines = new OrderLines();
 
-        expect(() => lines.assignStockEntry(generateEntityId(), randomUUID())).toThrow("Order line not found");
+        expect(() => lines.assignGood(generateEntityId(), randomUUID())).toThrow("Order line not found");
     });
 
-    it("assignStockEntry preserves other lines", () => {
+    it("assignGood preserves other lines", () => {
         const productA = createProduct();
         const productB = createProduct();
         const lines = new OrderLines().addProduct(productA, 1).addProduct(productB, 3);
-        const stockEntryId = randomUUID();
+        const goodId = randomUUID();
 
-        const updated = lines.assignStockEntry(productA.id, stockEntryId);
+        const updated = lines.assignGood(productA.id, goodId);
 
-        expect(updated.getLines().get(productA.id)?.stockEntryId).toBe(stockEntryId);
-        expect(updated.getLines().get(productB.id)?.stockEntryId).toBeUndefined();
+        expect(updated.getLines().get(productA.id)?.goodId).toBe(goodId);
+        expect(updated.getLines().get(productB.id)?.goodId).toBeUndefined();
         expect(updated.getLines().get(productB.id)?.quantity).toBe(3);
     });
 });

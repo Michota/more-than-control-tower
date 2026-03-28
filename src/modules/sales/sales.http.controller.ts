@@ -8,11 +8,8 @@ import { CancelOrderCommand } from "./commands/cancel-order/cancel-order.command
 import { CancelOrderParams } from "./commands/cancel-order/cancel-order.request.dto.js";
 import { CompleteOrderCommand } from "./commands/complete-order/complete-order.command.js";
 import { CompleteOrderParams } from "./commands/complete-order/complete-order.request.dto.js";
-import { AssignStockEntryCommand } from "./commands/assign-stock-entry/assign-stock-entry.command.js";
-import {
-    AssignStockEntryBody,
-    AssignStockEntryParams,
-} from "./commands/assign-stock-entry/assign-stock-entry.request.dto.js";
+import { AssignGoodCommand } from "./commands/assign-good/assign-good.command.js";
+import { AssignGoodBody, AssignGoodParams } from "./commands/assign-good/assign-good.request.dto.js";
 
 @Controller("order")
 export class SalesHttpController {
@@ -46,13 +43,13 @@ export class SalesHttpController {
         await this.commandBus.execute(new CompleteOrderCommand({ orderId: params.id }));
     }
 
-    @Post(":id/lines/:productId/assign-stock-entry")
-    async assignStockEntry(@Param() params: AssignStockEntryParams, @Body() body: AssignStockEntryBody): Promise<void> {
+    @Post(":id/lines/:productId/assign-good")
+    async assignGood(@Param() params: AssignGoodParams, @Body() body: AssignGoodBody): Promise<void> {
         await this.commandBus.execute(
-            new AssignStockEntryCommand({
+            new AssignGoodCommand({
                 orderId: params.id,
                 productId: params.productId,
-                stockEntryId: body.stockEntryId,
+                goodId: body.goodId,
             }),
         );
     }

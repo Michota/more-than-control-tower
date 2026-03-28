@@ -58,12 +58,12 @@ export class OrderNotFoundError extends NotFoundDomainException {
     }
 }
 
-export class StockEntryNotFoundForAssignmentError extends NotFoundDomainException {
-    static readonly message = "Stock entry not found.";
-    public readonly code = "ORDER.STOCK_ENTRY.NOT_FOUND";
+export class GoodNotFoundForAssignmentError extends NotFoundDomainException {
+    static readonly message = "Good not found in warehouse.";
+    public readonly code = "ORDER.GOOD.NOT_FOUND";
 
-    constructor(stockEntryId: string, cause?: Error) {
-        super(`${StockEntryNotFoundForAssignmentError.message} stockEntryId: ${stockEntryId}`, cause);
+    constructor(goodId: string, cause?: Error) {
+        super(`${GoodNotFoundForAssignmentError.message} goodId: ${goodId}`, cause);
     }
 }
 
@@ -82,15 +82,6 @@ export class OrderCannotBeCancelledError extends ConflictDomainException {
 
     constructor(cause?: Error, metadata?: Record<any, any>) {
         super(OrderCannotBeCancelledError.message, cause, metadata);
-    }
-}
-
-export class StockEntryAlreadyAssignedError extends ConflictDomainException {
-    static readonly message = "Stock entry is already assigned to another order.";
-    public readonly code = "ORDER.STOCK_ENTRY.ALREADY_ASSIGNED";
-
-    constructor(stockEntryId: string, cause?: Error) {
-        super(`${StockEntryAlreadyAssignedError.message} stockEntryId: ${stockEntryId}`, cause);
     }
 }
 

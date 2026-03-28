@@ -54,43 +54,41 @@ Order (Aggregate Root)
     └── OrderLine
         ├── product       — OrderItemEntity (catalog product ID + snapshotted price)
         ├── quantity      — number of units
-        └── stockEntryId? — optional reference to assigned warehouse stock entry
+        └── goodId?        — optional reference to a Warehouse Good (assigned later)
 ```
 
 ### Price Snapshotting
 
 Prices are resolved and captured at draft time. The `OrderItemEntity` stores the price as a `Money` value object. Subsequent catalog price changes do not affect existing orders (critical integrity rule).
 
-## Stock Entry Assignment
+## Good Assignment
 
-Order lines can optionally reference a warehouse stock entry (`stockEntryId`). This links the order to physical inventory.
+Order lines can optionally reference a Warehouse Good (`goodId`). This links the order line to a product definition in the Warehouse module — the catalog-level "what" rather than a specific stock batch.
 
 ### Key Design Decisions
 
-- **Assignment is a separate command** (`AssignStockEntryCommand`) — not part of drafting or placement. This allows orders to be placed before stock is available.
-- **Reservation is implicit** — there is no dedicated "reserved" flag on stock entries. Instead, the system queries all active orders to determine if a stock entry is already assigned.
-- **One stock entry per order line** — a stock entry can only be assigned to one active (non-cancelled, non-completed) order line at a time.
-- **Cross-module verification** — the assignment handler sends `GetStockEntryQuery` through the QueryBus to verify the stock entry exists in the Warehouse module.
+- **Good, not StockEntry** — the order line references the Warehouse Good (product definition), not a specific stock entry. Multiple orders can reference the same Good. Physical stock allocation is a Delivery/fulfillment concern.
+- **Assignment is a separate command** (`AssignGoodCommand`) — not part of drafting or placement. This allows orders to be placed before the Good is even created in the Warehouse.
+- **No reservation/uniqueness constraint** — unlike stock entries, Goods are shared catalog items. Many orders can reference the same Good simultaneously.
+- **Cross-module verification** — the assignment handler sends `GetGoodExistsQuery` through the QueryBus to verify the Good exists in the Warehouse module.
 
 ### Assignment Flow
 
 ```
-1. Client sends POST /order/:id/lines/:productId/assign-stock-entry
-   Body: { stockEntryId: "..." }
+1. Client sends POST /order/:id/lines/:productId/assign-good
+   Body: { goodId: "..." }
 
-2. AssignStockEntryCommandHandler:
+2. AssignGoodCommandHandler:
    a. Load the order (fail if not found)
-   b. Query Warehouse module via GetStockEntryQuery (fail if stock entry doesn't exist)
-   c. Check if stock entry is already assigned to any active order (fail if taken)
-   d. Call order.assignStockEntry(productId, stockEntryId)
-   e. Persist and publish StockEntryAssignedToOrderDomainEvent
+   b. Query Warehouse module via GetGoodExistsQuery (fail if good doesn't exist)
+   c. Call order.assignGood(productId, goodId)
+   d. Persist and publish GoodAssignedToOrderDomainEvent
 ```
 
-### When Stock Entry Can Be Assigned
+### When a Good Can Be Assigned
 
 - Order must be in `DRAFTED` or `PLACED` status (not `CANCELLED` or `COMPLETED`)
-- The stock entry must exist in the Warehouse module
-- The stock entry must not be assigned to another active order
+- The Good must exist in the Warehouse module
 
 ## API Endpoints
 
@@ -102,24 +100,24 @@ All endpoints are under the `/order` base path.
 | POST   | `/order/:id/place`                          | Place a drafted order    |
 | POST   | `/order/:id/cancel`                         | Cancel an order          |
 | POST   | `/order/:id/complete`                       | Complete a placed order  |
-| POST   | `/order/:id/lines/:productId/assign-stock-entry` | Assign stock entry to line |
+| POST   | `/order/:id/lines/:productId/assign-good`   | Assign warehouse good to line |
 
 ## Domain Events
 
-| Event                                | Emitted When                     |
-|--------------------------------------|----------------------------------|
-| `OrderDraftedDomainEvent`            | New order draft created          |
-| `OrderPlacedDomainEvent`             | Order transitions to PLACED      |
-| `OrderCancelledDomainEvent`          | Order transitions to CANCELLED   |
-| `OrderCompletedDomainEvent`          | Order transitions to COMPLETED   |
-| `StockEntryAssignedToOrderDomainEvent` | Stock entry linked to order line |
+| Event                              | Emitted When                     |
+|------------------------------------|----------------------------------|
+| `OrderDraftedDomainEvent`          | New order draft created          |
+| `OrderPlacedDomainEvent`           | Order transitions to PLACED      |
+| `OrderCancelledDomainEvent`        | Order transitions to CANCELLED   |
+| `OrderCompletedDomainEvent`        | Order transitions to COMPLETED   |
+| `GoodAssignedToOrderDomainEvent`   | Warehouse good linked to order line |
 
 These events can be consumed by other modules (Warehouse, Delivery, Freight) to trigger downstream workflows.
 
 ## Cross-Module Communication
 
-| Direction             | Mechanism    | Contract                  |
-|-----------------------|-------------|---------------------------|
-| Sales → Warehouse     | QueryBus    | `GetStockEntryQuery`      |
-| Sales → other modules | Domain Events | `Order*DomainEvent`      |
-| CRM → Sales           | QueryBus    | `GetCustomerOrdersQuery`  |
+| Direction             | Mechanism     | Contract                  |
+|-----------------------|---------------|---------------------------|
+| Sales → Warehouse     | QueryBus      | `GetGoodExistsQuery`      |
+| Sales → other modules | Domain Events | `Order*DomainEvent`       |
+| CRM → Sales           | QueryBus      | `GetCustomerOrdersQuery`  |

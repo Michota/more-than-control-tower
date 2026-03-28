@@ -5,7 +5,7 @@ import { ValueObject } from "../../../libs/ddd/index.js";
 export interface OrderLineProperties {
     readonly product: OrderItemEntity;
     readonly quantity: number;
-    readonly stockEntryId?: string;
+    readonly goodId?: string;
 }
 
 export class OrderLine extends ValueObject<OrderLineProperties> {
@@ -25,8 +25,8 @@ export class OrderLine extends ValueObject<OrderLineProperties> {
         return this.properties.quantity;
     }
 
-    get stockEntryId(): string | undefined {
-        return this.properties.stockEntryId;
+    get goodId(): string | undefined {
+        return this.properties.goodId;
     }
 
     get subtotal(): Money {
@@ -40,15 +40,15 @@ export class OrderLine extends ValueObject<OrderLineProperties> {
         return new OrderLine({
             product: this.properties.product,
             quantity,
-            stockEntryId: this.properties.stockEntryId,
+            goodId: this.properties.goodId,
         });
     }
 
-    withStockEntry(stockEntryId: string): OrderLine {
+    withGood(goodId: string): OrderLine {
         return new OrderLine({
             product: this.properties.product,
             quantity: this.properties.quantity,
-            stockEntryId,
+            goodId,
         });
     }
 }
