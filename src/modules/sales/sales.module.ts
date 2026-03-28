@@ -1,8 +1,9 @@
 import { EntityManager } from "@mikro-orm/core";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
-import { Module } from "@nestjs/common";
+import { Inject, Module, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
 import { STOCK_RESERVATION_CHECKERS } from "../../shared/infrastructure/stock-reservation-checker.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
 import { OrderStockReservationChecker } from "./infrastructure/order-stock-reservation-checker.js";
@@ -87,4 +88,22 @@ import { Product } from "./database/product.entity.js";
     ],
     exports: [ORDER_REPOSITORY_PORT, UNIT_OF_WORK_PORT],
 })
-export class SalesModule {}
+export class SalesModule implements OnModuleInit {
+    constructor(
+        @Inject(PERMISSION_REGISTRY)
+        private readonly permissionRegistry: PermissionRegistry,
+    ) {}
+
+    onModuleInit(): void {
+        this.permissionRegistry.registerForModule("sales", [
+            { key: "draft-order", name: "Draft Order" },
+            { key: "edit-draft", name: "Edit Draft Order" },
+            { key: "place-order", name: "Place Order" },
+            { key: "cancel-order", name: "Cancel Order" },
+            { key: "complete-order", name: "Complete Order" },
+            { key: "assign-good", name: "Assign Good to Order" },
+            { key: "assign-stock-entry", name: "Assign Stock Entry to Order" },
+            { key: "view-orders", name: "View Orders" },
+        ]);
+    }
+}

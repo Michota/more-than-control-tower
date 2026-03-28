@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
 import { AddProductToOrderCommand } from "./commands/add-product-to-order/add-product-to-order.command.js";
 import {
     AddProductToOrderBody,
@@ -30,6 +31,7 @@ import {
 import { GetOrderQuery, type OrderResponse } from "./queries/get-order/get-order.query.js";
 import { ListOrdersQuery, type ListOrdersResponse } from "./queries/list-orders/list-orders.query.js";
 import { ListOrdersRequestDto } from "./queries/list-orders/list-orders.request.dto.js";
+import { SalesPermission } from "./sales.permissions.js";
 
 @Controller("order")
 export class SalesHttpController {
@@ -38,6 +40,7 @@ export class SalesHttpController {
         private readonly queryBus: QueryBus,
     ) {}
 
+    @RequirePermission(SalesPermission.VIEW_ORDERS)
     @Get()
     async listOrders(@Query() query: ListOrdersRequestDto): Promise<ListOrdersResponse> {
         return this.queryBus.execute(
@@ -45,11 +48,13 @@ export class SalesHttpController {
         );
     }
 
+    @RequirePermission(SalesPermission.VIEW_ORDERS)
     @Get(":id")
     async getOrder(@Param("id", ParseUUIDPipe) id: string): Promise<OrderResponse> {
         return this.queryBus.execute(new GetOrderQuery(id));
     }
 
+    @RequirePermission(SalesPermission.DRAFT_ORDER)
     @Post("draft")
     async draftOrder(@Body() body: DraftOrderRequest): Promise<{ orderId: string }> {
         const orderId = await this.commandBus.execute(
@@ -65,21 +70,25 @@ export class SalesHttpController {
         return { orderId };
     }
 
+    @RequirePermission(SalesPermission.PLACE_ORDER)
     @Post(":id/place")
     async placeOrder(@Param() params: PlaceOrderParams): Promise<void> {
         await this.commandBus.execute(new PlaceOrderCommand({ orderId: params.id }));
     }
 
+    @RequirePermission(SalesPermission.CANCEL_ORDER)
     @Post(":id/cancel")
     async cancelOrder(@Param() params: CancelOrderParams): Promise<void> {
         await this.commandBus.execute(new CancelOrderCommand({ orderId: params.id }));
     }
 
+    @RequirePermission(SalesPermission.COMPLETE_ORDER)
     @Post(":id/complete")
     async completeOrder(@Param() params: CompleteOrderParams): Promise<void> {
         await this.commandBus.execute(new CompleteOrderCommand({ orderId: params.id }));
     }
 
+    @RequirePermission(SalesPermission.EDIT_DRAFT)
     @Post(":id/lines")
     async addProduct(@Param() params: AddProductToOrderParams, @Body() body: AddProductToOrderBody): Promise<void> {
         await this.commandBus.execute(
@@ -93,6 +102,7 @@ export class SalesHttpController {
         );
     }
 
+    @RequirePermission(SalesPermission.EDIT_DRAFT)
     @Patch(":id/lines/:productId")
     async changeProductQuantity(
         @Param() params: ChangeProductQuantityParams,
@@ -109,6 +119,7 @@ export class SalesHttpController {
         );
     }
 
+    @RequirePermission(SalesPermission.EDIT_DRAFT)
     @Delete(":id/lines/:productId")
     async removeProduct(@Param() params: RemoveProductFromOrderParams): Promise<void> {
         await this.commandBus.execute(
@@ -119,6 +130,7 @@ export class SalesHttpController {
         );
     }
 
+    @RequirePermission(SalesPermission.ASSIGN_GOOD)
     @Post(":id/lines/:productId/assign-good")
     async assignGood(@Param() params: AssignGoodParams, @Body() body: AssignGoodBody): Promise<void> {
         await this.commandBus.execute(
@@ -130,6 +142,7 @@ export class SalesHttpController {
         );
     }
 
+    @RequirePermission(SalesPermission.ASSIGN_STOCK_ENTRY)
     @Post(":id/lines/:productId/assign-stock-entry")
     async assignStockEntry(@Param() params: AssignStockEntryParams, @Body() body: AssignStockEntryBody): Promise<void> {
         await this.commandBus.execute(
