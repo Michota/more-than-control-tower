@@ -8,6 +8,7 @@ import {
     ParseUUIDPipe,
     Patch,
     Post,
+    Put,
     Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
@@ -26,6 +27,12 @@ import { UnassignPositionCommand } from "./commands/unassign-position/unassign-p
 import { DeactivateEmployeeCommand } from "./commands/deactivate-employee/deactivate-employee.command.js";
 import { SetPermissionOverrideCommand } from "./commands/set-permission-override/set-permission-override.command.js";
 import { SetPermissionOverrideRequest } from "./commands/set-permission-override/set-permission-override.request.dto.js";
+import { SetAvailabilityCommand } from "./commands/set-availability/set-availability.command.js";
+import { SetAvailabilityRequest } from "./commands/set-availability/set-availability.request.dto.js";
+import { ConfirmAvailabilityCommand } from "./commands/confirm-availability/confirm-availability.command.js";
+import { ConfirmAvailabilityRequest } from "./commands/confirm-availability/confirm-availability.request.dto.js";
+import { RejectAvailabilityCommand } from "./commands/reject-availability/reject-availability.command.js";
+import { RejectAvailabilityRequest } from "./commands/reject-availability/reject-availability.request.dto.js";
 import { CreatePositionCommand } from "./commands/create-position/create-position.command.js";
 import { CreatePositionRequest } from "./commands/create-position/create-position.request.dto.js";
 import { UpdatePositionCommand } from "./commands/update-position/update-position.command.js";
@@ -34,6 +41,9 @@ import { ListEmployeesRequestDto } from "./queries/list-employees/list-employees
 import { type ListEmployeesResponse } from "./queries/list-employees/list-employees.query-handler.js";
 import { ListPositionsQuery } from "./queries/list-positions/list-positions.query.js";
 import { type ListPositionsResponse } from "./queries/list-positions/list-positions.query-handler.js";
+import { GetEmployeeAvailabilityQuery } from "./queries/get-employee-availability/get-employee-availability.query.js";
+import { GetEmployeeAvailabilityRequestDto } from "./queries/get-employee-availability/get-employee-availability.request.dto.js";
+import { type GetEmployeeAvailabilityResponse } from "./queries/get-employee-availability/get-employee-availability.query-handler.js";
 
 @Controller("employees")
 export class HrHttpController {
@@ -174,5 +184,57 @@ export class HrHttpController {
     @Get()
     async listEmployees(@Query() dto: ListEmployeesRequestDto): Promise<ListEmployeesResponse> {
         return this.queryBus.execute(new ListEmployeesQuery(dto.page, dto.limit, dto.positionKey, dto.status));
+    }
+
+    // ─── Availability ────────────────────────────────────────
+
+    @Put(":id/availability")
+    async setAvailability(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: SetAvailabilityRequest,
+        @CurrentUser() user: RequestUser,
+    ): Promise<void> {
+        const isManager = user.userId !== id;
+        await this.commandBus.execute(
+            new SetAvailabilityCommand({
+                employeeId: id,
+                entries: body.entries,
+                setByManager: isManager,
+            }),
+        );
+    }
+
+    @Post(":id/availability/confirm")
+    async confirmAvailability(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: ConfirmAvailabilityRequest,
+    ): Promise<void> {
+        await this.commandBus.execute(
+            new ConfirmAvailabilityCommand({
+                employeeId: id,
+                dates: body.dates,
+            }),
+        );
+    }
+
+    @Post(":id/availability/reject")
+    async rejectAvailability(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: RejectAvailabilityRequest,
+    ): Promise<void> {
+        await this.commandBus.execute(
+            new RejectAvailabilityCommand({
+                employeeId: id,
+                dates: body.dates,
+            }),
+        );
+    }
+
+    @Get(":id/availability")
+    async getEmployeeAvailability(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Query() dto: GetEmployeeAvailabilityRequestDto,
+    ): Promise<GetEmployeeAvailabilityResponse> {
+        return this.queryBus.execute(new GetEmployeeAvailabilityQuery(id, dto.fromDate, dto.toDate));
     }
 }

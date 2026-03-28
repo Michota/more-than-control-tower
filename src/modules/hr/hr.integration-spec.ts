@@ -16,7 +16,11 @@ import { DeleteEmployeeCommand } from "./commands/delete-employee/delete-employe
 import { CreatePositionCommand } from "./commands/create-position/create-position.command";
 import { UpdatePositionCommand } from "./commands/update-position/update-position.command";
 import { SetPermissionOverrideCommand } from "./commands/set-permission-override/set-permission-override.command";
+import { SetAvailabilityCommand } from "./commands/set-availability/set-availability.command";
+import { ConfirmAvailabilityCommand } from "./commands/confirm-availability/confirm-availability.command";
+import { RejectAvailabilityCommand } from "./commands/reject-availability/reject-availability.command";
 import { PermissionOverrideState } from "./domain/permission-override-state.enum";
+import { AvailabilityEntryStatus } from "./domain/availability-entry-status.enum";
 import {
     EmployeeNotFoundError,
     InvalidPositionKeyError,
@@ -25,9 +29,17 @@ import {
     PositionKeyAlreadyExistsError,
     UnknownPermissionError,
 } from "./domain/employee.errors";
+import { AvailabilityAlreadyConfirmedError, NoPendingAvailabilityError } from "./domain/availability-entry.errors";
 import { ListPositionsQuery } from "./queries/list-positions/list-positions.query";
 import { type ListPositionsResponse } from "./queries/list-positions/list-positions.query-handler";
+import { GetEmployeeAvailabilityQuery } from "./queries/get-employee-availability/get-employee-availability.query";
+import { type GetEmployeeAvailabilityResponse } from "./queries/get-employee-availability/get-employee-availability.query-handler";
+import {
+    CheckEmployeeAvailabilityQuery,
+    type CheckEmployeeAvailabilityResponse,
+} from "../../shared/queries/check-employee-availability.query";
 import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry";
+import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
 import { HrModule } from "./hr.module";
 
 describe("HR Module — Integration Tests", () => {
@@ -39,7 +51,7 @@ describe("HR Module — Integration Tests", () => {
 
     beforeAll(async () => {
         moduleRef = await Test.createTestingModule({
-            imports: [TestMikroOrmDatabaseModule(), CqrsModule.forRoot(), HrModule],
+            imports: [TestMikroOrmDatabaseModule(), CqrsModule.forRoot(), PermissionRegistryModule, HrModule],
         }).compile();
 
         await moduleRef.init();
@@ -384,6 +396,247 @@ describe("HR Module — Integration Tests", () => {
             await expect(
                 commandBus.execute(new DeleteEmployeeCommand({ employeeId: "00000000-0000-0000-0000-000000000000" })),
             ).rejects.toThrow(EmployeeNotFoundError);
+        });
+    });
+
+    // ─── Availability ────────────────────────────────────────
+
+    describe("Set Availability", () => {
+        it("sets availability entries for an employee (by employee → PENDING_APPROVAL)", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [
+                        { date: "2026-04-01", startTime: "08:00", endTime: "16:00" },
+                        { date: "2026-04-02", startTime: "09:00", endTime: "17:00" },
+                    ],
+                    setByManager: false,
+                }),
+            );
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id),
+            );
+
+            expect(result.entries).toHaveLength(2);
+            expect(result.entries[0].date).toBe("2026-04-01");
+            expect(result.entries[0].status).toBe(AvailabilityEntryStatus.PENDING_APPROVAL);
+            expect(result.entries[1].date).toBe("2026-04-02");
+        });
+
+        it("sets availability entries by manager → CONFIRMED", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-04-03", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id),
+            );
+
+            expect(result.entries).toHaveLength(1);
+            expect(result.entries[0].status).toBe(AvailabilityEntryStatus.CONFIRMED);
+        });
+
+        it("replaces existing entries for the same dates", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-04-05", startTime: "08:00", endTime: "12:00" }],
+                    setByManager: false,
+                }),
+            );
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-04-05", startTime: "10:00", endTime: "18:00" }],
+                    setByManager: false,
+                }),
+            );
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id),
+            );
+
+            const april5 = result.entries.filter((e) => e.date === "2026-04-05");
+            expect(april5).toHaveLength(1);
+            expect(april5[0].startTime).toBe("10:00");
+            expect(april5[0].endTime).toBe("18:00");
+        });
+
+        it("throws EmployeeNotFoundError for non-existent employee", async () => {
+            await expect(
+                commandBus.execute(
+                    new SetAvailabilityCommand({
+                        employeeId: "00000000-0000-0000-0000-000000000000",
+                        entries: [{ date: "2026-04-01", startTime: "08:00", endTime: "16:00" }],
+                        setByManager: false,
+                    }),
+                ),
+            ).rejects.toThrow(EmployeeNotFoundError);
+        });
+    });
+
+    describe("Confirm Availability", () => {
+        it("confirms pending entries", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-05-01", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: false,
+                }),
+            );
+
+            await commandBus.execute(new ConfirmAvailabilityCommand({ employeeId: id, dates: ["2026-05-01"] }));
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id),
+            );
+
+            const may1 = result.entries.find((e) => e.date === "2026-05-01");
+            expect(may1).toBeDefined();
+            expect(may1!.status).toBe(AvailabilityEntryStatus.CONFIRMED);
+        });
+
+        it("throws when entries already confirmed", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-05-02", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            await expect(
+                commandBus.execute(new ConfirmAvailabilityCommand({ employeeId: id, dates: ["2026-05-02"] })),
+            ).rejects.toThrow(AvailabilityAlreadyConfirmedError);
+        });
+    });
+
+    describe("Reject Availability", () => {
+        it("removes pending entries", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-06-01", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: false,
+                }),
+            );
+
+            await commandBus.execute(new RejectAvailabilityCommand({ employeeId: id, dates: ["2026-06-01"] }));
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id),
+            );
+
+            const june1 = result.entries.find((e) => e.date === "2026-06-01");
+            expect(june1).toBeUndefined();
+        });
+
+        it("throws when trying to reject confirmed entries", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-06-02", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            await expect(
+                commandBus.execute(new RejectAvailabilityCommand({ employeeId: id, dates: ["2026-06-02"] })),
+            ).rejects.toThrow(NoPendingAvailabilityError);
+        });
+    });
+
+    describe("Query: GetEmployeeAvailability with date range", () => {
+        it("filters by date range", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [
+                        { date: "2026-07-01", startTime: "08:00", endTime: "16:00" },
+                        { date: "2026-07-15", startTime: "08:00", endTime: "16:00" },
+                        { date: "2026-08-01", startTime: "08:00", endTime: "16:00" },
+                    ],
+                    setByManager: true,
+                }),
+            );
+
+            const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
+                new GetEmployeeAvailabilityQuery(id, "2026-07-01", "2026-07-31"),
+            );
+
+            expect(result.entries).toHaveLength(2);
+            expect(result.entries.every((e) => e.date.startsWith("2026-07"))).toBe(true);
+        });
+    });
+
+    describe("Cross-module: CheckEmployeeAvailability", () => {
+        it("returns available=true for confirmed date", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-09-01", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: true,
+                }),
+            );
+
+            const result = await queryBus.execute<CheckEmployeeAvailabilityQuery, CheckEmployeeAvailabilityResponse>(
+                new CheckEmployeeAvailabilityQuery(id, "2026-09-01"),
+            );
+
+            expect(result.available).toBe(true);
+        });
+
+        it("returns available=false for pending date", async () => {
+            const id = await createEmployee();
+
+            await commandBus.execute(
+                new SetAvailabilityCommand({
+                    employeeId: id,
+                    entries: [{ date: "2026-09-02", startTime: "08:00", endTime: "16:00" }],
+                    setByManager: false,
+                }),
+            );
+
+            const result = await queryBus.execute<CheckEmployeeAvailabilityQuery, CheckEmployeeAvailabilityResponse>(
+                new CheckEmployeeAvailabilityQuery(id, "2026-09-02"),
+            );
+
+            expect(result.available).toBe(false);
+        });
+
+        it("returns available=false for date with no entries", async () => {
+            const id = await createEmployee();
+
+            const result = await queryBus.execute<CheckEmployeeAvailabilityQuery, CheckEmployeeAvailabilityResponse>(
+                new CheckEmployeeAvailabilityQuery(id, "2026-09-03"),
+            );
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBeDefined();
         });
     });
 
