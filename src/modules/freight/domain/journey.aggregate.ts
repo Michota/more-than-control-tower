@@ -8,7 +8,9 @@ import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
     JourneyCannotStartError,
+    JourneyNotAwaitingLoadingError,
     JourneyNotInProgressError,
+    JourneyNotModifiableError,
     JourneyNotPlannedError,
     JourneyStopAlreadyExistsError,
     JourneyStopNotFoundError,
@@ -18,6 +20,7 @@ import {
 import { JourneyCreatedDomainEvent } from "./events/journey-created.domain-event.js";
 import { JourneyStartedDomainEvent } from "./events/journey-started.domain-event.js";
 import { JourneyCompletedDomainEvent } from "./events/journey-completed.domain-event.js";
+import { JourneyLoadingRequestedDomainEvent } from "./events/journey-loading-requested.domain-event.js";
 
 const journeySchema = z.object({
     routeId: z.string().min(1),
@@ -27,6 +30,7 @@ const journeySchema = z.object({
     vehicleIds: z.array(z.string()),
     representativeIds: z.array(z.string()),
     stops: z.array(z.instanceof(JourneyStop)),
+    loadingDeadline: z.string().datetime().optional(),
 });
 
 export type JourneyProperties = z.infer<typeof journeySchema>;
@@ -62,6 +66,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
                 vehicleIds: props.vehicleIds,
                 representativeIds: props.representativeIds,
                 stops: journeyStops,
+                loadingDeadline: undefined,
             },
         });
 
@@ -114,6 +119,10 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
         return this.properties.stops;
     }
 
+    get loadingDeadline(): string | undefined {
+        return this.properties.loadingDeadline;
+    }
+
     // ─── Guards ─────────────────────────────────────────────
 
     private ensureNotTerminal(): void {
@@ -125,9 +134,9 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
         }
     }
 
-    private ensurePlanned(): void {
-        if (this.status !== JourneyStatus.PLANNED) {
-            throw new JourneyNotPlannedError(this.id as string);
+    private ensureModifiable(): void {
+        if (this.status !== JourneyStatus.PLANNED && this.status !== JourneyStatus.AWAITING_LOADING) {
+            throw new JourneyNotModifiableError(this.id as string);
         }
     }
 
@@ -137,9 +146,31 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
 
     // ─── Lifecycle ──────────────────────────────────────────
 
+    requestLoading(deadline: string): void {
+        if (this.status !== JourneyStatus.PLANNED) {
+            throw new JourneyNotPlannedError(this.id as string);
+        }
+        this.properties.status = JourneyStatus.AWAITING_LOADING;
+        this.properties.loadingDeadline = deadline;
+        this.addEvent(
+            new JourneyLoadingRequestedDomainEvent({
+                aggregateId: this.id,
+                loadingDeadline: deadline,
+            }),
+        );
+    }
+
+    cancelLoading(): void {
+        if (this.status !== JourneyStatus.AWAITING_LOADING) {
+            throw new JourneyNotAwaitingLoadingError(this.id as string);
+        }
+        this.properties.status = JourneyStatus.PLANNED;
+        this.properties.loadingDeadline = undefined;
+    }
+
     start(): void {
         this.ensureNotTerminal();
-        if (this.status !== JourneyStatus.PLANNED) {
+        if (this.status !== JourneyStatus.AWAITING_LOADING) {
             throw new JourneyCannotStartError(this.id as string);
         }
         this.properties.status = JourneyStatus.IN_PROGRESS;
@@ -168,10 +199,10 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
         this.properties.status = JourneyStatus.CANCELLED;
     }
 
-    // ─── Stop management (PLANNED only) ─────────────────────
+    // ─── Stop management (PLANNED or AWAITING_LOADING) ──────
 
     addStop(stop: JourneyStop): void {
-        this.ensurePlanned();
+        this.ensureModifiable();
         const existing = this.findStopIndex(stop.customerId);
         if (existing !== -1) {
             throw new JourneyStopAlreadyExistsError(this.id as string, stop.customerId);
@@ -181,7 +212,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     }
 
     removeStop(customerId: string): void {
-        this.ensurePlanned();
+        this.ensureModifiable();
         const idx = this.findStopIndex(customerId);
         if (idx === -1) {
             throw new JourneyStopNotFoundError(this.id as string, customerId);
@@ -190,7 +221,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     }
 
     assignOrderToStop(customerId: string, orderId: string): void {
-        this.ensurePlanned();
+        this.ensureModifiable();
         const idx = this.findStopIndex(customerId);
         if (idx === -1) {
             throw new JourneyStopNotFoundError(this.id as string, customerId);
@@ -203,7 +234,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     }
 
     unassignOrderFromStop(customerId: string, orderId: string): void {
-        this.ensurePlanned();
+        this.ensureModifiable();
         const idx = this.findStopIndex(customerId);
         if (idx === -1) {
             throw new JourneyStopNotFoundError(this.id as string, customerId);
@@ -216,7 +247,7 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     }
 
     reorderStops(stopSequences: { customerId: string; sequence: number }[]): void {
-        this.ensurePlanned();
+        this.ensureModifiable();
         for (const { customerId, sequence } of stopSequences) {
             const idx = this.findStopIndex(customerId);
             if (idx === -1) {

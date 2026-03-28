@@ -29,6 +29,7 @@ export class ListJourneysQueryHandler implements IQueryHandler<ListJourneysQuery
                 orderIds: s.orderIds,
                 sequence: s.sequence,
             })),
+            loadingDeadline: j.loadingDeadline,
         }));
     }
 }

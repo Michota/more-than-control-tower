@@ -23,6 +23,7 @@ export interface JourneyListItem {
     vehicleIds: string[];
     representativeIds: string[];
     stops: JourneyStopItem[];
+    loadingDeadline?: string;
 }
 
 export type ListJourneysResponse = JourneyListItem[];

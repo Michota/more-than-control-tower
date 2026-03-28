@@ -7,7 +7,9 @@ import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
     JourneyCannotStartError,
+    JourneyNotAwaitingLoadingError,
     JourneyNotInProgressError,
+    JourneyNotModifiableError,
     JourneyNotPlannedError,
     JourneyStopAlreadyExistsError,
     JourneyStopNotFoundError,
@@ -17,6 +19,7 @@ import {
 import { JourneyCreatedDomainEvent } from "./events/journey-created.domain-event";
 import { JourneyStartedDomainEvent } from "./events/journey-started.domain-event";
 import { JourneyCompletedDomainEvent } from "./events/journey-completed.domain-event";
+import { JourneyLoadingRequestedDomainEvent } from "./events/journey-loading-requested.domain-event";
 
 const defaultAddress = {
     country: "PL",
@@ -86,9 +89,45 @@ describe("JourneyAggregate", () => {
         });
     });
 
-    describe("start()", () => {
-        it("transitions from PLANNED to IN_PROGRESS", () => {
+    describe("requestLoading()", () => {
+        it("transitions from PLANNED to AWAITING_LOADING with deadline", () => {
             const journey = createJourney();
+            journey.clearEvents();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+
+            expect(journey.status).toBe(JourneyStatus.AWAITING_LOADING);
+            expect(journey.loadingDeadline).toBe("2026-04-01T08:00:00.000Z");
+            expect(journey.domainEvents).toHaveLength(1);
+            expect(journey.domainEvents[0]).toBeInstanceOf(JourneyLoadingRequestedDomainEvent);
+        });
+
+        it("throws when not PLANNED", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            expect(() => journey.requestLoading("2026-04-01T09:00:00.000Z")).toThrow(JourneyNotPlannedError);
+        });
+    });
+
+    describe("cancelLoading()", () => {
+        it("transitions from AWAITING_LOADING back to PLANNED", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.cancelLoading();
+
+            expect(journey.status).toBe(JourneyStatus.PLANNED);
+            expect(journey.loadingDeadline).toBeUndefined();
+        });
+
+        it("throws when not AWAITING_LOADING", () => {
+            const journey = createJourney();
+            expect(() => journey.cancelLoading()).toThrow(JourneyNotAwaitingLoadingError);
+        });
+    });
+
+    describe("start()", () => {
+        it("transitions from AWAITING_LOADING to IN_PROGRESS", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.clearEvents();
             journey.start();
 
@@ -97,14 +136,21 @@ describe("JourneyAggregate", () => {
             expect(journey.domainEvents[0]).toBeInstanceOf(JourneyStartedDomainEvent);
         });
 
+        it("throws when PLANNED (must request loading first)", () => {
+            const journey = createJourney();
+            expect(() => journey.start()).toThrow(JourneyCannotStartError);
+        });
+
         it("throws when already in progress", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
             expect(() => journey.start()).toThrow(JourneyCannotStartError);
         });
 
         it("throws when completed", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
             journey.complete();
             expect(() => journey.start()).toThrow(JourneyAlreadyCompletedError);
@@ -120,6 +166,7 @@ describe("JourneyAggregate", () => {
     describe("complete()", () => {
         it("transitions from IN_PROGRESS to COMPLETED", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
             journey.clearEvents();
             journey.complete();
@@ -136,6 +183,7 @@ describe("JourneyAggregate", () => {
 
         it("throws when already completed", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
             journey.complete();
             expect(() => journey.complete()).toThrow(JourneyAlreadyCompletedError);
@@ -149,8 +197,16 @@ describe("JourneyAggregate", () => {
             expect(journey.status).toBe(JourneyStatus.CANCELLED);
         });
 
+        it("cancels an AWAITING_LOADING journey", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.cancel();
+            expect(journey.status).toBe(JourneyStatus.CANCELLED);
+        });
+
         it("cancels an IN_PROGRESS journey", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
             journey.cancel();
             expect(journey.status).toBe(JourneyStatus.CANCELLED);
@@ -158,6 +214,7 @@ describe("JourneyAggregate", () => {
 
         it("throws when already completed", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
             journey.complete();
             expect(() => journey.cancel()).toThrow(JourneyAlreadyCompletedError);
@@ -186,10 +243,18 @@ describe("JourneyAggregate", () => {
             expect(() => journey.addStop(makeJourneyStop("c1", 2))).toThrow(JourneyStopAlreadyExistsError);
         });
 
-        it("throws when journey is not PLANNED", () => {
+        it("allows adding stops during AWAITING_LOADING", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.addStop(makeJourneyStop("c3", 2));
+            expect(journey.stops).toHaveLength(3);
+        });
+
+        it("throws when journey is IN_PROGRESS", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
-            expect(() => journey.addStop(makeJourneyStop("c3", 2))).toThrow(JourneyNotPlannedError);
+            expect(() => journey.addStop(makeJourneyStop("c3", 2))).toThrow(JourneyNotModifiableError);
         });
     });
 
@@ -207,10 +272,11 @@ describe("JourneyAggregate", () => {
             expect(() => journey.removeStop("nonexistent")).toThrow(JourneyStopNotFoundError);
         });
 
-        it("throws when journey is not PLANNED", () => {
+        it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
-            expect(() => journey.removeStop("c1")).toThrow(JourneyNotPlannedError);
+            expect(() => journey.removeStop("c1")).toThrow(JourneyNotModifiableError);
         });
     });
 
@@ -242,10 +308,11 @@ describe("JourneyAggregate", () => {
             expect(() => journey.assignOrderToStop("nonexistent", "order-1")).toThrow(JourneyStopNotFoundError);
         });
 
-        it("throws when journey is not PLANNED", () => {
+        it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
-            expect(() => journey.assignOrderToStop("c1", "order-1")).toThrow(JourneyNotPlannedError);
+            expect(() => journey.assignOrderToStop("c1", "order-1")).toThrow(JourneyNotModifiableError);
         });
     });
 
@@ -289,10 +356,11 @@ describe("JourneyAggregate", () => {
             );
         });
 
-        it("throws when journey is not PLANNED", () => {
+        it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
             journey.start();
-            expect(() => journey.reorderStops([{ customerId: "c1", sequence: 0 }])).toThrow(JourneyNotPlannedError);
+            expect(() => journey.reorderStops([{ customerId: "c1", sequence: 0 }])).toThrow(JourneyNotModifiableError);
         });
     });
 });

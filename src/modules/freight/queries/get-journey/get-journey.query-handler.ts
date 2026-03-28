@@ -33,6 +33,7 @@ export class GetJourneyQueryHandler implements IQueryHandler<GetJourneyQuery, Ge
                 orderIds: s.orderIds,
                 sequence: s.sequence,
             })),
+            loadingDeadline: journey.loadingDeadline,
         };
     }
 }

@@ -14,6 +14,7 @@ const JourneySchema = defineEntity({
         vehicleIds: p.array().default([]),
         representativeIds: p.array().default([]),
         stops: p.embedded(JourneyStopRecord).array().default([]),
+        loadingDeadline: p.string().nullable(),
     },
 });
 

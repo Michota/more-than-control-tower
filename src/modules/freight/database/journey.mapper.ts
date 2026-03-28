@@ -35,6 +35,7 @@ export class JourneyMapper implements Mapper<JourneyAggregate, RequiredEntityDat
                             sequence: s.sequence,
                         }),
                 ),
+                loadingDeadline: record.loadingDeadline ?? undefined,
             },
         });
     }
@@ -59,6 +60,7 @@ export class JourneyMapper implements Mapper<JourneyAggregate, RequiredEntityDat
                 orderIds: s.orderIds,
                 sequence: s.sequence,
             })),
+            loadingDeadline: domain.loadingDeadline ?? null,
         };
     }
 

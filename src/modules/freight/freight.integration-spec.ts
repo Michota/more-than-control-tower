@@ -17,6 +17,7 @@ import {
     JourneyAlreadyCompletedError,
     JourneyCannotStartError,
     JourneyNotInProgressError,
+    JourneyNotAwaitingLoadingError,
 } from "./domain/journey.errors";
 
 // Vehicle commands & queries
@@ -45,6 +46,8 @@ import { CreateJourneyCommand } from "./commands/create-journey/create-journey.c
 import { StartJourneyCommand } from "./commands/start-journey/start-journey.command";
 import { CompleteJourneyCommand } from "./commands/complete-journey/complete-journey.command";
 import { CancelJourneyCommand } from "./commands/cancel-journey/cancel-journey.command";
+import { RequestJourneyLoadingCommand } from "./commands/request-journey-loading/request-journey-loading.command";
+import { CancelJourneyLoadingCommand } from "./commands/cancel-journey-loading/cancel-journey-loading.command";
 import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query";
 import { GetJourneyQuery } from "./queries/get-journey/get-journey.query";
 
@@ -357,9 +360,60 @@ describe("Freight Module — Integration Tests", () => {
             expect(journeys.length).toBeGreaterThanOrEqual(1);
         });
 
-        it("starts a planned journey", async () => {
+        it("requests loading for a planned journey", async () => {
             const routeId = await createRoute();
             const journeyId = await createJourney(routeId);
+
+            await commandBus.execute(
+                new RequestJourneyLoadingCommand({
+                    journeyId,
+                    loadingDeadline: "2026-04-01T08:00:00.000Z",
+                    fromWarehouseId: "00000000-0000-0000-0000-000000000001",
+                }),
+            );
+
+            const journey = await queryBus.execute(new GetJourneyQuery(journeyId));
+            expect(journey.status).toBe(JourneyStatus.AWAITING_LOADING);
+            expect(journey.loadingDeadline).toBe("2026-04-01T08:00:00.000Z");
+        });
+
+        it("cancels loading and returns to PLANNED", async () => {
+            const routeId = await createRoute();
+            const journeyId = await createJourney(routeId);
+            await commandBus.execute(
+                new RequestJourneyLoadingCommand({
+                    journeyId,
+                    loadingDeadline: "2026-04-01T08:00:00.000Z",
+                    fromWarehouseId: "00000000-0000-0000-0000-000000000001",
+                }),
+            );
+
+            await commandBus.execute(new CancelJourneyLoadingCommand({ journeyId }));
+
+            const journey = await queryBus.execute(new GetJourneyQuery(journeyId));
+            expect(journey.status).toBe(JourneyStatus.PLANNED);
+            expect(journey.loadingDeadline).toBeUndefined();
+        });
+
+        it("throws when canceling loading on a non-awaiting journey", async () => {
+            const routeId = await createRoute();
+            const journeyId = await createJourney(routeId);
+
+            await expect(commandBus.execute(new CancelJourneyLoadingCommand({ journeyId }))).rejects.toThrow(
+                JourneyNotAwaitingLoadingError,
+            );
+        });
+
+        it("starts an awaiting-loading journey", async () => {
+            const routeId = await createRoute();
+            const journeyId = await createJourney(routeId);
+            await commandBus.execute(
+                new RequestJourneyLoadingCommand({
+                    journeyId,
+                    loadingDeadline: "2026-04-01T08:00:00.000Z",
+                    fromWarehouseId: "00000000-0000-0000-0000-000000000001",
+                }),
+            );
 
             await commandBus.execute(new StartJourneyCommand({ journeyId }));
 
@@ -370,6 +424,13 @@ describe("Freight Module — Integration Tests", () => {
         it("completes an in-progress journey", async () => {
             const routeId = await createRoute();
             const journeyId = await createJourney(routeId);
+            await commandBus.execute(
+                new RequestJourneyLoadingCommand({
+                    journeyId,
+                    loadingDeadline: "2026-04-01T08:00:00.000Z",
+                    fromWarehouseId: "00000000-0000-0000-0000-000000000001",
+                }),
+            );
             await commandBus.execute(new StartJourneyCommand({ journeyId }));
 
             await commandBus.execute(new CompleteJourneyCommand({ journeyId }));
@@ -388,10 +449,9 @@ describe("Freight Module — Integration Tests", () => {
             expect(journey.status).toBe(JourneyStatus.CANCELLED);
         });
 
-        it("throws when starting an in-progress journey", async () => {
+        it("throws when starting a PLANNED journey (must request loading first)", async () => {
             const routeId = await createRoute();
             const journeyId = await createJourney(routeId);
-            await commandBus.execute(new StartJourneyCommand({ journeyId }));
 
             await expect(commandBus.execute(new StartJourneyCommand({ journeyId }))).rejects.toThrow(
                 JourneyCannotStartError,
@@ -410,6 +470,13 @@ describe("Freight Module — Integration Tests", () => {
         it("throws when completing an already completed journey", async () => {
             const routeId = await createRoute();
             const journeyId = await createJourney(routeId);
+            await commandBus.execute(
+                new RequestJourneyLoadingCommand({
+                    journeyId,
+                    loadingDeadline: "2026-04-01T08:00:00.000Z",
+                    fromWarehouseId: "00000000-0000-0000-0000-000000000001",
+                }),
+            );
             await commandBus.execute(new StartJourneyCommand({ journeyId }));
             await commandBus.execute(new CompleteJourneyCommand({ journeyId }));
 

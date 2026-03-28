@@ -44,11 +44,27 @@ export class JourneyNotInProgressError extends ConflictDomainException {
     }
 }
 
+export class JourneyNotModifiableError extends ConflictDomainException {
+    public readonly code = "JOURNEY.NOT_MODIFIABLE";
+
+    constructor(id: string) {
+        super(`Journey ${id} can only be modified while in PLANNED or AWAITING_LOADING status`);
+    }
+}
+
 export class JourneyNotPlannedError extends ConflictDomainException {
     public readonly code = "JOURNEY.NOT_PLANNED";
 
     constructor(id: string) {
-        super(`Journey ${id} can only be modified while in PLANNED status`);
+        super(`Journey ${id} must be in PLANNED status for this operation`);
+    }
+}
+
+export class JourneyNotAwaitingLoadingError extends ConflictDomainException {
+    public readonly code = "JOURNEY.NOT_AWAITING_LOADING";
+
+    constructor(id: string) {
+        super(`Journey ${id} is not awaiting loading`);
     }
 }
 

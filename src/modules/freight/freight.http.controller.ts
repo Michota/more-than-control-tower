@@ -40,6 +40,9 @@ import { CreateJourneyRequestDto } from "./commands/create-journey/create-journe
 import { StartJourneyCommand } from "./commands/start-journey/start-journey.command.js";
 import { CompleteJourneyCommand } from "./commands/complete-journey/complete-journey.command.js";
 import { CancelJourneyCommand } from "./commands/cancel-journey/cancel-journey.command.js";
+import { RequestJourneyLoadingCommand } from "./commands/request-journey-loading/request-journey-loading.command.js";
+import { RequestJourneyLoadingRequestDto } from "./commands/request-journey-loading/request-journey-loading.request.dto.js";
+import { CancelJourneyLoadingCommand } from "./commands/cancel-journey-loading/cancel-journey-loading.command.js";
 import { AddJourneyStopCommand } from "./commands/add-journey-stop/add-journey-stop.command.js";
 import { AddJourneyStopRequestDto } from "./commands/add-journey-stop/add-journey-stop.request.dto.js";
 import { RemoveJourneyStopCommand } from "./commands/remove-journey-stop/remove-journey-stop.command.js";
@@ -260,9 +263,34 @@ export class FreightHttpController {
         return { journeyId };
     }
 
+    @Post("journeys/:id/request-loading")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Request vehicle loading for a planned journey (PLANNED → AWAITING_LOADING)" })
+    @ApiResponse({ status: 200 })
+    async requestLoading(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: RequestJourneyLoadingRequestDto,
+    ): Promise<void> {
+        await this.commandBus.execute(
+            new RequestJourneyLoadingCommand({
+                journeyId: id,
+                loadingDeadline: body.loadingDeadline,
+                fromWarehouseId: body.fromWarehouseId,
+            }),
+        );
+    }
+
+    @Post("journeys/:id/cancel-loading")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Cancel loading request (AWAITING_LOADING → PLANNED)" })
+    @ApiResponse({ status: 200 })
+    async cancelLoading(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new CancelJourneyLoadingCommand({ journeyId: id }));
+    }
+
     @Post("journeys/:id/start")
     @RequirePermission(FreightPermission.START_JOURNEY)
-    @ApiOperation({ summary: "Start a planned journey" })
+    @ApiOperation({ summary: "Start a journey (AWAITING_LOADING → IN_PROGRESS)" })
     @ApiResponse({ status: 200 })
     async startJourney(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new StartJourneyCommand({ journeyId: id }));
