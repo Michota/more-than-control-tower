@@ -63,4 +63,16 @@ export class OrderLines extends ValueObject<OrderLinesProperties> {
     getLines(): ReadonlyMap<ProductId, OrderLine> {
         return this.properties.items;
     }
+
+    assignStockEntry(productId: ProductId, stockEntryId: string): OrderLines {
+        const line = this.properties.items.get(productId);
+
+        if (!line) {
+            throw new Error(`Order line not found for productId: ${productId}`);
+        }
+
+        const updated = OrderLines.createLinesMap(this.properties.items);
+        updated.set(productId, line.withStockEntry(stockEntryId));
+        return new OrderLines(updated);
+    }
 }

@@ -48,3 +48,66 @@ export class CannotChangeQuantityOfPlacedOrderError extends ConflictDomainExcept
         super(CannotChangeQuantityOfPlacedOrderError.message, cause, metadata);
     }
 }
+
+export class OrderNotFoundError extends NotFoundDomainException {
+    static readonly message = "Order not found.";
+    public readonly code = "ORDER.NOT_FOUND";
+
+    constructor(orderId: string, cause?: Error) {
+        super(`${OrderNotFoundError.message} orderId: ${orderId}`, cause);
+    }
+}
+
+export class StockEntryNotFoundForAssignmentError extends NotFoundDomainException {
+    static readonly message = "Stock entry not found.";
+    public readonly code = "ORDER.STOCK_ENTRY.NOT_FOUND";
+
+    constructor(stockEntryId: string, cause?: Error) {
+        super(`${StockEntryNotFoundForAssignmentError.message} stockEntryId: ${stockEntryId}`, cause);
+    }
+}
+
+export class OrderCannotBePlacedError extends ConflictDomainException {
+    static readonly message = "Order can only be placed from DRAFTED status.";
+    public readonly code = "ORDER.PLACE.FORBIDDEN";
+
+    constructor(cause?: Error, metadata?: Record<any, any>) {
+        super(OrderCannotBePlacedError.message, cause, metadata);
+    }
+}
+
+export class OrderCannotBeCancelledError extends ConflictDomainException {
+    static readonly message = "Order can only be cancelled from DRAFTED or PLACED status.";
+    public readonly code = "ORDER.CANCEL.FORBIDDEN";
+
+    constructor(cause?: Error, metadata?: Record<any, any>) {
+        super(OrderCannotBeCancelledError.message, cause, metadata);
+    }
+}
+
+export class StockEntryAlreadyAssignedError extends ConflictDomainException {
+    static readonly message = "Stock entry is already assigned to another order.";
+    public readonly code = "ORDER.STOCK_ENTRY.ALREADY_ASSIGNED";
+
+    constructor(stockEntryId: string, cause?: Error) {
+        super(`${StockEntryAlreadyAssignedError.message} stockEntryId: ${stockEntryId}`, cause);
+    }
+}
+
+export class OrderLineNotFoundError extends NotFoundDomainException {
+    static readonly message = "Order line not found for the given product.";
+    public readonly code = "ORDER.ORDERLINE.NOT_FOUND";
+
+    constructor(productId: string, cause?: Error) {
+        super(`${OrderLineNotFoundError.message} productId: ${productId}`, cause);
+    }
+}
+
+export class OrderCannotBeCompletedError extends ConflictDomainException {
+    static readonly message = "Order can only be completed from PLACED status.";
+    public readonly code = "ORDER.COMPLETE.FORBIDDEN";
+
+    constructor(cause?: Error, metadata?: Record<any, any>) {
+        super(OrderCannotBeCompletedError.message, cause, metadata);
+    }
+}

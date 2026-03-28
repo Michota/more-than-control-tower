@@ -1,12 +1,25 @@
 import { Except } from "type-fest";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
+import { type EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import { Money } from "../../../shared/value-objects/money.js";
 import { OrderItemEntity } from "./order-item.entity.js";
 import { OrderDraftedDomainEvent } from "./events/order-drafted.domain-event.js";
 import { OrderLines } from "./order-lines.value-object.js";
 import { OrderStatus } from "./order-status.enum.js";
-import { CannotChangeQuantityOfPlacedOrderError, OrderHasOrderLinesWithoutItems } from "./order.errors.js";
+import { OrderPlacedDomainEvent } from "./events/order-placed.domain-event.js";
+import { OrderCancelledDomainEvent } from "./events/order-cancelled.domain-event.js";
+import { OrderCompletedDomainEvent } from "./events/order-completed.domain-event.js";
+import { StockEntryAssignedToOrderDomainEvent } from "./events/stock-entry-assigned-to-order.domain-event.js";
+import {
+    CannotChangeQuantityOfPlacedOrderError,
+    OrderCannotBeCancelledError,
+    OrderCannotBeCompletedError,
+    OrderCannotBePlacedError,
+    OrderHasOrderLinesWithoutItems,
+    OrderIsNotEditableError,
+    OrderLineNotFoundError,
+} from "./order.errors.js";
 
 export interface OrderProperties {
     cost: Money;
@@ -86,5 +99,73 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
         }
         this.properties.orderLines = this.properties.orderLines.removeProduct(product);
         this.properties.cost = this.properties.orderLines.getTotalPrice();
+    }
+
+    place(): void {
+        if (this.properties.status !== OrderStatus.DRAFTED) {
+            throw new OrderCannotBePlacedError();
+        }
+
+        this.properties.status = OrderStatus.PLACED;
+
+        this.addEvent(
+            new OrderPlacedDomainEvent({
+                aggregateId: this.id,
+                customerId: this.properties.customerId,
+            }),
+        );
+    }
+
+    cancel(): void {
+        if (this.properties.status !== OrderStatus.DRAFTED && this.properties.status !== OrderStatus.PLACED) {
+            throw new OrderCannotBeCancelledError();
+        }
+
+        this.properties.status = OrderStatus.CANCELLED;
+
+        this.addEvent(
+            new OrderCancelledDomainEvent({
+                aggregateId: this.id,
+                customerId: this.properties.customerId,
+            }),
+        );
+    }
+
+    complete(): void {
+        if (this.properties.status !== OrderStatus.PLACED) {
+            throw new OrderCannotBeCompletedError();
+        }
+
+        this.properties.status = OrderStatus.COMPLETED;
+
+        this.addEvent(
+            new OrderCompletedDomainEvent({
+                aggregateId: this.id,
+                customerId: this.properties.customerId,
+            }),
+        );
+    }
+
+    assignStockEntry(productId: string, stockEntryId: string): void {
+        if (this.properties.status === OrderStatus.CANCELLED || this.properties.status === OrderStatus.COMPLETED) {
+            throw new OrderIsNotEditableError();
+        }
+
+        const productEntityId = productId as EntityId;
+        const line = this.properties.orderLines.getLines().get(productEntityId);
+
+        if (!line) {
+            throw new OrderLineNotFoundError(productId);
+        }
+
+        this.properties.orderLines = this.properties.orderLines.assignStockEntry(productEntityId, stockEntryId);
+
+        this.addEvent(
+            new StockEntryAssignedToOrderDomainEvent({
+                aggregateId: this.id,
+                productId,
+                stockEntryId,
+            }),
+        );
     }
 }

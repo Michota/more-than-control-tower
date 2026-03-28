@@ -7,9 +7,7 @@ const OrderLineSchema = defineEntity({
     properties: {
         product: () => p.manyToOne(Product),
         quantity: p.integer(),
-        // Disabled. Remove or re-enable, base on experience.
-        // vatRate: p.decimal(),
-        // currency,
+        stockEntryId: p.uuid().nullable(),
     },
 });
 

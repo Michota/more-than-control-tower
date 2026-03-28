@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { EntityManager } from "@mikro-orm/core";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
 import { OrderAggregate } from "../domain/order.aggregate.js";
+import { OrderStatus } from "../domain/order-status.enum.js";
 import { Order } from "./order.entity.js";
 import { OrderMapper } from "./order.mapper.js";
 import { OrderRepositoryPort } from "./order.repository.port.js";
@@ -64,5 +65,21 @@ export class OrderRepository implements OrderRepositoryPort {
 
     async transaction<T>(handler: () => Promise<T>): Promise<T> {
         return this.em.transactional(handler);
+    }
+
+    async isStockEntryAssigned(stockEntryId: string): Promise<boolean> {
+        const connection = this.em.getConnection();
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const result: { exists: boolean }[] = await connection.execute(
+            `SELECT EXISTS(
+                SELECT 1 FROM "order"
+                WHERE status NOT IN (?, ?)
+                AND "order_lines"::jsonb @> ?::jsonb
+            ) AS "exists"`,
+            [OrderStatus.CANCELLED, OrderStatus.COMPLETED, JSON.stringify([{ stockEntryId }])],
+        );
+
+        return result[0]?.exists === true;
     }
 }

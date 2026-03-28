@@ -37,6 +37,7 @@ import { ListWarehousesQueryHandler } from "./queries/list-warehouses/list-wareh
 import { ListSectorsQueryHandler } from "./queries/list-sectors/list-sectors.query-handler.js";
 import { GetSectorQueryHandler } from "./queries/get-sector/get-sector.query-handler.js";
 import { GetSectorLoadQueryHandler } from "./queries/get-sector-load/get-sector-load.query-handler.js";
+import { GetStockEntryQueryHandler } from "./queries/get-stock-entry/get-stock-entry.query-handler.js";
 import { Good } from "./database/good.entity.js";
 import { GoodRepository } from "./database/good.repository.js";
 import { GoodsReceipt } from "./database/goods-receipt.entity.js";
@@ -87,6 +88,7 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         ListSectorsQueryHandler,
         GetSectorQueryHandler,
         GetSectorLoadQueryHandler,
+        GetStockEntryQueryHandler,
         {
             provide: GOOD_REPOSITORY_PORT,
             useFactory: (em: EntityManager) => new GoodRepository(em),
