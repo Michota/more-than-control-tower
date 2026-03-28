@@ -8,7 +8,10 @@ import { DraftOrderCommand } from "./commands/draft-order/draft-order.command";
 import { PlaceOrderCommand } from "./commands/place-order/place-order.command";
 import { CancelOrderCommand } from "./commands/cancel-order/cancel-order.command";
 import { CompleteOrderCommand } from "./commands/complete-order/complete-order.command";
+import { AddProductToOrderCommand } from "./commands/add-product-to-order/add-product-to-order.command";
 import { AssignGoodCommand } from "./commands/assign-good/assign-good.command";
+import { AssignStockEntryCommand } from "./commands/assign-stock-entry/assign-stock-entry.command";
+import { ChangeProductQuantityCommand } from "./commands/change-product-quantity/change-product-quantity.command";
 import { OrderSource } from "./domain/order-source.enum";
 import { OrderStatus } from "./domain/order-status.enum";
 import {
@@ -33,12 +36,27 @@ import { WarehouseModule } from "../warehouse/warehouse.module";
 import { Customer } from "../crm/database/customer.entity";
 import { CustomerType } from "../crm/domain/customer-type.enum";
 import { CreateGoodCommand } from "../warehouse/commands/create-good/create-good.command";
+import { CreateWarehouseCommand } from "../warehouse/commands/create-warehouse/create-warehouse.command";
+import { OpenGoodsReceiptCommand } from "../warehouse/commands/open-goods-receipt/open-goods-receipt.command";
+import { SetGoodsReceiptLinesCommand } from "../warehouse/commands/set-goods-receipt-lines/set-goods-receipt-lines.command";
+import { ConfirmGoodsReceiptCommand } from "../warehouse/commands/confirm-goods-receipt/confirm-goods-receipt.command";
 import { DimensionUnit } from "../warehouse/domain/good-dimensions.value-object";
 import { WeightUnit } from "../warehouse/domain/good-weight.value-object";
+import { StockEntry } from "../warehouse/database/stock-entry.entity";
+import { QueryBus } from "@nestjs/cqrs";
+import { GetOrderQuery, type OrderResponse } from "./queries/get-order/get-order.query";
+import { ListOrdersQuery } from "./queries/list-orders/list-orders.query";
+import {
+    CannotAssignStockEntryError,
+    StockEntryAlreadyAssignedError,
+    StockEntryNotFoundForAssignmentError,
+    CannotChangeQuantityOfPlacedOrderError,
+} from "./domain/order.errors";
 
 describe("Sales Module — Integration Tests", () => {
     let moduleRef: TestingModule;
     let commandBus: CommandBus;
+    let queryBus: QueryBus;
     let orm: MikroORM;
     let em: EntityManager;
 
@@ -64,6 +82,7 @@ describe("Sales Module — Integration Tests", () => {
         await moduleRef.init();
 
         commandBus = moduleRef.get(CommandBus);
+        queryBus = moduleRef.get(QueryBus);
         orm = moduleRef.get(MikroORM);
         em = orm.em.fork();
 
@@ -387,6 +406,248 @@ describe("Sales Module — Integration Tests", () => {
                     }),
                 ),
             ).rejects.toThrow(OrderLineNotFoundError);
+        });
+    });
+
+    // ─── Draft Editing ────────────────────────────────────────
+
+    describe("Draft Editing", () => {
+        let secondProductId: string;
+        let secondPriceId: string;
+
+        beforeAll(async () => {
+            secondProductId = randomUUID();
+            secondPriceId = randomUUID();
+
+            await em.insert(Product, {
+                id: secondProductId,
+                name: "Second Product",
+                category: categoryId,
+                vatRate: "23",
+                availableFrom: new Date(),
+                availableTo: null,
+            });
+            await em.insert(Price, {
+                id: secondPriceId,
+                amount: "20.00",
+                currency: "PLN",
+                validFrom: new Date("2020-01-01"),
+                validTo: null,
+                product: secondProductId,
+                priceType: null,
+            });
+        });
+
+        it("adds a product to a draft order", async () => {
+            const orderId = await draftOrder();
+
+            await commandBus.execute(
+                new AddProductToOrderCommand({
+                    orderId,
+                    itemId: secondProductId,
+                    quantity: 2,
+                    priceId: secondPriceId,
+                }),
+            );
+
+            const order = await findOrder(orderId);
+            expect(order!.orderLines).toHaveLength(2);
+        });
+
+        it("changes product quantity on a draft order", async () => {
+            const orderId = await draftOrder();
+
+            await commandBus.execute(
+                new ChangeProductQuantityCommand({
+                    orderId,
+                    itemId: productId,
+                    quantity: 5,
+                    priceId,
+                }),
+            );
+
+            const order = await findOrder(orderId);
+            expect(order!.orderLines[0].quantity).toBe(5);
+        });
+
+        it("throws when editing a placed order", async () => {
+            const orderId = await draftOrder();
+            await commandBus.execute(new PlaceOrderCommand({ orderId }));
+
+            await expect(
+                commandBus.execute(
+                    new AddProductToOrderCommand({
+                        orderId,
+                        itemId: secondProductId,
+                        quantity: 1,
+                        priceId: secondPriceId,
+                    }),
+                ),
+            ).rejects.toThrow(CannotChangeQuantityOfPlacedOrderError);
+        });
+    });
+
+    // ─── Stock Entry Assignment + IN_PROGRESS ─────────────────
+
+    describe("Assign Stock Entry", () => {
+        async function createGood(): Promise<string> {
+            return commandBus.execute(
+                new CreateGoodCommand({
+                    name: `Good ${randomUUID().slice(0, 8)}`,
+                    weightValue: 1,
+                    weightUnit: WeightUnit.KG,
+                    dimensionLength: 10,
+                    dimensionWidth: 10,
+                    dimensionHeight: 10,
+                    dimensionUnit: DimensionUnit.CM,
+                }),
+            );
+        }
+
+        async function createStockEntry(goodId: string): Promise<string> {
+            const warehouseId: string = await commandBus.execute(
+                new CreateWarehouseCommand({
+                    name: `WH ${randomUUID().slice(0, 8)}`,
+                    address: { country: "PL", postalCode: "00-001", state: "Maz", city: "Warszawa", street: "Test 1" },
+                }),
+            );
+
+            const receiptId: string = await commandBus.execute(
+                new OpenGoodsReceiptCommand({ targetWarehouseId: warehouseId }),
+            );
+
+            await commandBus.execute(new SetGoodsReceiptLinesCommand({ receiptId, lines: [{ goodId, quantity: 10 }] }));
+
+            await commandBus.execute(new ConfirmGoodsReceiptCommand({ receiptId }));
+
+            const stockEntryEm = em.fork();
+            const entry = await stockEntryEm.findOne(StockEntry, { goodId });
+            return entry!.id;
+        }
+
+        it("assigns stock entry and auto-transitions to IN_PROGRESS", async () => {
+            const orderId = await draftOrder();
+            const goodId = await createGood();
+
+            await commandBus.execute(new PlaceOrderCommand({ orderId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }));
+
+            const stockEntryId = await createStockEntry(goodId);
+            await commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId }));
+
+            const order = await findOrder(orderId);
+            expect(order!.status).toBe(OrderStatus.IN_PROGRESS);
+            expect(order!.orderLines[0].stockEntryId).toBe(stockEntryId);
+        });
+
+        it("throws StockEntryAlreadyAssignedError when entry is taken", async () => {
+            const goodId = await createGood();
+            const stockEntryId = await createStockEntry(goodId);
+
+            const orderId1 = await draftOrder();
+            const orderId2 = await draftOrder();
+
+            await commandBus.execute(new PlaceOrderCommand({ orderId: orderId1 }));
+            await commandBus.execute(new AssignGoodCommand({ orderId: orderId1, productId, goodId }));
+            await commandBus.execute(new AssignStockEntryCommand({ orderId: orderId1, productId, stockEntryId }));
+
+            await commandBus.execute(new PlaceOrderCommand({ orderId: orderId2 }));
+            await commandBus.execute(new AssignGoodCommand({ orderId: orderId2, productId, goodId }));
+
+            await expect(
+                commandBus.execute(new AssignStockEntryCommand({ orderId: orderId2, productId, stockEntryId })),
+            ).rejects.toThrow(StockEntryAlreadyAssignedError);
+        });
+
+        it("throws CannotAssignStockEntryError on DRAFTED order", async () => {
+            const orderId = await draftOrder();
+            const goodId = await createGood();
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }));
+            const stockEntryId = await createStockEntry(goodId);
+
+            await expect(
+                commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId })),
+            ).rejects.toThrow(CannotAssignStockEntryError);
+        });
+
+        it("throws StockEntryNotFoundForAssignmentError for non-existent entry", async () => {
+            const orderId = await draftOrder();
+            const goodId = await createGood();
+            await commandBus.execute(new PlaceOrderCommand({ orderId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }));
+
+            await expect(
+                commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId: randomUUID() })),
+            ).rejects.toThrow(StockEntryNotFoundForAssignmentError);
+        });
+
+        it("IN_PROGRESS order cannot be cancelled", async () => {
+            const orderId = await draftOrder();
+            const goodId = await createGood();
+
+            await commandBus.execute(new PlaceOrderCommand({ orderId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }));
+            const stockEntryId = await createStockEntry(goodId);
+            await commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId }));
+
+            await expect(commandBus.execute(new CancelOrderCommand({ orderId }))).rejects.toThrow(
+                OrderCannotBeCancelledError,
+            );
+        });
+
+        it("IN_PROGRESS order can be completed", async () => {
+            const orderId = await draftOrder();
+            const goodId = await createGood();
+
+            await commandBus.execute(new PlaceOrderCommand({ orderId }));
+            await commandBus.execute(new AssignGoodCommand({ orderId, productId, goodId }));
+            const stockEntryId = await createStockEntry(goodId);
+            await commandBus.execute(new AssignStockEntryCommand({ orderId, productId, stockEntryId }));
+
+            await commandBus.execute(new CompleteOrderCommand({ orderId }));
+
+            const order = await findOrder(orderId);
+            expect(order!.status).toBe(OrderStatus.COMPLETED);
+        });
+    });
+
+    // ─── Order Queries ────────────────────────────────────────
+
+    describe("Order Queries", () => {
+        it("gets order by ID with full details", async () => {
+            const orderId = await draftOrder();
+
+            const order: OrderResponse = await queryBus.execute(new GetOrderQuery(orderId));
+
+            expect(order.id).toBe(orderId);
+            expect(order.customerId).toBe(customerId);
+            expect(order.actorId).toBe(customerId);
+            expect(order.source).toBe(OrderSource.SR);
+            expect(order.status).toBe(OrderStatus.DRAFTED);
+            expect(order.orderLines).toHaveLength(1);
+        });
+
+        it("lists orders with pagination", async () => {
+            await draftOrder();
+            await draftOrder();
+
+            const result = await queryBus.execute(new ListOrdersQuery(1, 50));
+
+            expect(result.data.length).toBeGreaterThanOrEqual(2);
+        });
+
+        it("filters orders by customerId", async () => {
+            const result = await queryBus.execute(new ListOrdersQuery(1, 50, customerId));
+
+            expect(result.data.every((o: { customerId: string }) => o.customerId === customerId)).toBe(true);
+        });
+
+        it("filters orders by status", async () => {
+            const result = await queryBus.execute(new ListOrdersQuery(1, 50, undefined, OrderStatus.DRAFTED));
+
+            expect(result.data.every((o: { status: string }) => o.status === (OrderStatus.DRAFTED as string))).toBe(
+                true,
+            );
         });
     });
 });
