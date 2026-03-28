@@ -54,6 +54,9 @@ import { JourneyIdResponseDto, JourneyResponseDto } from "./dtos/journey.respons
 import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query.js";
 import { GetJourneyQuery } from "./queries/get-journey/get-journey.query.js";
 import { CheckJourneyAvailabilityQuery } from "./queries/check-journey-availability/check-journey-availability.query.js";
+import { GetJourneyLoadingPlanQuery } from "./queries/get-journey-loading-plan/get-journey-loading-plan.query.js";
+import { RequestJourneyStockTransfersCommand } from "./commands/request-journey-stock-transfers/request-journey-stock-transfers.command.js";
+import { RequestJourneyStockTransfersRequestDto } from "./commands/request-journey-stock-transfers/request-journey-stock-transfers.request.dto.js";
 
 @ApiTags("Freight")
 @Controller("freight")
@@ -286,6 +289,31 @@ export class FreightHttpController {
     @ApiResponse({ status: 200 })
     async cancelLoading(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new CancelJourneyLoadingCommand({ journeyId: id }));
+    }
+
+    @Get("journeys/:id/loading-plan")
+    @RequirePermission(FreightPermission.VIEW_JOURNEYS)
+    @ApiOperation({ summary: "Get loading plan — items needed based on assigned orders" })
+    @ApiResponse({ status: 200 })
+    async getLoadingPlan(@Param("id", ParseUUIDPipe) id: UUID) {
+        return this.queryBus.execute(new GetJourneyLoadingPlanQuery(id));
+    }
+
+    @Post("journeys/:id/stock-transfers")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Request stock transfers to load the vehicle (AWAITING_LOADING only)" })
+    @ApiResponse({ status: 201 })
+    async requestStockTransfers(
+        @Param("id", ParseUUIDPipe) id: UUID,
+        @Body() body: RequestJourneyStockTransfersRequestDto,
+    ): Promise<{ transferRequestIds: string[] }> {
+        const transferRequestIds = await this.commandBus.execute(
+            new RequestJourneyStockTransfersCommand({
+                journeyId: id,
+                items: body.items,
+            }),
+        );
+        return { transferRequestIds };
     }
 
     @Post("journeys/:id/start")
