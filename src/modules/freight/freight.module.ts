@@ -46,6 +46,7 @@ import { CancelJourneyLoadingCommandHandler } from "./commands/cancel-journey-lo
 import { RequestJourneyStockTransfersCommandHandler } from "./commands/request-journey-stock-transfers/request-journey-stock-transfers.command-handler.js";
 import { MarkReadyForDepartureCommandHandler } from "./commands/mark-ready-for-departure/mark-ready-for-departure.command-handler.js";
 import { GetJourneyLoadingPlanQueryHandler } from "./queries/get-journey-loading-plan/get-journey-loading-plan.query-handler.js";
+import { CheckJourneyReadinessQueryHandler } from "./queries/check-journey-readiness/check-journey-readiness.query-handler.js";
 
 // Database
 import { Vehicle } from "./database/vehicle.entity.js";
@@ -97,6 +98,7 @@ import { FreightHttpController } from "./freight.http.controller.js";
         GetJourneyQueryHandler,
         CheckJourneyAvailabilityQueryHandler,
         GetJourneyLoadingPlanQueryHandler,
+        CheckJourneyReadinessQueryHandler,
 
         // Repositories
         {

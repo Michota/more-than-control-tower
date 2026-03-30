@@ -55,6 +55,7 @@ import { JourneyIdResponseDto, JourneyResponseDto } from "./dtos/journey.respons
 import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query.js";
 import { GetJourneyQuery } from "./queries/get-journey/get-journey.query.js";
 import { CheckJourneyAvailabilityQuery } from "./queries/check-journey-availability/check-journey-availability.query.js";
+import { CheckJourneyReadinessQuery } from "./queries/check-journey-readiness/check-journey-readiness.query.js";
 import { GetJourneyLoadingPlanQuery } from "./queries/get-journey-loading-plan/get-journey-loading-plan.query.js";
 import { RequestJourneyStockTransfersCommand } from "./commands/request-journey-stock-transfers/request-journey-stock-transfers.command.js";
 import { RequestJourneyStockTransfersRequestDto } from "./commands/request-journey-stock-transfers/request-journey-stock-transfers.request.dto.js";
@@ -257,6 +258,20 @@ export class FreightHttpController {
     @ApiResponse({ status: 200, type: [JourneyResponseDto] })
     async listJourneys(): Promise<JourneyResponseDto[]> {
         return this.queryBus.execute(new ListJourneysQuery());
+    }
+
+    @Get("journeys/:id/readiness")
+    @RequirePermission(FreightPermission.VIEW_JOURNEYS)
+    @ApiOperation({
+        summary: "Check if a journey is ready for departure",
+        description:
+            "Runs all readiness checks: crew assigned (DRIVER + RSR), vehicle active, " +
+            "crew permissions (driver license, sales permissions), crew availability. " +
+            "Returns a checklist with pass/fail per item and an overall ready flag.",
+    })
+    @ApiResponse({ status: 200 })
+    async checkReadiness(@Param("id", ParseUUIDPipe) id: UUID) {
+        return this.queryBus.execute(new CheckJourneyReadinessQuery(id));
     }
 
     @Get("journeys/:id")
