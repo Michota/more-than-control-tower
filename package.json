@@ -24,5 +24,6 @@
         "lint-staged": "^16.4.0",
         "prettier": "^3.4.2",
         "turbo": "^2.5.4"
-    }
+    },
+    "packageManager": "pnpm@10.28.1"
 }
