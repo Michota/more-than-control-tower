@@ -17,6 +17,7 @@ import { DraftOrderCommandHandler } from "./commands/draft-order/draft-order.com
 import { PlaceOrderCommandHandler } from "./commands/place-order/place-order.command-handler.js";
 import { RemoveProductFromOrderCommandHandler } from "./commands/remove-product-from-order/remove-product-from-order.command-handler.js";
 import { GetCustomerOrdersQueryHandler } from "./queries/get-customer-orders/get-customer-orders.query-handler.js";
+import { GetOrdersByIdsQueryHandler } from "./queries/get-orders-by-ids/get-orders-by-ids.query-handler.js";
 import { GetOrderQueryHandler } from "./queries/get-order/get-order.query-handler.js";
 import { ListOrdersQueryHandler } from "./queries/list-orders/list-orders.query-handler.js";
 import { SalesHttpController } from "./sales.http.controller.js";
@@ -58,6 +59,7 @@ import { Product } from "./database/product.entity.js";
         GetOrderQueryHandler,
         ListOrdersQueryHandler,
         GetCustomerOrdersQueryHandler,
+        GetOrdersByIdsQueryHandler,
         {
             provide: STOCK_RESERVATION_CHECKERS,
             useClass: OrderStockReservationChecker,
