@@ -115,3 +115,11 @@ export class JourneyMissingRsrError extends ConflictDomainException {
         super(`Journey ${id} requires at least one crew member with RSR role`);
     }
 }
+
+export class CrewMemberMissingPermissionError extends ConflictDomainException {
+    public readonly code = "JOURNEY.CREW_MISSING_PERMISSION";
+
+    constructor(employeeId: string, role: string, missingPermission: string) {
+        super(`Crew member ${employeeId} (${role}) lacks required permission: ${missingPermission}`);
+    }
+}

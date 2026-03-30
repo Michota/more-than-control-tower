@@ -54,6 +54,36 @@ import { GetJourneyQuery } from "./queries/get-journey/get-journey.query";
 
 import { FreightModule } from "./freight.module";
 import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
+import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
+import {
+    GetEmployeePermissionsQuery,
+    GetEmployeePermissionsResponse,
+} from "../../shared/queries/get-employee-permissions.query";
+
+/**
+ * Mock HR handler: returns all freight + sales permissions for any employee.
+ * In production, HR module resolves these from positions.
+ */
+@QueryHandler(GetEmployeePermissionsQuery)
+class MockGetEmployeePermissionsQueryHandler implements IQueryHandler<
+    GetEmployeePermissionsQuery,
+    GetEmployeePermissionsResponse
+> {
+    execute(query: GetEmployeePermissionsQuery): Promise<GetEmployeePermissionsResponse> {
+        return Promise.resolve({
+            userId: query.userId,
+            effectivePermissions: [
+                "freight:driver-license-b",
+                "freight:driver-license-c",
+                "freight:driver-license-c-e",
+                "sales:complete-order",
+                "sales:view-orders",
+                "sales:draft-order",
+            ],
+            positionKeys: [],
+        });
+    }
+}
 
 describe("Freight Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -64,6 +94,7 @@ describe("Freight Module — Integration Tests", () => {
     beforeAll(async () => {
         moduleRef = await Test.createTestingModule({
             imports: [TestMikroOrmDatabaseModule(), CqrsModule.forRoot(), PermissionRegistryModule, FreightModule],
+            providers: [MockGetEmployeePermissionsQueryHandler],
         }).compile();
 
         await moduleRef.init();
@@ -99,10 +130,12 @@ describe("Freight Module — Integration Tests", () => {
     }
 
     async function createRouteWithCrew(name = "Test Route"): Promise<string> {
+        const vehicleId = await createVehicle({ name: "Crew Vehicle" });
         const routeId = await createRoute(name);
         await commandBus.execute(
             new EditRouteCommand({
                 routeId,
+                vehicleIds: [vehicleId],
                 crewMembers: [
                     { employeeId: "d1", employeeName: "Adam Nowak", role: CrewMemberRole.DRIVER },
                     { employeeId: "r1", employeeName: "Jan Kowalski", role: CrewMemberRole.RSR },
