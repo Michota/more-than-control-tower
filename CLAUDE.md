@@ -30,4 +30,5 @@ Tests are not optional follow-up work — they are part of the feature.
 
 ## Commits
 
-Prefer atomic commits — group logically related changes together rather than committing everything at once. For example, separate domain logic, infrastructure, and test commits when it makes sense. Don't over-split either; use judgment.
+- Prefer atomic commits — group logically related changes together rather than committing everything at once. For example, separate domain logic, infrastructure, and test commits when it makes sense. Don't over-split either; use judgment.
+- Add prefix in title that describes scope. e.g. `feat<warehouse>: ...`, or `fix<permissions>: ...`
