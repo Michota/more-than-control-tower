@@ -967,3 +967,26 @@ Delivery actors (dispatchers, drivers, warehouse workers) need the granular stag
 - The Delivery module must be built before the full order execution flow works end-to-end
 - Sales Order completion is triggered by Delivery, not by a Sales actor directly (though manual completion remains possible for edge cases)
 - Querying "where is my order?" requires joining Sales Order status with Delivery Fulfillment stage — this can be done via a cross-module query or a dedicated read model
+
+---
+
+# ADR-021: ERP Activity Log — cross-module event consumption (TODO)
+
+**Status:** Pending implementation
+**Date:** 2026-03-30
+
+## Context
+
+The ERP module has an `ActivityLogService` that records timestamped employee actions (e.g. "visit-completed", "payment-collected") into the `activity_log_entry` table. A daily cron job (`ActivityLogCleanupCron`) deletes entries older than 7 days.
+
+The service is built and exported, but **no cross-module event handlers consume it yet**. The intent is for the ERP module's application layer to subscribe to domain events from other modules (e.g. Delivery's visit completion, Accountancy's payment collection) and call `ActivityLogService.log()` to record them.
+
+## TODO
+
+- Create event handlers in `src/modules/erp/application/event-handlers/` that listen to cross-module domain events and write activity log entries via `ActivityLogService`
+- Candidate events to subscribe to (once the emitting modules exist):
+  - Delivery: visit completed, delivery confirmed
+  - Accountancy: payment collected
+  - Warehouse: goods receipt confirmed, stock transfer completed
+  - Sales: order placed, order completed
+- Each handler imports only the event class from the publishing module's `domain/events/` — no other cross-module imports
