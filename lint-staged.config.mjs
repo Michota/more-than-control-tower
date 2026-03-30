@@ -9,6 +9,11 @@ export default {
             commands.push(`eslint --fix --config apps/api/eslint.config.mjs ${apiFiles.join(" ")}`);
         }
 
+        const webFiles = filenames.filter((f) => f.includes("apps/web/") && isLintable(f));
+        if (webFiles.length > 0) {
+            commands.push(`eslint --fix --config apps/web/eslint.config.mjs ${webFiles.join(" ")}`);
+        }
+
         commands.push(`prettier --write --no-error-on-unmatched-pattern ${filenames.join(" ")}`);
         return commands;
     },
