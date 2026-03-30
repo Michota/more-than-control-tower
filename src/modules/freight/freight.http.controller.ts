@@ -175,7 +175,14 @@ export class FreightHttpController {
 
     @Patch("routes/:id")
     @RequirePermission(FreightPermission.EDIT_ROUTE)
-    @ApiOperation({ summary: "Edit route properties (partial update)" })
+    @ApiOperation({
+        summary: "Edit route properties (partial update)",
+        description:
+            "When assigning crew members, the frontend should first check availability " +
+            "via GET /freight/journeys/availability. If any crew member is unavailable " +
+            "(hrAvailable=false), alert the dispatcher before proceeding — assignment " +
+            "is allowed but requires explicit acknowledgement.",
+    })
     @ApiResponse({ status: 200 })
     async editRoute(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: EditRouteRequestDto): Promise<void> {
         await this.commandBus.execute(
@@ -218,7 +225,14 @@ export class FreightHttpController {
 
     @Get("journeys/availability")
     @RequirePermission(FreightPermission.VIEW_JOURNEYS)
-    @ApiOperation({ summary: "Check vehicle and crew member availability for a date" })
+    @ApiOperation({
+        summary: "Check vehicle and crew member availability for a date",
+        description:
+            "Returns both Freight double-booking status and HR availability for each " +
+            "crew member. The frontend MUST call this before assigning crew to a route " +
+            "or journey. If hrAvailable is false, display a warning to the dispatcher " +
+            "and require confirmation before proceeding with the assignment.",
+    })
     @ApiResponse({ status: 200 })
     async checkAvailability(
         @Query("date") date: string,
