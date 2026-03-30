@@ -1,12 +1,12 @@
 // @ts-check
-import { nestjsConfig } from "../../packages/eslint-config/nestjs.mjs";
+import { baseConfig } from "../../packages/eslint-config/base.mjs";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
     {
-        ignores: ["eslint.config.mjs", "src/database/migrations/**"],
+        ignores: ["dist", "src/routeTree.gen.ts"],
     },
-    ...nestjsConfig,
+    ...baseConfig,
     {
         languageOptions: {
             parserOptions: {
