@@ -1,0 +1,9 @@
+# Automatically merged with docker-compose.yml by Docker Compose in local development.
+# In production, use: docker compose -f docker-compose.yml up
+#
+# Adds: test database creation on first container start.
+
+services:
+    postgres:
+        volumes:
+            - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro

@@ -1,7 +1,13 @@
 # compiled output
-/dist
+dist
 /node_modules
 /build
+
+# Turbo
+.turbo
+
+# TanStack Router
+.tanstack
 
 # Logs
 logs
@@ -54,3 +60,5 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+packages/*/node_modules/*

@@ -1,0 +1,44 @@
+/*  
+    Most of repositories will probably need generic 
+    save/find/delete operations, so it's easier
+    to have some shared interfaces.
+
+    More **specific queries should be defined
+    in a respective repository.**
+*/
+
+import { OffsetPaginationParameters } from "src/libs/types/pagination";
+
+export class Paginated<T> {
+    readonly count: number;
+    readonly limit: number;
+    readonly page: number;
+    readonly data: readonly T[];
+
+    constructor(props: Paginated<T>) {
+        this.count = props.count;
+        this.limit = props.limit;
+        this.page = props.page;
+        this.data = props.data;
+    }
+}
+
+export type OrderDirection = "asc" | "desc";
+
+export type OrderBy = { field: string | true; direction: OrderDirection };
+
+export interface PaginatedQueryParameters extends OffsetPaginationParameters {
+    orderBy: OrderBy;
+}
+
+export interface RepositoryPort<Entity> {
+    save(entity: Entity | Entity[]): Promise<void>;
+
+    findOneById(id: string): Promise<Entity | null>;
+    findAll(): Promise<Entity[]>;
+    findAllPaginated(params: PaginatedQueryParameters): Promise<Paginated<Entity>>;
+
+    delete(entity: Entity): Promise<boolean>;
+
+    transaction<T>(handler: () => Promise<T>): Promise<T>;
+}
