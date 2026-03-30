@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Button } from "~/components/ui/button";
-import { useTheme } from "~/lib/theme";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/lib/theme";
 import { Moon, Sun } from "lucide-react";
-import * as m from "~/lib/paraglide/messages";
+import * as m from "@/lib/paraglide/messages";
 
 export const Route = createFileRoute("/")({
     component: HomePage,
