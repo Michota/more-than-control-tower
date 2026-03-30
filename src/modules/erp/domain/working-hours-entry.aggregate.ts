@@ -70,6 +70,18 @@ export class WorkingHoursEntryAggregate extends AggregateRoot<WorkingHoursEntryP
             throw new WorkingHoursEntryLockedError(this.id as string);
         }
 
+        this.applyEdit(fields);
+    }
+
+    /**
+     * Manager-only edit that bypasses the lock check.
+     * Authorization must be verified by the calling handler.
+     */
+    forceEdit(fields: { hours?: number; note?: string; activityId?: string }): void {
+        this.applyEdit(fields);
+    }
+
+    private applyEdit(fields: { hours?: number; note?: string; activityId?: string }): void {
         if (fields.hours !== undefined) {
             this.properties.hours = fields.hours;
         }

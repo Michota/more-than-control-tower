@@ -1,12 +1,18 @@
 import { Inject } from "@nestjs/common";
-import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
+import { CommandHandler, EventBus, ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
-import { WorkingHoursEntryNotFoundError } from "../../domain/working-hours-entry.errors.js";
+import {
+    GetEmployeePermissionsQuery,
+    GetEmployeePermissionsResponse,
+} from "../../../../shared/queries/get-employee-permissions.query.js";
+import { GetEmployeeQuery, GetEmployeeResponse } from "../../../../shared/queries/get-employee.query.js";
+import { WorkingHoursEntryNotFoundError, WorkingHoursNotOwnedError } from "../../domain/working-hours-entry.errors.js";
 import { ActivityNotFoundError } from "../../domain/activity.errors.js";
 import type { ActivityRepositoryPort } from "../../database/activity.repository.port.js";
 import type { WorkingHoursEntryRepositoryPort } from "../../database/working-hours-entry.repository.port.js";
 import { ACTIVITY_REPOSITORY_PORT, WORKING_HOURS_ENTRY_REPOSITORY_PORT } from "../../erp.di-tokens.js";
+import { ErpPermission } from "../../erp.permissions.js";
 import { EditWorkingHoursCommand } from "./edit-working-hours.command.js";
 
 @CommandHandler(EditWorkingHoursCommand)
@@ -22,6 +28,7 @@ export class EditWorkingHoursCommandHandler implements ICommandHandler<EditWorki
         private readonly uow: UnitOfWorkPort,
 
         private readonly eventBus: EventBus,
+        private readonly queryBus: QueryBus,
     ) {}
 
     async execute(cmd: EditWorkingHoursCommand): Promise<void> {
@@ -31,6 +38,13 @@ export class EditWorkingHoursCommandHandler implements ICommandHandler<EditWorki
             throw new WorkingHoursEntryNotFoundError(cmd.entryId);
         }
 
+        const canManage = await this.hasManagePermission(cmd.actorId);
+        const isOwner = await this.isOwner(cmd.actorId, entry.properties.employeeId);
+
+        if (!isOwner && !canManage) {
+            throw new WorkingHoursNotOwnedError(entry.properties.employeeId);
+        }
+
         if (cmd.activityId) {
             const activity = await this.activityRepo.findOneById(cmd.activityId);
             if (!activity) {
@@ -38,16 +52,39 @@ export class EditWorkingHoursCommandHandler implements ICommandHandler<EditWorki
             }
         }
 
-        entry.edit({
-            hours: cmd.hours,
-            note: cmd.note,
-            activityId: cmd.activityId,
-        });
+        if (canManage && entry.isLocked) {
+            entry.forceEdit({
+                hours: cmd.hours,
+                note: cmd.note,
+                activityId: cmd.activityId,
+            });
+        } else {
+            entry.edit({
+                hours: cmd.hours,
+                note: cmd.note,
+                activityId: cmd.activityId,
+            });
+        }
 
         await this.workingHoursRepo.save(entry);
         await this.uow.commit();
 
         this.eventBus.publishAll(entry.domainEvents);
         entry.clearEvents();
+    }
+
+    private async isOwner(actorUserId: string, employeeId: string): Promise<boolean> {
+        const employee = await this.queryBus.execute<GetEmployeeQuery, GetEmployeeResponse | null>(
+            new GetEmployeeQuery(employeeId),
+        );
+        return employee?.userId === actorUserId;
+    }
+
+    private async hasManagePermission(userId: string): Promise<boolean> {
+        const permissions = await this.queryBus.execute<
+            GetEmployeePermissionsQuery,
+            GetEmployeePermissionsResponse | null
+        >(new GetEmployeePermissionsQuery(userId));
+        return permissions?.effectivePermissions.includes(ErpPermission.MANAGE_WORKING_HOURS) ?? false;
     }
 }

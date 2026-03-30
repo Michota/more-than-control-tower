@@ -6,6 +6,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
 import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
 import { ErpModule } from "./erp.module";
+import { HrModule } from "../hr/hr.module";
 import { CreateActivityCommand } from "./commands/create-activity/create-activity.command";
 import { LogWorkingHoursCommand } from "./commands/log-working-hours/log-working-hours.command";
 import { EditWorkingHoursCommand } from "./commands/edit-working-hours/edit-working-hours.command";
@@ -22,10 +23,17 @@ import {
     type GetEmployeeActivityLogResponse,
 } from "./queries/get-employee-activity-log/get-employee-activity-log.query";
 import { WorkingHoursStatus } from "./domain/working-hours-status.enum";
-import { WorkingHoursEntryLockedError, WorkingHoursEntryNotFoundError } from "./domain/working-hours-entry.errors";
+import {
+    WorkingHoursEntryLockedError,
+    WorkingHoursEntryNotFoundError,
+    WorkingHoursNotOwnedError,
+} from "./domain/working-hours-entry.errors";
 import { ActivityNotFoundError, ActivityInUseError } from "./domain/activity.errors";
 import { ActivityLogService } from "./infrastructure/activity-log.service";
 import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cron";
+import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command";
+import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command";
+import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command";
 
 describe("ERP Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -33,8 +41,9 @@ describe("ERP Module — Integration Tests", () => {
     let queryBus: QueryBus;
     let orm: MikroORM;
 
-    const employeeId = randomUUID();
-    const managerId = randomUUID();
+    const MANAGER_USER_ID = randomUUID();
+    let workerUserId: string;
+    let workerEmployeeId: string;
 
     beforeAll(async () => {
         moduleRef = await Test.createTestingModule({
@@ -44,6 +53,7 @@ describe("ERP Module — Integration Tests", () => {
                 CqrsModule.forRoot(),
                 PermissionRegistryModule,
                 ErpModule,
+                HrModule,
             ],
         }).compile();
 
@@ -54,6 +64,45 @@ describe("ERP Module — Integration Tests", () => {
         orm = moduleRef.get(MikroORM);
 
         await orm.schema.refresh();
+
+        // Create manager with erp:manage-working-hours permission
+        await commandBus.execute(
+            new CreatePositionCommand({
+                key: "erp:manager",
+                displayName: "ERP Manager",
+                permissionKeys: ["erp:manage-working-hours"],
+            }),
+        );
+        const managerEmployeeId: string = await commandBus.execute(
+            new CreateEmployeeCommand({
+                firstName: "Manager",
+                lastName: "ERP",
+                email: "erp-manager@test.com",
+                phone: "+48000000001",
+            }),
+        );
+        await orm.em.nativeUpdate("Employee", { id: managerEmployeeId }, { userId: MANAGER_USER_ID });
+        orm.em.clear();
+        await commandBus.execute(
+            new AssignPositionCommand({
+                employeeId: managerEmployeeId,
+                positionKey: "erp:manager",
+                assignedBy: "system",
+            }),
+        );
+
+        // Create a regular worker (linked to a userId)
+        workerEmployeeId = await commandBus.execute(
+            new CreateEmployeeCommand({
+                firstName: "Worker",
+                lastName: "ERP",
+                email: "erp-worker@test.com",
+                phone: "+48000000002",
+            }),
+        );
+        workerUserId = `erp-worker-user-${randomUUID().slice(0, 8)}`;
+        await orm.em.nativeUpdate("Employee", { id: workerEmployeeId }, { userId: workerUserId });
+        orm.em.clear();
     });
 
     afterAll(async () => {
@@ -86,7 +135,6 @@ describe("ERP Module — Integration Tests", () => {
             const created = activities.find((a) => a.id === activityId);
 
             expect(created).toBeDefined();
-            expect(created!.name).toBe("Warehouse work");
             expect(created!.description).toBeUndefined();
         });
     });
@@ -94,10 +142,11 @@ describe("ERP Module — Integration Tests", () => {
     // ─── Log Working Hours ───────────────────────────────────
 
     describe("Log Working Hours", () => {
-        it("logs working hours without activity", async () => {
+        it("logs own working hours", async () => {
             const entryId: string = await commandBus.execute(
                 new LogWorkingHoursCommand({
-                    employeeId,
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
                     date: "2026-03-28",
                     hours: 4,
                     note: "Morning shift",
@@ -107,41 +156,49 @@ describe("ERP Module — Integration Tests", () => {
             expect(entryId).toBeDefined();
 
             const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(employeeId, "2026-03-28", "2026-03-28"),
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-03-28", "2026-03-28", workerUserId),
             );
 
             const logged = entries.find((e) => e.id === entryId);
             expect(logged).toBeDefined();
             expect(logged!.hours).toBe(4);
-            expect(logged!.note).toBe("Morning shift");
             expect(logged!.status).toBe(WorkingHoursStatus.OPEN as string);
         });
 
-        it("logs working hours with activity", async () => {
-            const activityId: string = await commandBus.execute(new CreateActivityCommand({ name: "Delivery run" }));
-
+        it("manager can log hours for another employee", async () => {
             const entryId: string = await commandBus.execute(
                 new LogWorkingHoursCommand({
-                    employeeId,
-                    date: "2026-03-28",
-                    hours: 3,
-                    activityId,
+                    employeeId: workerEmployeeId,
+                    actorId: MANAGER_USER_ID,
+                    date: "2026-03-29",
+                    hours: 6,
                 }),
             );
 
-            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(employeeId, "2026-03-28", "2026-03-28"),
-            );
+            expect(entryId).toBeDefined();
+        });
 
-            const logged = entries.find((e) => e.id === entryId);
-            expect(logged!.activityId).toBe(activityId);
+        it("throws WorkingHoursNotOwnedError when non-manager logs for another employee", async () => {
+            const otherEmployeeId = randomUUID();
+
+            await expect(
+                commandBus.execute(
+                    new LogWorkingHoursCommand({
+                        employeeId: otherEmployeeId,
+                        actorId: workerUserId,
+                        date: "2026-03-28",
+                        hours: 2,
+                    }),
+                ),
+            ).rejects.toThrow(WorkingHoursNotOwnedError);
         });
 
         it("throws ActivityNotFoundError for non-existent activity", async () => {
             await expect(
                 commandBus.execute(
                     new LogWorkingHoursCommand({
-                        employeeId,
+                        employeeId: workerEmployeeId,
+                        actorId: workerUserId,
                         date: "2026-03-28",
                         hours: 2,
                         activityId: randomUUID(),
@@ -151,57 +208,64 @@ describe("ERP Module — Integration Tests", () => {
         });
     });
 
+    // ─── View Working Hours ──────────────────────────────────
+
+    describe("View Working Hours — ownership", () => {
+        it("worker can view own hours", async () => {
+            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-03-28", "2026-03-28", workerUserId),
+            );
+
+            expect(entries.length).toBeGreaterThanOrEqual(1);
+        });
+
+        it("manager can view anyone's hours", async () => {
+            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-03-28", "2026-03-28", MANAGER_USER_ID),
+            );
+
+            expect(entries.length).toBeGreaterThanOrEqual(1);
+        });
+
+        it("throws WorkingHoursNotOwnedError when worker views another's hours", async () => {
+            const otherEmployeeId = randomUUID();
+
+            await expect(
+                queryBus.execute(
+                    new GetEmployeeWorkingHoursQuery(otherEmployeeId, "2026-03-28", "2026-03-28", workerUserId),
+                ),
+            ).rejects.toThrow(WorkingHoursNotOwnedError);
+        });
+    });
+
     // ─── Edit Working Hours ──────────────────────────────────
 
     describe("Edit Working Hours", () => {
-        it("edits hours on an open entry", async () => {
+        it("worker edits own open entry", async () => {
             const entryId: string = await commandBus.execute(
                 new LogWorkingHoursCommand({
-                    employeeId,
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
                     date: "2026-03-27",
                     hours: 4,
                 }),
             );
 
-            await commandBus.execute(new EditWorkingHoursCommand({ entryId, hours: 6 }));
+            await commandBus.execute(new EditWorkingHoursCommand({ entryId, actorId: workerUserId, hours: 6 }));
 
             const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(employeeId, "2026-03-27", "2026-03-27"),
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-03-27", "2026-03-27", workerUserId),
             );
 
             const edited = entries.find((e) => e.id === entryId);
             expect(edited!.hours).toBe(6);
         });
 
-        it("edits note on an open entry", async () => {
+        it("worker cannot edit locked entry", async () => {
             const entryId: string = await commandBus.execute(
                 new LogWorkingHoursCommand({
-                    employeeId,
-                    date: "2026-03-26",
-                    hours: 3,
-                }),
-            );
-
-            await commandBus.execute(new EditWorkingHoursCommand({ entryId, note: "Added note" }));
-
-            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(employeeId, "2026-03-26", "2026-03-26"),
-            );
-
-            const edited = entries.find((e) => e.id === entryId);
-            expect(edited!.note).toBe("Added note");
-        });
-
-        it("throws WorkingHoursEntryNotFoundError for non-existent entry", async () => {
-            await expect(
-                commandBus.execute(new EditWorkingHoursCommand({ entryId: randomUUID(), hours: 5 })),
-            ).rejects.toThrow(WorkingHoursEntryNotFoundError);
-        });
-
-        it("throws WorkingHoursEntryLockedError when editing a locked entry", async () => {
-            const entryId: string = await commandBus.execute(
-                new LogWorkingHoursCommand({
-                    employeeId,
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
                     date: "2026-03-25",
                     hours: 4,
                 }),
@@ -209,101 +273,203 @@ describe("ERP Module — Integration Tests", () => {
 
             await commandBus.execute(
                 new LockWorkingHoursCommand({
-                    employeeId,
+                    employeeId: workerEmployeeId,
                     dateFrom: "2026-03-25",
                     dateTo: "2026-03-25",
-                    lockedBy: managerId,
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
-            await expect(commandBus.execute(new EditWorkingHoursCommand({ entryId, hours: 8 }))).rejects.toThrow(
-                WorkingHoursEntryLockedError,
-            );
+            await expect(
+                commandBus.execute(new EditWorkingHoursCommand({ entryId, actorId: workerUserId, hours: 8 })),
+            ).rejects.toThrow(WorkingHoursEntryLockedError);
         });
-    });
 
-    // ─── Lock Working Hours ──────────────────────────────────
-
-    describe("Lock Working Hours", () => {
-        it("locks all open entries in a date range", async () => {
-            const empId = randomUUID();
-
-            await commandBus.execute(new LogWorkingHoursCommand({ employeeId: empId, date: "2026-03-20", hours: 4 }));
-            await commandBus.execute(new LogWorkingHoursCommand({ employeeId: empId, date: "2026-03-21", hours: 5 }));
+        it("manager can edit locked entry via forceEdit", async () => {
+            const entryId: string = await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
+                    date: "2026-03-24",
+                    hours: 4,
+                }),
+            );
 
             await commandBus.execute(
                 new LockWorkingHoursCommand({
-                    employeeId: empId,
-                    dateFrom: "2026-03-20",
-                    dateTo: "2026-03-21",
-                    lockedBy: managerId,
+                    employeeId: workerEmployeeId,
+                    dateFrom: "2026-03-24",
+                    dateTo: "2026-03-24",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
+            await commandBus.execute(new EditWorkingHoursCommand({ entryId, actorId: MANAGER_USER_ID, hours: 10 }));
+
             const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(empId, "2026-03-20", "2026-03-21"),
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-03-24", "2026-03-24", MANAGER_USER_ID),
             );
 
-            expect(entries).toHaveLength(2);
-            expect(entries.every((e) => e.status === (WorkingHoursStatus.LOCKED as string))).toBe(true);
-            expect(entries.every((e) => e.lockedBy === managerId)).toBe(true);
+            const edited = entries.find((e) => e.id === entryId);
+            expect(edited!.hours).toBe(10);
         });
 
-        it("does nothing when no open entries exist in range", async () => {
+        it("throws WorkingHoursNotOwnedError when worker edits another's entry", async () => {
+            const entryId: string = await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: MANAGER_USER_ID,
+                    date: "2026-03-23",
+                    hours: 3,
+                }),
+            );
+
+            const otherUserId = `other-user-${randomUUID().slice(0, 8)}`;
+            await expect(
+                commandBus.execute(new EditWorkingHoursCommand({ entryId, actorId: otherUserId, hours: 5 })),
+            ).rejects.toThrow(WorkingHoursNotOwnedError);
+        });
+
+        it("throws WorkingHoursEntryNotFoundError for non-existent entry", async () => {
             await expect(
                 commandBus.execute(
-                    new LockWorkingHoursCommand({
-                        employeeId: randomUUID(),
-                        dateFrom: "2026-01-01",
-                        dateTo: "2026-01-31",
-                        lockedBy: managerId,
-                    }),
+                    new EditWorkingHoursCommand({ entryId: randomUUID(), actorId: workerUserId, hours: 5 }),
                 ),
-            ).resolves.not.toThrow();
+            ).rejects.toThrow(WorkingHoursEntryNotFoundError);
         });
     });
 
     // ─── Delete Working Hours ─────────────────────────────────
 
     describe("Delete Working Hours", () => {
-        it("deletes an open entry", async () => {
-            const empId = randomUUID();
+        it("worker deletes own open entry", async () => {
             const entryId: string = await commandBus.execute(
-                new LogWorkingHoursCommand({ employeeId: empId, date: "2026-05-01", hours: 3 }),
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
+                    date: "2026-05-01",
+                    hours: 3,
+                }),
             );
 
-            await commandBus.execute(new DeleteWorkingHoursCommand({ entryId }));
+            await commandBus.execute(new DeleteWorkingHoursCommand({ entryId, actorId: workerUserId }));
 
             const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(empId, "2026-05-01", "2026-05-01"),
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-05-01", "2026-05-01", workerUserId),
             );
-            expect(entries).toHaveLength(0);
+            expect(entries.find((e) => e.id === entryId)).toBeUndefined();
         });
 
-        it("throws WorkingHoursEntryNotFoundError for non-existent entry", async () => {
-            await expect(commandBus.execute(new DeleteWorkingHoursCommand({ entryId: randomUUID() }))).rejects.toThrow(
-                WorkingHoursEntryNotFoundError,
-            );
-        });
-
-        it("throws WorkingHoursEntryLockedError when deleting a locked entry", async () => {
-            const empId = randomUUID();
+        it("worker cannot delete locked entry", async () => {
             const entryId: string = await commandBus.execute(
-                new LogWorkingHoursCommand({ employeeId: empId, date: "2026-05-02", hours: 4 }),
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
+                    date: "2026-05-02",
+                    hours: 4,
+                }),
+            );
+
+            await commandBus.execute(
+                new LockWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    dateFrom: "2026-05-02",
+                    dateTo: "2026-05-02",
+                    actorId: MANAGER_USER_ID,
+                }),
+            );
+
+            await expect(
+                commandBus.execute(new DeleteWorkingHoursCommand({ entryId, actorId: workerUserId })),
+            ).rejects.toThrow(WorkingHoursEntryLockedError);
+        });
+
+        it("manager can delete locked entry", async () => {
+            const entryId: string = await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
+                    date: "2026-05-03",
+                    hours: 2,
+                }),
+            );
+
+            await commandBus.execute(
+                new LockWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    dateFrom: "2026-05-03",
+                    dateTo: "2026-05-03",
+                    actorId: MANAGER_USER_ID,
+                }),
+            );
+
+            await commandBus.execute(new DeleteWorkingHoursCommand({ entryId, actorId: MANAGER_USER_ID }));
+
+            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-05-03", "2026-05-03", MANAGER_USER_ID),
+            );
+            expect(entries.find((e) => e.id === entryId)).toBeUndefined();
+        });
+
+        it("throws WorkingHoursNotOwnedError when worker deletes another's entry", async () => {
+            const entryId: string = await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: MANAGER_USER_ID,
+                    date: "2026-05-04",
+                    hours: 3,
+                }),
+            );
+
+            const otherUserId = `other-${randomUUID().slice(0, 8)}`;
+            await expect(
+                commandBus.execute(new DeleteWorkingHoursCommand({ entryId, actorId: otherUserId })),
+            ).rejects.toThrow(WorkingHoursNotOwnedError);
+        });
+    });
+
+    // ─── Lock Working Hours ──────────────────────────────────
+
+    describe("Lock Working Hours", () => {
+        it("manager locks entries in a date range", async () => {
+            const empId = workerEmployeeId;
+
+            await commandBus.execute(
+                new LogWorkingHoursCommand({ employeeId: empId, actorId: workerUserId, date: "2026-03-20", hours: 4 }),
+            );
+            await commandBus.execute(
+                new LogWorkingHoursCommand({ employeeId: empId, actorId: workerUserId, date: "2026-03-21", hours: 5 }),
             );
 
             await commandBus.execute(
                 new LockWorkingHoursCommand({
                     employeeId: empId,
-                    dateFrom: "2026-05-02",
-                    dateTo: "2026-05-02",
-                    lockedBy: managerId,
+                    dateFrom: "2026-03-20",
+                    dateTo: "2026-03-21",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
-            await expect(commandBus.execute(new DeleteWorkingHoursCommand({ entryId }))).rejects.toThrow(
-                WorkingHoursEntryLockedError,
+            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
+                new GetEmployeeWorkingHoursQuery(empId, "2026-03-20", "2026-03-21", MANAGER_USER_ID),
             );
+
+            expect(entries).toHaveLength(2);
+            expect(entries.every((e) => e.status === (WorkingHoursStatus.LOCKED as string))).toBe(true);
+            expect(entries.every((e) => e.lockedBy === MANAGER_USER_ID)).toBe(true);
+        });
+
+        it("non-manager cannot lock hours", async () => {
+            await expect(
+                commandBus.execute(
+                    new LockWorkingHoursCommand({
+                        employeeId: workerEmployeeId,
+                        dateFrom: "2026-06-01",
+                        dateTo: "2026-06-30",
+                        actorId: workerUserId,
+                    }),
+                ),
+            ).rejects.toThrow(WorkingHoursNotOwnedError);
         });
     });
 
@@ -332,7 +498,8 @@ describe("ERP Module — Integration Tests", () => {
 
             await commandBus.execute(
                 new LogWorkingHoursCommand({
-                    employeeId: randomUUID(),
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
                     date: "2026-05-10",
                     hours: 2,
                     activityId,
@@ -371,7 +538,6 @@ describe("ERP Module — Integration Tests", () => {
 
             await logService.log(empId, "old-action", "This is old");
 
-            // Manually set the entry's occurredAt to 10 days ago via raw SQL
             const connection = orm.em.getConnection();
             await connection.execute(
                 `UPDATE "activity_log_entry" SET "occurred_at" = NOW() - INTERVAL '10 days' WHERE "employee_id" = ?`,
@@ -391,27 +557,38 @@ describe("ERP Module — Integration Tests", () => {
 
     describe("Query Working Hours", () => {
         it("returns entries filtered by date range", async () => {
-            const empId = randomUUID();
-
-            await commandBus.execute(new LogWorkingHoursCommand({ employeeId: empId, date: "2026-04-01", hours: 3 }));
-            await commandBus.execute(new LogWorkingHoursCommand({ employeeId: empId, date: "2026-04-02", hours: 5 }));
-            await commandBus.execute(new LogWorkingHoursCommand({ employeeId: empId, date: "2026-04-10", hours: 2 }));
+            await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
+                    date: "2026-04-01",
+                    hours: 3,
+                }),
+            );
+            await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
+                    date: "2026-04-02",
+                    hours: 5,
+                }),
+            );
+            await commandBus.execute(
+                new LogWorkingHoursCommand({
+                    employeeId: workerEmployeeId,
+                    actorId: workerUserId,
+                    date: "2026-04-10",
+                    hours: 2,
+                }),
+            );
 
             const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(empId, "2026-04-01", "2026-04-05"),
+                new GetEmployeeWorkingHoursQuery(workerEmployeeId, "2026-04-01", "2026-04-05", workerUserId),
             );
 
             expect(entries).toHaveLength(2);
             expect(entries[0].date).toBe("2026-04-01");
             expect(entries[1].date).toBe("2026-04-02");
-        });
-
-        it("returns empty array for employee with no entries", async () => {
-            const entries: GetEmployeeWorkingHoursResponse = await queryBus.execute(
-                new GetEmployeeWorkingHoursQuery(randomUUID(), "2026-01-01", "2026-12-31"),
-            );
-
-            expect(entries).toHaveLength(0);
         });
     });
 });

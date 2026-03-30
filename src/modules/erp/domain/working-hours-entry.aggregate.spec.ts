@@ -98,6 +98,24 @@ describe("WorkingHoursEntryAggregate", () => {
         });
     });
 
+    describe("forceEdit", () => {
+        it("updates hours on a LOCKED entry", () => {
+            const entry = logEntry({ hours: 4 });
+            entry.lock(randomUUID());
+
+            entry.forceEdit({ hours: 8 });
+
+            expect(entry.properties.hours).toBe(8);
+        });
+
+        it("validates after forceEdit — rejects invalid hours", () => {
+            const entry = logEntry();
+            entry.lock(randomUUID());
+
+            expect(() => entry.forceEdit({ hours: 30 })).toThrow();
+        });
+    });
+
     describe("ensureDeletable", () => {
         it("does not throw for an OPEN entry", () => {
             const entry = logEntry();

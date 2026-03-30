@@ -4,13 +4,13 @@ export class LockWorkingHoursCommand extends Command<void> {
     readonly employeeId: string;
     readonly dateFrom: string;
     readonly dateTo: string;
-    readonly lockedBy: string;
+    readonly actorId: string;
 
     constructor(props: CommandProps<LockWorkingHoursCommand>) {
         super(props);
         this.employeeId = props.employeeId;
         this.dateFrom = props.dateFrom;
         this.dateTo = props.dateTo;
-        this.lockedBy = props.lockedBy;
+        this.actorId = props.actorId;
     }
 }

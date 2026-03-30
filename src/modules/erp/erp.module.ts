@@ -88,6 +88,7 @@ export class ErpModule implements OnModuleInit {
             { key: "edit-working-hours", name: "Edit Working Hours" },
             { key: "delete-working-hours", name: "Delete Working Hours" },
             { key: "lock-working-hours", name: "Lock Working Hours" },
+            { key: "manage-working-hours", name: "Manage Working Hours (view/edit/lock anyone)" },
             { key: "view-working-hours", name: "View Working Hours" },
             { key: "view-activity-log", name: "View Activity Log" },
         ]);

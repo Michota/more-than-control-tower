@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
+import { CurrentUser, type RequestUser } from "../../shared/auth/decorators/current-user.decorator.js";
 import { CreateActivityCommand } from "./commands/create-activity/create-activity.command.js";
 import { CreateActivityRequest } from "./commands/create-activity/create-activity.request.dto.js";
 import { DeleteActivityCommand } from "./commands/delete-activity/delete-activity.command.js";
@@ -75,16 +76,23 @@ export class ErpHttpController {
     async getEmployeeWorkingHours(
         @Param() params: GetEmployeeWorkingHoursParams,
         @Query() query: GetEmployeeWorkingHoursQueryDto,
+        @CurrentUser() user: RequestUser,
     ): Promise<GetEmployeeWorkingHoursResponse> {
-        return this.queryBus.execute(new GetEmployeeWorkingHoursQuery(params.employeeId, query.dateFrom, query.dateTo));
+        return this.queryBus.execute(
+            new GetEmployeeWorkingHoursQuery(params.employeeId, query.dateFrom, query.dateTo, user.userId),
+        );
     }
 
     @RequirePermission(ErpPermission.LOG_WORKING_HOURS)
     @Post("working-hours")
-    async logWorkingHours(@Body() body: LogWorkingHoursRequest): Promise<{ entryId: string }> {
+    async logWorkingHours(
+        @Body() body: LogWorkingHoursRequest,
+        @CurrentUser() user: RequestUser,
+    ): Promise<{ entryId: string }> {
         const entryId = await this.commandBus.execute(
             new LogWorkingHoursCommand({
                 employeeId: body.employeeId,
+                actorId: user.userId,
                 date: body.date,
                 hours: body.hours,
                 note: body.note,
@@ -99,10 +107,12 @@ export class ErpHttpController {
     async editWorkingHours(
         @Param() params: EditWorkingHoursParams,
         @Body() body: EditWorkingHoursRequest,
+        @CurrentUser() user: RequestUser,
     ): Promise<void> {
         await this.commandBus.execute(
             new EditWorkingHoursCommand({
                 entryId: params.id,
+                actorId: user.userId,
                 hours: body.hours,
                 note: body.note,
                 activityId: body.activityId,
@@ -112,19 +122,22 @@ export class ErpHttpController {
 
     @RequirePermission(ErpPermission.DELETE_WORKING_HOURS)
     @Delete("working-hours/:id")
-    async deleteWorkingHours(@Param() params: DeleteWorkingHoursParams): Promise<void> {
-        await this.commandBus.execute(new DeleteWorkingHoursCommand({ entryId: params.id }));
+    async deleteWorkingHours(
+        @Param() params: DeleteWorkingHoursParams,
+        @CurrentUser() user: RequestUser,
+    ): Promise<void> {
+        await this.commandBus.execute(new DeleteWorkingHoursCommand({ entryId: params.id, actorId: user.userId }));
     }
 
     @RequirePermission(ErpPermission.LOCK_WORKING_HOURS)
     @Post("working-hours/lock")
-    async lockWorkingHours(@Body() body: LockWorkingHoursRequest): Promise<void> {
+    async lockWorkingHours(@Body() body: LockWorkingHoursRequest, @CurrentUser() user: RequestUser): Promise<void> {
         await this.commandBus.execute(
             new LockWorkingHoursCommand({
                 employeeId: body.employeeId,
                 dateFrom: body.dateFrom,
                 dateTo: body.dateTo,
-                lockedBy: body.lockedBy,
+                actorId: user.userId,
             }),
         );
     }

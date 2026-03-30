@@ -1,4 +1,8 @@
-import { ConflictDomainException, NotFoundDomainException } from "../../../libs/exceptions/http-domain.exceptions.js";
+import {
+    ConflictDomainException,
+    ForbiddenDomainException,
+    NotFoundDomainException,
+} from "../../../libs/exceptions/http-domain.exceptions.js";
 
 export class WorkingHoursEntryNotFoundError extends NotFoundDomainException {
     static readonly message = "Working hours entry not found.";
@@ -24,5 +28,14 @@ export class WorkingHoursEntryAlreadyLockedError extends ConflictDomainException
 
     constructor(id: string) {
         super(WorkingHoursEntryAlreadyLockedError.message, undefined, { id });
+    }
+}
+
+export class WorkingHoursNotOwnedError extends ForbiddenDomainException {
+    static readonly message = "You can only access your own working hours.";
+    public readonly code = "ERP.WORKING_HOURS.NOT_OWNED";
+
+    constructor(employeeId: string) {
+        super(WorkingHoursNotOwnedError.message, undefined, { employeeId });
     }
 }

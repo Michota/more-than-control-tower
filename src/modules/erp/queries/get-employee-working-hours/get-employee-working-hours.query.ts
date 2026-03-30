@@ -18,6 +18,7 @@ export class GetEmployeeWorkingHoursQuery extends Query<GetEmployeeWorkingHoursR
         public readonly employeeId: string,
         public readonly dateFrom: string,
         public readonly dateTo: string,
+        public readonly actorId: string,
     ) {
         super();
     }

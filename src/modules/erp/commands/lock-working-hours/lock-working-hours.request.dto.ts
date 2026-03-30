@@ -9,7 +9,4 @@ export class LockWorkingHoursRequest {
 
     @IsDateString()
     dateTo!: string;
-
-    @IsUUID()
-    lockedBy!: string;
 }

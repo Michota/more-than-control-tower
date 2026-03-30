@@ -7,6 +7,7 @@ export const ErpPermission = {
     DELETE_WORKING_HOURS: "erp:delete-working-hours",
     LOCK_WORKING_HOURS: "erp:lock-working-hours",
     VIEW_WORKING_HOURS: "erp:view-working-hours",
+    MANAGE_WORKING_HOURS: "erp:manage-working-hours",
     VIEW_ACTIVITY_LOG: "erp:view-activity-log",
 } as const;
 
