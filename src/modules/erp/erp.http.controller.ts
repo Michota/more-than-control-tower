@@ -38,6 +38,8 @@ import { CreditWalletCommand } from "./commands/credit-wallet/credit-wallet.comm
 import { CreditWalletRequest } from "./commands/credit-wallet/credit-wallet.request.dto.js";
 import { DebitWalletCommand } from "./commands/debit-wallet/debit-wallet.command.js";
 import { DebitWalletRequest } from "./commands/debit-wallet/debit-wallet.request.dto.js";
+import { ChargeWalletCommand } from "./commands/charge-wallet/charge-wallet.command.js";
+import { ChargeWalletRequest } from "./commands/charge-wallet/charge-wallet.request.dto.js";
 import {
     GetWalletBalanceQuery,
     type WalletBalanceResponse,
@@ -209,6 +211,19 @@ export class ErpHttpController {
                 employeeId: body.employeeId,
                 amount: body.amount,
                 method: body.method,
+                reason: body.reason,
+                actorId: user.userId,
+            }),
+        );
+    }
+
+    @RequirePermission(ErpPermission.MANAGE_WALLET)
+    @Post("wallet/charge")
+    async chargeWallet(@Body() body: ChargeWalletRequest, @CurrentUser() user: RequestUser): Promise<void> {
+        await this.commandBus.execute(
+            new ChargeWalletCommand({
+                employeeId: body.employeeId,
+                amount: body.amount,
                 reason: body.reason,
                 actorId: user.userId,
             }),

@@ -8,6 +8,7 @@ import { WalletTransactionMethod } from "./wallet-transaction-method.enum.js";
 import { InsufficientWalletBalanceError } from "./wallet.errors.js";
 import { WalletCreditedDomainEvent } from "./events/wallet-credited.domain-event.js";
 import { WalletDebitedDomainEvent } from "./events/wallet-debited.domain-event.js";
+import { WalletChargedDomainEvent } from "./events/wallet-charged.domain-event.js";
 
 export interface WalletProperties {
     employeeId: string;
@@ -96,6 +97,36 @@ export class WalletAggregate extends AggregateRoot<WalletProperties> {
 
         this.addEvent(
             new WalletDebitedDomainEvent({
+                aggregateId: this.id,
+                employeeId: this.properties.employeeId,
+                amount,
+                currency: this.properties.currency,
+                reason,
+            }),
+        );
+    }
+
+    /**
+     * Charge is a penalty deduction (e.g. damaged goods, theft).
+     * Unlike debit, it can push the balance below zero — the employee owes the company.
+     */
+    charge(amount: string, reason: string, initiatedBy: string): void {
+        const tx = WalletTransactionEntity.create({
+            walletId: this.id as string,
+            type: WalletTransactionType.CHARGE,
+            amount,
+            currency: this.properties.currency,
+            method: WalletTransactionMethod.OTHER,
+            reason,
+            initiatedBy,
+            occurredAt: new Date(),
+        });
+
+        this._balance = this._balance.sub(new Decimal(amount));
+        this._pendingTransactions.push(tx);
+
+        this.addEvent(
+            new WalletChargedDomainEvent({
                 aggregateId: this.id,
                 employeeId: this.properties.employeeId,
                 amount,

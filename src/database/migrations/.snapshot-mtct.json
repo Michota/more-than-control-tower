@@ -3588,7 +3588,7 @@
                     "scale": null,
                     "default": null,
                     "comment": null,
-                    "enumItems": ["CREDIT", "DEBIT"],
+                    "enumItems": ["CREDIT", "DEBIT", "CHARGE"],
                     "mappedType": "enum"
                 },
                 "amount": {
@@ -3701,8 +3701,8 @@
             "checks": [
                 {
                     "name": "wallet_transaction_type_check",
-                    "expression": "\"type\" in ('CREDIT', 'DEBIT')",
-                    "definition": "check (\"type\" in ('CREDIT', 'DEBIT'))",
+                    "expression": "\"type\" in ('CREDIT', 'DEBIT', 'CHARGE')",
+                    "definition": "check (\"type\" in ('CREDIT', 'DEBIT', 'CHARGE'))",
                     "columnName": "type"
                 },
                 {

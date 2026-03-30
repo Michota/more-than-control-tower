@@ -12,7 +12,7 @@ export class Migration20260330145052 extends Migration {
         );
 
         this.addSql(
-            `alter table "wallet_transaction" add constraint "wallet_transaction_type_check" check ("type" in ('CREDIT', 'DEBIT'));`,
+            `alter table "wallet_transaction" add constraint "wallet_transaction_type_check" check ("type" in ('CREDIT', 'DEBIT', 'CHARGE'));`,
         );
         this.addSql(
             `alter table "wallet_transaction" add constraint "wallet_transaction_method_check" check ("method" in ('CASH', 'TRANSFER', 'OTHER'));`,

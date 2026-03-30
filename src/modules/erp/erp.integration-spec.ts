@@ -33,6 +33,7 @@ import { ActivityLogService } from "./infrastructure/activity-log.service";
 import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cron";
 import { CreditWalletCommand } from "./commands/credit-wallet/credit-wallet.command";
 import { DebitWalletCommand } from "./commands/debit-wallet/debit-wallet.command";
+import { ChargeWalletCommand } from "./commands/charge-wallet/charge-wallet.command";
 import {
     GetWalletBalanceQuery,
     type WalletBalanceResponse,
@@ -710,6 +711,50 @@ describe("ERP Module — Integration Tests", () => {
             const balance = await queryBus.execute(new GetWalletBalanceQuery(randomUUID()));
 
             expect(balance).toBeNull();
+        });
+
+        it("charges a wallet (penalty deduction)", async () => {
+            await commandBus.execute(
+                new ChargeWalletCommand({
+                    employeeId: workerEmployeeId,
+                    amount: "25.00",
+                    reason: "Damaged goods",
+                    actorId: MANAGER_USER_ID,
+                }),
+            );
+
+            const balance: WalletBalanceResponse | null = await queryBus.execute(
+                new GetWalletBalanceQuery(workerEmployeeId),
+            );
+
+            expect(balance!.balance).toBe("95.00");
+        });
+
+        it("charge can push balance below zero", async () => {
+            await commandBus.execute(
+                new ChargeWalletCommand({
+                    employeeId: workerEmployeeId,
+                    amount: "200.00",
+                    reason: "Stolen equipment",
+                    actorId: MANAGER_USER_ID,
+                }),
+            );
+
+            const balance: WalletBalanceResponse | null = await queryBus.execute(
+                new GetWalletBalanceQuery(workerEmployeeId),
+            );
+
+            expect(Number(balance!.balance)).toBeLessThan(0);
+        });
+
+        it("charge appears in transaction history with CHARGE type", async () => {
+            const transactions: GetWalletTransactionsResponse = await queryBus.execute(
+                new GetWalletTransactionsQuery(workerEmployeeId),
+            );
+
+            const charges = transactions.filter((tx) => tx.type === "CHARGE");
+            expect(charges.length).toBeGreaterThanOrEqual(1);
+            expect(charges[0].reason).toBeDefined();
         });
     });
 });

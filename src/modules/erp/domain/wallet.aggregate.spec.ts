@@ -77,6 +77,36 @@ describe("WalletAggregate", () => {
         });
     });
 
+    describe("charge", () => {
+        it("deducts from balance", () => {
+            const wallet = createWallet();
+            wallet.credit("100.00", WalletTransactionMethod.CASH, "Fuel advance", managerId);
+
+            wallet.charge("30.00", "Damaged goods", managerId);
+
+            expect(wallet.balance.equals(new Decimal("70.00"))).toBe(true);
+            expect(wallet.pendingTransactions).toHaveLength(2);
+            expect(wallet.domainEvents).toHaveLength(2);
+        });
+
+        it("can push balance below zero", () => {
+            const wallet = createWallet();
+            wallet.credit("20.00", WalletTransactionMethod.CASH, "Small advance", managerId);
+
+            wallet.charge("50.00", "Stolen equipment", managerId);
+
+            expect(wallet.balance.equals(new Decimal("-30.00"))).toBe(true);
+        });
+
+        it("works on zero balance — employee owes the company", () => {
+            const wallet = createWallet();
+
+            wallet.charge("100.00", "Theft", managerId);
+
+            expect(wallet.balance.equals(new Decimal("-100.00"))).toBe(true);
+        });
+    });
+
     describe("reconstitute", () => {
         it("reconstitutes with precomputed balance", () => {
             const wallet = WalletAggregate.reconstitute(

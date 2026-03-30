@@ -16,7 +16,7 @@ export interface WalletTransactionProperties {
 
 const walletTransactionSchema = z.object({
     walletId: z.uuid(),
-    type: z.enum(["CREDIT", "DEBIT"]),
+    type: z.enum(["CREDIT", "DEBIT", "CHARGE"]),
     amount: z.string().refine((v) => Number(v) > 0, "Amount must be positive"),
     currency: z.string().length(3),
     method: z.enum(["CASH", "TRANSFER", "OTHER"]),

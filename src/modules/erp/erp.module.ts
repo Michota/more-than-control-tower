@@ -13,6 +13,7 @@ import { DeleteWorkingHoursCommandHandler } from "./commands/delete-working-hour
 import { LockWorkingHoursCommandHandler } from "./commands/lock-working-hours/lock-working-hours.command-handler.js";
 import { CreditWalletCommandHandler } from "./commands/credit-wallet/credit-wallet.command-handler.js";
 import { DebitWalletCommandHandler } from "./commands/debit-wallet/debit-wallet.command-handler.js";
+import { ChargeWalletCommandHandler } from "./commands/charge-wallet/charge-wallet.command-handler.js";
 import { ListActivitiesQueryHandler } from "./queries/list-activities/list-activities.query-handler.js";
 import { GetEmployeeWorkingHoursQueryHandler } from "./queries/get-employee-working-hours/get-employee-working-hours.query-handler.js";
 import { GetEmployeeActivityLogQueryHandler } from "./queries/get-employee-activity-log/get-employee-activity-log.query-handler.js";
@@ -52,6 +53,7 @@ import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cr
         LockWorkingHoursCommandHandler,
         CreditWalletCommandHandler,
         DebitWalletCommandHandler,
+        ChargeWalletCommandHandler,
         ListActivitiesQueryHandler,
         GetEmployeeWorkingHoursQueryHandler,
         GetEmployeeActivityLogQueryHandler,
