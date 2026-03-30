@@ -383,7 +383,7 @@ describe("OrderAggregate.assignStockEntry()", () => {
         expect(order.domainEvents[1]).toBeInstanceOf(OrderInProgressDomainEvent);
     });
 
-    it("stays PLACED when not all lines have stock entries", () => {
+    it("transitions to IN_PROGRESS on first stock entry even if not all lines have one", () => {
         const productA = createProduct();
         const productB = createProduct();
         const order = draftOrder([productA, productB]);
@@ -394,7 +394,7 @@ describe("OrderAggregate.assignStockEntry()", () => {
 
         order.assignStockEntry(productA.id as string, randomUUID());
 
-        expect(order.properties.status).toBe(OrderStatus.PLACED);
+        expect(order.properties.status).toBe(OrderStatus.IN_PROGRESS);
     });
 
     it("throws when order is DRAFTED", () => {

@@ -192,7 +192,8 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
      * Assigns a physical stock entry to an order line.
      * Only allowed on PLACED or IN_PROGRESS orders (stock is assigned after placement).
      * The order line must already have a goodId assigned.
-     * When all lines have stock entries assigned, the order auto-transitions to IN_PROGRESS.
+     * The first stock entry assignment transitions the order to IN_PROGRESS — physical goods
+     * are now committed and the order becomes non-cancellable.
      */
     assignStockEntry(productId: string, stockEntryId: string): void {
         if (this.properties.status !== OrderStatus.PLACED && this.properties.status !== OrderStatus.IN_PROGRESS) {
@@ -220,7 +221,7 @@ export class OrderAggregate extends AggregateRoot<OrderProperties> {
             }),
         );
 
-        if (this.properties.status === OrderStatus.PLACED && this.properties.orderLines.allLinesHaveStockEntry()) {
+        if (this.properties.status === OrderStatus.PLACED) {
             this.properties.status = OrderStatus.IN_PROGRESS;
 
             this.addEvent(

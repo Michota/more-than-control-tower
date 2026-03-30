@@ -18,7 +18,7 @@ DRAFTED ──→ PLACED ──→ IN_PROGRESS ──→ COMPLETED
 |---------------|-----------------------------------------------------------------------------|
 | `DRAFTED`     | Initial state. Order is being composed — lines can be added/changed/removed |
 | `PLACED`      | Order confirmed. Line modifications blocked. Good/stock entry assignment allowed |
-| `IN_PROGRESS` | All lines have physical stock entries assigned. Non-cancellable             |
+| `IN_PROGRESS` | At least one stock entry assigned. Physical goods committed. Non-cancellable |
 | `COMPLETED`   | Order successfully fulfilled                                                |
 | `CANCELLED`   | Order was cancelled (only from DRAFTED or PLACED)                           |
 
@@ -31,7 +31,7 @@ DRAFTED ──→ PLACED ──→ IN_PROGRESS ──→ COMPLETED
 | `DRAFTED`     | `PLACED`      | `PlaceOrderCommand`                               |
 | `DRAFTED`     | `CANCELLED`   | `CancelOrderCommand`                              |
 | `PLACED`      | `PLACED`      | `AssignGoodCommand`, `AssignStockEntryCommand` (partial) |
-| `PLACED`      | `IN_PROGRESS` | Auto-transition when all lines have stock entries  |
+| `PLACED`      | `IN_PROGRESS` | Auto-transition on first stock entry assignment    |
 | `PLACED`      | `COMPLETED`   | `CompleteOrderCommand`                             |
 | `PLACED`      | `CANCELLED`   | `CancelOrderCommand`                              |
 | `IN_PROGRESS` | `COMPLETED`   | `CompleteOrderCommand`                             |
@@ -100,7 +100,7 @@ Order lines can reference a Warehouse StockEntry (`stockEntryId`) — the physic
 - **1:1 reservation** — a stock entry can only be assigned to one active order at a time
 - **Requires goodId first** — the order line must have a Good assigned, and the stock entry's `goodId` must match
 - **Only on PLACED or IN_PROGRESS orders** — stock is assigned after placement, not during drafting
-- **Auto-transition** — when all lines have stock entries, order auto-transitions `PLACED → IN_PROGRESS`
+- **Auto-transition** — the first stock entry assignment transitions `PLACED → IN_PROGRESS` (physical goods are now committed)
 - **IN_PROGRESS is non-cancellable** — physical goods are committed
 
 ### Assignment Flow
@@ -115,7 +115,7 @@ Order lines can reference a Warehouse StockEntry (`stockEntryId`) — the physic
    c. Verify stock entry's goodId matches order line's goodId
    d. Check stock entry isn't already assigned to another active order
    e. Call order.assignStockEntry(productId, stockEntryId)
-   f. If all lines now have stock entries → auto-transition to IN_PROGRESS
+   f. If order is PLACED → auto-transition to IN_PROGRESS (first stock entry commits physical goods)
    g. Persist and publish events
 ```
 
