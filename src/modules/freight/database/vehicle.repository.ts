@@ -17,6 +17,16 @@ export class VehicleRepository implements VehicleRepositoryPort {
         return record ? this.mapper.toDomain(record) : null;
     }
 
+    async findByVin(vin: string): Promise<VehicleAggregate | null> {
+        const record = await this.em.findOne(Vehicle, { vin });
+        return record ? this.mapper.toDomain(record) : null;
+    }
+
+    async findByLicensePlate(licensePlate: string): Promise<VehicleAggregate | null> {
+        const record = await this.em.findOne(Vehicle, { licensePlate });
+        return record ? this.mapper.toDomain(record) : null;
+    }
+
     async findAll(): Promise<VehicleAggregate[]> {
         const records = await this.em.find(Vehicle, {});
         return records.map((r) => this.mapper.toDomain(r));

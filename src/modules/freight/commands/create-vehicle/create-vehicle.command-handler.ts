@@ -6,6 +6,7 @@ import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.
 import type { VehicleRepositoryPort } from "../../database/vehicle.repository.port.js";
 import { VehicleAttribute } from "../../domain/vehicle-attribute.value-object.js";
 import { VehicleAggregate } from "../../domain/vehicle.aggregate.js";
+import { VehicleLicensePlateAlreadyExistsError, VehicleVinAlreadyExistsError } from "../../domain/vehicle.errors.js";
 import { VEHICLE_REPOSITORY_PORT } from "../../freight.di-tokens.js";
 import { CreateVehicleCommand } from "./create-vehicle.command.js";
 
@@ -22,6 +23,19 @@ export class CreateVehicleCommandHandler implements ICommandHandler<CreateVehicl
     ) {}
 
     async execute(cmd: CreateVehicleCommand): Promise<IdOfEntity<VehicleAggregate>> {
+        if (cmd.vin) {
+            const existing = await this.vehicleRepo.findByVin(cmd.vin);
+            if (existing) {
+                throw new VehicleVinAlreadyExistsError(cmd.vin);
+            }
+        }
+        if (cmd.licensePlate) {
+            const existing = await this.vehicleRepo.findByLicensePlate(cmd.licensePlate);
+            if (existing) {
+                throw new VehicleLicensePlateAlreadyExistsError(cmd.licensePlate);
+            }
+        }
+
         const vehicle = VehicleAggregate.create({
             name: cmd.name,
             requiredLicenseCategory: cmd.requiredLicenseCategory,

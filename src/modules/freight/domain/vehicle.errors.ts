@@ -27,3 +27,19 @@ export class VehicleAlreadyActiveError extends ConflictDomainException {
         super(`Vehicle ${id} is already active`);
     }
 }
+
+export class VehicleVinAlreadyExistsError extends ConflictDomainException {
+    public readonly code = "VEHICLE.VIN_ALREADY_EXISTS";
+
+    constructor(vin: string) {
+        super(`Vehicle with VIN ${vin} already exists`);
+    }
+}
+
+export class VehicleLicensePlateAlreadyExistsError extends ConflictDomainException {
+    public readonly code = "VEHICLE.LICENSE_PLATE_ALREADY_EXISTS";
+
+    constructor(licensePlate: string) {
+        super(`Vehicle with license plate ${licensePlate} already exists`);
+    }
+}
