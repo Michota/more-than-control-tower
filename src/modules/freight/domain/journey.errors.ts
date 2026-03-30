@@ -68,6 +68,14 @@ export class JourneyNotAwaitingLoadingError extends ConflictDomainException {
     }
 }
 
+export class JourneyNotAwaitingDepartureError extends ConflictDomainException {
+    public readonly code = "JOURNEY.NOT_AWAITING_DEPARTURE";
+
+    constructor(id: string) {
+        super(`Journey ${id} is not awaiting departure`);
+    }
+}
+
 export class JourneyStopNotFoundError extends NotFoundDomainException {
     public readonly code = "JOURNEY.STOP_NOT_FOUND";
 

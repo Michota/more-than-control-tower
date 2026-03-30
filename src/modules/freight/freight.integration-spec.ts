@@ -16,7 +16,7 @@ import {
 } from "./domain/route.errors";
 import {
     JourneyAlreadyCompletedError,
-    JourneyCannotStartError,
+    JourneyNotAwaitingDepartureError,
     JourneyNotInProgressError,
     JourneyNotAwaitingLoadingError,
 } from "./domain/journey.errors";
@@ -49,6 +49,7 @@ import { CompleteJourneyCommand } from "./commands/complete-journey/complete-jou
 import { CancelJourneyCommand } from "./commands/cancel-journey/cancel-journey.command";
 import { RequestJourneyLoadingCommand } from "./commands/request-journey-loading/request-journey-loading.command";
 import { CancelJourneyLoadingCommand } from "./commands/cancel-journey-loading/cancel-journey-loading.command";
+import { MarkReadyForDepartureCommand } from "./commands/mark-ready-for-departure/mark-ready-for-departure.command";
 import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query";
 import { GetJourneyQuery } from "./queries/get-journey/get-journey.query";
 
@@ -59,6 +60,16 @@ import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastruc
 import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command";
 import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command";
 import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command";
+import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
+import { CancelTransferRequestsByRequesterCommand } from "../../shared/commands/cancel-transfer-requests-by-requester.command";
+
+/** No-op handler — Warehouse module not loaded in Freight integration tests */
+@CommandHandler(CancelTransferRequestsByRequesterCommand)
+class NoOpCancelTransferRequestsHandler implements ICommandHandler<CancelTransferRequestsByRequesterCommand> {
+    execute(): Promise<void> {
+        return Promise.resolve();
+    }
+}
 
 describe("Freight Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -75,6 +86,7 @@ describe("Freight Module — Integration Tests", () => {
                 FreightModule,
                 HrModule,
             ],
+            providers: [NoOpCancelTransferRequestsHandler],
         }).compile();
 
         await moduleRef.init();
@@ -511,6 +523,7 @@ describe("Freight Module — Integration Tests", () => {
                 }),
             );
 
+            await commandBus.execute(new MarkReadyForDepartureCommand({ journeyId }));
             await commandBus.execute(new StartJourneyCommand({ journeyId }));
 
             const journey = await queryBus.execute(new GetJourneyQuery(journeyId));
@@ -527,6 +540,7 @@ describe("Freight Module — Integration Tests", () => {
                     fromWarehouseId: "00000000-0000-0000-0000-000000000001",
                 }),
             );
+            await commandBus.execute(new MarkReadyForDepartureCommand({ journeyId }));
             await commandBus.execute(new StartJourneyCommand({ journeyId }));
 
             await commandBus.execute(new CompleteJourneyCommand({ journeyId }));
@@ -545,12 +559,12 @@ describe("Freight Module — Integration Tests", () => {
             expect(journey.status).toBe(JourneyStatus.CANCELLED);
         });
 
-        it("throws when starting a PLANNED journey (must request loading first)", async () => {
+        it("throws when starting a PLANNED journey (must go through loading + departure)", async () => {
             const routeId = await createRoute();
             const journeyId = await createJourney(routeId);
 
             await expect(commandBus.execute(new StartJourneyCommand({ journeyId }))).rejects.toThrow(
-                JourneyCannotStartError,
+                JourneyNotAwaitingDepartureError,
             );
         });
 
@@ -573,6 +587,7 @@ describe("Freight Module — Integration Tests", () => {
                     fromWarehouseId: "00000000-0000-0000-0000-000000000001",
                 }),
             );
+            await commandBus.execute(new MarkReadyForDepartureCommand({ journeyId }));
             await commandBus.execute(new StartJourneyCommand({ journeyId }));
             await commandBus.execute(new CompleteJourneyCommand({ journeyId }));
 

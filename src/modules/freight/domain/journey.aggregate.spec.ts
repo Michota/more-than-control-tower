@@ -8,9 +8,9 @@ import { JourneyAggregate } from "./journey.aggregate";
 import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
-    JourneyCannotStartError,
     JourneyMissingDriverError,
     JourneyMissingRsrError,
+    JourneyNotAwaitingDepartureError,
     JourneyNotAwaitingLoadingError,
     JourneyNotInProgressError,
     JourneyNotModifiableError,
@@ -133,10 +133,34 @@ describe("JourneyAggregate", () => {
         });
     });
 
-    describe("start()", () => {
-        it("transitions from AWAITING_LOADING to IN_PROGRESS", () => {
+    describe("markReadyForDeparture()", () => {
+        it("transitions from AWAITING_LOADING to AWAITING_DEPARTURE", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
+
+            expect(journey.status).toBe(JourneyStatus.AWAITING_DEPARTURE);
+        });
+
+        it("throws when not AWAITING_LOADING", () => {
+            const journey = createJourney();
+            expect(() => journey.markReadyForDeparture()).toThrow(JourneyNotAwaitingLoadingError);
+        });
+
+        it("throws when crew is incomplete (no DRIVER)", () => {
+            const journey = createJourney({
+                crewMembers: [new CrewMember({ employeeId: "r1", employeeName: "Jan", role: CrewMemberRole.RSR })],
+            });
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            expect(() => journey.markReadyForDeparture()).toThrow(JourneyMissingDriverError);
+        });
+    });
+
+    describe("start()", () => {
+        it("transitions from AWAITING_DEPARTURE to IN_PROGRESS", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.clearEvents();
             journey.start();
 
@@ -145,21 +169,29 @@ describe("JourneyAggregate", () => {
             expect(journey.domainEvents[0]).toBeInstanceOf(JourneyStartedDomainEvent);
         });
 
-        it("throws when PLANNED (must request loading first)", () => {
+        it("throws when PLANNED", () => {
             const journey = createJourney();
-            expect(() => journey.start()).toThrow(JourneyCannotStartError);
+            expect(() => journey.start()).toThrow(JourneyNotAwaitingDepartureError);
+        });
+
+        it("throws when AWAITING_LOADING (must mark ready first)", () => {
+            const journey = createJourney();
+            journey.requestLoading("2026-04-01T08:00:00.000Z");
+            expect(() => journey.start()).toThrow(JourneyNotAwaitingDepartureError);
         });
 
         it("throws when already in progress", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
-            expect(() => journey.start()).toThrow(JourneyCannotStartError);
+            expect(() => journey.start()).toThrow(JourneyNotAwaitingDepartureError);
         });
 
         it("throws when completed", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             journey.complete();
             expect(() => journey.start()).toThrow(JourneyAlreadyCompletedError);
@@ -176,6 +208,7 @@ describe("JourneyAggregate", () => {
         it("transitions from IN_PROGRESS to COMPLETED", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             journey.clearEvents();
             journey.complete();
@@ -193,6 +226,7 @@ describe("JourneyAggregate", () => {
         it("throws when already completed", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             journey.complete();
             expect(() => journey.complete()).toThrow(JourneyAlreadyCompletedError);
@@ -216,6 +250,7 @@ describe("JourneyAggregate", () => {
         it("cancels an IN_PROGRESS journey", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             journey.cancel();
             expect(journey.status).toBe(JourneyStatus.CANCELLED);
@@ -224,6 +259,7 @@ describe("JourneyAggregate", () => {
         it("throws when already completed", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             journey.complete();
             expect(() => journey.cancel()).toThrow(JourneyAlreadyCompletedError);
@@ -238,7 +274,7 @@ describe("JourneyAggregate", () => {
 
     // ─── Crew validation ─────────────────────────────────────
 
-    describe("crew validation on start()", () => {
+    describe("crew validation on markReadyForDeparture()", () => {
         it("throws when no DRIVER in crew", () => {
             const journey = createJourney({
                 crewMembers: [
@@ -246,7 +282,7 @@ describe("JourneyAggregate", () => {
                 ],
             });
             journey.requestLoading("2026-04-01T08:00:00.000Z");
-            expect(() => journey.start()).toThrow(JourneyMissingDriverError);
+            expect(() => journey.markReadyForDeparture()).toThrow(JourneyMissingDriverError);
         });
 
         it("throws when no RSR in crew", () => {
@@ -256,10 +292,10 @@ describe("JourneyAggregate", () => {
                 ],
             });
             journey.requestLoading("2026-04-01T08:00:00.000Z");
-            expect(() => journey.start()).toThrow(JourneyMissingRsrError);
+            expect(() => journey.markReadyForDeparture()).toThrow(JourneyMissingRsrError);
         });
 
-        it("allows start when same person is both DRIVER and RSR", () => {
+        it("allows departure when same person is both DRIVER and RSR", () => {
             const journey = createJourney({
                 crewMembers: [
                     new CrewMember({ employeeId: "e1", employeeName: "Jan Nowak", role: CrewMemberRole.DRIVER }),
@@ -267,8 +303,8 @@ describe("JourneyAggregate", () => {
                 ],
             });
             journey.requestLoading("2026-04-01T08:00:00.000Z");
-            journey.start();
-            expect(journey.status).toBe(JourneyStatus.IN_PROGRESS);
+            journey.markReadyForDeparture();
+            expect(journey.status).toBe(JourneyStatus.AWAITING_DEPARTURE);
         });
     });
 
@@ -296,6 +332,7 @@ describe("JourneyAggregate", () => {
         it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             expect(() =>
                 journey.setCrewMembers([
@@ -331,6 +368,7 @@ describe("JourneyAggregate", () => {
         it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             expect(() => journey.addStop(makeJourneyStop("c3", 2))).toThrow(JourneyNotModifiableError);
         });
@@ -353,6 +391,7 @@ describe("JourneyAggregate", () => {
         it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             expect(() => journey.removeStop("c1")).toThrow(JourneyNotModifiableError);
         });
@@ -389,6 +428,7 @@ describe("JourneyAggregate", () => {
         it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             expect(() => journey.assignOrderToStop("c1", "order-1")).toThrow(JourneyNotModifiableError);
         });
@@ -437,6 +477,7 @@ describe("JourneyAggregate", () => {
         it("throws when journey is IN_PROGRESS", () => {
             const journey = createJourney();
             journey.requestLoading("2026-04-01T08:00:00.000Z");
+            journey.markReadyForDeparture();
             journey.start();
             expect(() => journey.reorderStops([{ customerId: "c1", sequence: 0 }])).toThrow(JourneyNotModifiableError);
         });

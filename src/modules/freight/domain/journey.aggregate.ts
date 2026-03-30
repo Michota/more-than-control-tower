@@ -9,9 +9,9 @@ import { RouteStop } from "./route-stop.value-object.js";
 import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
-    JourneyCannotStartError,
     JourneyMissingDriverError,
     JourneyMissingRsrError,
+    JourneyNotAwaitingDepartureError,
     JourneyNotAwaitingLoadingError,
     JourneyNotInProgressError,
     JourneyNotModifiableError,
@@ -139,7 +139,8 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
     }
 
     private ensureModifiable(): void {
-        if (this.status !== JourneyStatus.PLANNED && this.status !== JourneyStatus.AWAITING_LOADING) {
+        const modifiable = [JourneyStatus.PLANNED, JourneyStatus.AWAITING_LOADING, JourneyStatus.AWAITING_DEPARTURE];
+        if (!modifiable.includes(this.status)) {
             throw new JourneyNotModifiableError(this.id as string);
         }
     }
@@ -183,12 +184,19 @@ export class JourneyAggregate extends AggregateRoot<JourneyProperties> {
         this.properties.loadingDeadline = undefined;
     }
 
-    start(): void {
-        this.ensureNotTerminal();
+    markReadyForDeparture(): void {
         if (this.status !== JourneyStatus.AWAITING_LOADING) {
-            throw new JourneyCannotStartError(this.id as string);
+            throw new JourneyNotAwaitingLoadingError(this.id as string);
         }
         this.ensureCrewComplete();
+        this.properties.status = JourneyStatus.AWAITING_DEPARTURE;
+    }
+
+    start(): void {
+        this.ensureNotTerminal();
+        if (this.status !== JourneyStatus.AWAITING_DEPARTURE) {
+            throw new JourneyNotAwaitingDepartureError(this.id as string);
+        }
         this.properties.status = JourneyStatus.IN_PROGRESS;
         this.addEvent(
             new JourneyStartedDomainEvent({

@@ -43,6 +43,7 @@ import { CancelJourneyCommand } from "./commands/cancel-journey/cancel-journey.c
 import { RequestJourneyLoadingCommand } from "./commands/request-journey-loading/request-journey-loading.command.js";
 import { RequestJourneyLoadingRequestDto } from "./commands/request-journey-loading/request-journey-loading.request.dto.js";
 import { CancelJourneyLoadingCommand } from "./commands/cancel-journey-loading/cancel-journey-loading.command.js";
+import { MarkReadyForDepartureCommand } from "./commands/mark-ready-for-departure/mark-ready-for-departure.command.js";
 import { AddJourneyStopCommand } from "./commands/add-journey-stop/add-journey-stop.command.js";
 import { AddJourneyStopRequestDto } from "./commands/add-journey-stop/add-journey-stop.request.dto.js";
 import { RemoveJourneyStopCommand } from "./commands/remove-journey-stop/remove-journey-stop.command.js";
@@ -330,9 +331,17 @@ export class FreightHttpController {
         return { transferRequestIds };
     }
 
+    @Post("journeys/:id/ready-for-departure")
+    @RequirePermission(FreightPermission.CREATE_JOURNEY)
+    @ApiOperation({ summary: "Mark journey as loaded and ready for departure (AWAITING_LOADING → AWAITING_DEPARTURE)" })
+    @ApiResponse({ status: 200 })
+    async markReadyForDeparture(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
+        await this.commandBus.execute(new MarkReadyForDepartureCommand({ journeyId: id }));
+    }
+
     @Post("journeys/:id/start")
     @RequirePermission(FreightPermission.START_JOURNEY)
-    @ApiOperation({ summary: "Start a journey (AWAITING_LOADING → IN_PROGRESS)" })
+    @ApiOperation({ summary: "Start a journey — vehicle departs (AWAITING_DEPARTURE → IN_PROGRESS)" })
     @ApiResponse({ status: 200 })
     async startJourney(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new StartJourneyCommand({ journeyId: id }));
