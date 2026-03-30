@@ -19,7 +19,7 @@ export default tseslint.config(
     },
     reactRefresh.configs.vite,
     {
-        files: ["**/routes/**/*.tsx", "**/components/ui/**/*.tsx", "**/lib/**/*.tsx"],
+        files: ["**/routes/**/*.tsx", "**/components/ui/**/*.tsx"],
         rules: {
             "react-refresh/only-export-components": "off",
         },
