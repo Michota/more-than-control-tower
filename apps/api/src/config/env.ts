@@ -1,6 +1,20 @@
 /* eslint-disable no-restricted-syntax */
-import "dotenv/config"; // <-- Must be before any module that reads process.env
+import { config } from "dotenv";
+import { existsSync } from "fs";
+import { resolve } from "path";
 import z from "zod";
+
+// Load .env from CWD first, then fall back to monorepo root
+const cwdEnv = resolve(process.cwd(), ".env");
+const rootEnv = resolve(process.cwd(), "../../.env");
+
+if (existsSync(cwdEnv)) {
+    config({ path: cwdEnv });
+} else if (existsSync(rootEnv)) {
+    config({ path: rootEnv });
+} else {
+    config(); // default dotenv behavior
+}
 
 const portSchema = z.coerce.number().int().min(1).max(65535).default(3000);
 
