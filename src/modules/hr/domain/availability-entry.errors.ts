@@ -51,3 +51,11 @@ export class AvailabilityLockedError extends BadRequestDomainException {
         super(`Availability for dates [${dates.join(", ")}] is locked because the time has already started`);
     }
 }
+
+export class AvailabilityDatePassedError extends BadRequestDomainException {
+    public readonly code = "AVAILABILITY.DATE_PASSED";
+
+    constructor(dates: string[]) {
+        super(`Cannot modify availability for past dates: [${dates.join(", ")}]`);
+    }
+}

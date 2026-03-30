@@ -7,7 +7,11 @@ import {
     GetEmployeePermissionsResponse,
 } from "../../../../shared/queries/get-employee-permissions.query.js";
 import { EmployeeNotFoundError } from "../../domain/employee.errors.js";
-import { AvailabilityLockedError, AvailabilityNotOwnedError } from "../../domain/availability-entry.errors.js";
+import {
+    AvailabilityDatePassedError,
+    AvailabilityLockedError,
+    AvailabilityNotOwnedError,
+} from "../../domain/availability-entry.errors.js";
 import { AvailabilityEntryAggregate } from "../../domain/availability-entry.aggregate.js";
 import type { EmployeeRepositoryPort } from "../../database/employee.repository.port.js";
 import type { AvailabilityEntryRepositoryPort } from "../../database/availability-entry.repository.port.js";
@@ -36,8 +40,14 @@ export class SetAvailabilityCommandHandler implements ICommandHandler<SetAvailab
             throw new EmployeeNotFoundError(cmd.employeeId);
         }
 
-        const canManage = await this.hasManagePermission(cmd.actorId);
         const dates = [...new Set(cmd.entries.map((e) => e.date))];
+        const today = new Date().toISOString().slice(0, 10);
+        const pastDates = dates.filter((d) => d < today);
+        if (pastDates.length > 0) {
+            throw new AvailabilityDatePassedError(pastDates);
+        }
+
+        const canManage = await this.hasManagePermission(cmd.actorId);
 
         if (!canManage) {
             if (employee.userId !== cmd.actorId) {
