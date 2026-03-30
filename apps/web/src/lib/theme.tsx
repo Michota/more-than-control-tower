@@ -17,10 +17,6 @@ function getSystemTheme(): ResolvedTheme {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function resolveTheme(theme: Theme): ResolvedTheme {
-    return theme === "system" ? getSystemTheme() : theme;
-}
-
 function applyTheme(resolved: ResolvedTheme) {
     document.documentElement.classList.toggle("dark", resolved === "dark");
 }
@@ -31,7 +27,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         return (stored as Theme) ?? "system";
     });
 
-    const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => resolveTheme(theme));
+    const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
+
+    const resolvedTheme = theme === "system" ? systemTheme : theme;
 
     const setTheme = useCallback((next: Theme) => {
         localStorage.setItem(STORAGE_KEY, next);
@@ -39,23 +37,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     useEffect(() => {
-        const resolved = resolveTheme(theme);
-        setResolvedTheme(resolved);
-        applyTheme(resolved);
-
-        if (theme !== "system") {
-            return;
-        }
-
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
-        const handler = () => {
-            const r = resolveTheme("system");
-            setResolvedTheme(r);
-            applyTheme(r);
-        };
+        const handler = () => setSystemTheme(mq.matches ? "dark" : "light");
         mq.addEventListener("change", handler);
         return () => mq.removeEventListener("change", handler);
-    }, [theme]);
+    }, []);
+
+    useEffect(() => {
+        applyTheme(resolvedTheme);
+    }, [resolvedTheme]);
 
     const value = useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme]);
 
