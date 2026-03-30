@@ -9,15 +9,12 @@ export interface AvailabilityEntryInput {
 export class SetAvailabilityCommand extends Command<void> {
     readonly employeeId: string;
     readonly entries: AvailabilityEntryInput[];
-    readonly setByManager: boolean;
-    /** System user ID of the authenticated user making the request */
-    readonly requestedByUserId: string;
+    readonly actorId: string;
 
     constructor(props: CommandProps<SetAvailabilityCommand>) {
         super(props);
         this.employeeId = props.employeeId;
         this.entries = props.entries;
-        this.setByManager = props.setByManager;
-        this.requestedByUserId = props.requestedByUserId;
+        this.actorId = props.actorId;
     }
 }

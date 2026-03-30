@@ -419,6 +419,27 @@ describe("HR Module — Integration Tests", () => {
 
     // ─── Availability ────────────────────────────────────────
 
+    const MANAGER_USER_ID = "manager-user-001";
+
+    describe("Availability — manager fixture setup", () => {
+        it("creates a manager with hr:manage-availability permission", async () => {
+            await ensurePosition("hr:manager", "HR Manager", ["hr:manage-availability"]);
+            const managerId = await createEmployee({
+                firstName: "Manager",
+                lastName: "Test",
+                skipUniquenessCheck: true,
+            });
+            await orm.em.nativeUpdate("Employee", { id: managerId }, { userId: MANAGER_USER_ID });
+            orm.em.clear();
+            await commandBus.execute(
+                new AssignPositionCommand({ employeeId: managerId, positionKey: "hr:manager", assignedBy: "system" }),
+            );
+
+            const manager = await getEmployee(managerId);
+            expect(manager!.positionAssignments.some((pa) => pa.positionKey === "hr:manager")).toBe(true);
+        });
+    });
+
     describe("Set Availability", () => {
         it("sets availability entries for an employee (by employee → PENDING_APPROVAL)", async () => {
             const { employeeId: id, userId } = await createLinkedEmployee();
@@ -430,8 +451,7 @@ describe("HR Module — Integration Tests", () => {
                         { date: "2026-04-01", startTime: "08:00", endTime: "16:00" },
                         { date: "2026-04-02", startTime: "09:00", endTime: "17:00" },
                     ],
-                    setByManager: false,
-                    requestedByUserId: userId,
+                    actorId: userId,
                 }),
             );
 
@@ -452,8 +472,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-04-03", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -472,8 +491,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-04-05", startTime: "08:00", endTime: "12:00" }],
-                    setByManager: false,
-                    requestedByUserId: userId,
+                    actorId: userId,
                 }),
             );
 
@@ -481,8 +499,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-04-05", startTime: "10:00", endTime: "18:00" }],
-                    setByManager: false,
-                    requestedByUserId: userId,
+                    actorId: userId,
                 }),
             );
 
@@ -502,8 +519,7 @@ describe("HR Module — Integration Tests", () => {
                     new SetAvailabilityCommand({
                         employeeId: "00000000-0000-0000-0000-000000000000",
                         entries: [{ date: "2026-04-01", startTime: "08:00", endTime: "16:00" }],
-                        setByManager: false,
-                        requestedByUserId: "test-user",
+                        actorId: MANAGER_USER_ID,
                     }),
                 ),
             ).rejects.toThrow(EmployeeNotFoundError);
@@ -517,8 +533,7 @@ describe("HR Module — Integration Tests", () => {
                     new SetAvailabilityCommand({
                         employeeId: id,
                         entries: [{ date: "2026-04-10", startTime: "08:00", endTime: "16:00" }],
-                        setByManager: false,
-                        requestedByUserId: "someone-else",
+                        actorId: "someone-else",
                     }),
                 ),
             ).rejects.toThrow(AvailabilityNotOwnedError);
@@ -532,8 +547,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2020-01-01", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -543,8 +557,7 @@ describe("HR Module — Integration Tests", () => {
                     new SetAvailabilityCommand({
                         employeeId: id,
                         entries: [{ date: "2020-01-01", startTime: "10:00", endTime: "18:00" }],
-                        setByManager: false,
-                        requestedByUserId: userId,
+                        actorId: userId,
                     }),
                 ),
             ).rejects.toThrow(AvailabilityLockedError);
@@ -557,8 +570,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2020-02-01", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -567,8 +579,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2020-02-01", startTime: "10:00", endTime: "18:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -589,8 +600,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-05-01", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: false,
-                    requestedByUserId: userId,
+                    actorId: userId,
                 }),
             );
 
@@ -612,8 +622,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-05-02", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -631,8 +640,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-06-01", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: false,
-                    requestedByUserId: userId,
+                    actorId: userId,
                 }),
             );
 
@@ -653,8 +661,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-06-02", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -672,8 +679,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-10-01", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -693,8 +699,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-10-02", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -705,8 +710,7 @@ describe("HR Module — Integration Tests", () => {
                     new SetAvailabilityCommand({
                         employeeId: id,
                         entries: [{ date: "2026-10-02", startTime: "10:00", endTime: "18:00" }],
-                        setByManager: false,
-                        requestedByUserId: userId,
+                        actorId: userId,
                     }),
                 ),
             ).rejects.toThrow(AvailabilityLockedError);
@@ -719,8 +723,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-10-03", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -730,8 +733,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-10-03", startTime: "10:00", endTime: "18:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -750,8 +752,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-10-04", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -775,8 +776,7 @@ describe("HR Module — Integration Tests", () => {
                         { date: "2026-07-15", startTime: "08:00", endTime: "16:00" },
                         { date: "2026-08-01", startTime: "08:00", endTime: "16:00" },
                     ],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -797,8 +797,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-09-01", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: true,
-                    requestedByUserId: "test-user",
+                    actorId: MANAGER_USER_ID,
                 }),
             );
 
@@ -816,8 +815,7 @@ describe("HR Module — Integration Tests", () => {
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [{ date: "2026-09-02", startTime: "08:00", endTime: "16:00" }],
-                    setByManager: false,
-                    requestedByUserId: userId,
+                    actorId: userId,
                 }),
             );
 

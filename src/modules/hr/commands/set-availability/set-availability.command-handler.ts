@@ -1,7 +1,11 @@
 import { Inject } from "@nestjs/common";
-import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
+import { CommandHandler, EventBus, ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
+import {
+    GetEmployeePermissionsQuery,
+    GetEmployeePermissionsResponse,
+} from "../../../../shared/queries/get-employee-permissions.query.js";
 import { EmployeeNotFoundError } from "../../domain/employee.errors.js";
 import { AvailabilityLockedError, AvailabilityNotOwnedError } from "../../domain/availability-entry.errors.js";
 import { AvailabilityEntryAggregate } from "../../domain/availability-entry.aggregate.js";
@@ -23,6 +27,7 @@ export class SetAvailabilityCommandHandler implements ICommandHandler<SetAvailab
         private readonly uow: UnitOfWorkPort,
 
         private readonly eventBus: EventBus,
+        private readonly queryBus: QueryBus,
     ) {}
 
     async execute(cmd: SetAvailabilityCommand): Promise<void> {
@@ -31,10 +36,11 @@ export class SetAvailabilityCommandHandler implements ICommandHandler<SetAvailab
             throw new EmployeeNotFoundError(cmd.employeeId);
         }
 
+        const canManage = await this.hasManagePermission(cmd.actorId);
         const dates = [...new Set(cmd.entries.map((e) => e.date))];
 
-        if (!cmd.setByManager) {
-            if (employee.userId !== cmd.requestedByUserId) {
+        if (!canManage) {
+            if (employee.userId !== cmd.actorId) {
                 throw new AvailabilityNotOwnedError(cmd.employeeId);
             }
 
@@ -54,7 +60,7 @@ export class SetAvailabilityCommandHandler implements ICommandHandler<SetAvailab
                 date: e.date,
                 startTime: e.startTime,
                 endTime: e.endTime,
-                setByManager: cmd.setByManager,
+                setByManager: canManage,
             }),
         );
 
@@ -67,5 +73,13 @@ export class SetAvailabilityCommandHandler implements ICommandHandler<SetAvailab
             }
             entry.clearEvents();
         }
+    }
+
+    private async hasManagePermission(userId: string): Promise<boolean> {
+        const permissions = await this.queryBus.execute<
+            GetEmployeePermissionsQuery,
+            GetEmployeePermissionsResponse | null
+        >(new GetEmployeePermissionsQuery(userId));
+        return permissions?.effectivePermissions.includes("hr:manage-availability") ?? false;
     }
 }
