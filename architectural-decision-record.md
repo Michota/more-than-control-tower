@@ -912,3 +912,58 @@ Consumers: Auth module (activation emails, password reset), potentially Accounta
 ## Status
 
 Not yet implemented. Tracked here so the port is designed when email sending is first needed rather than bolted on ad-hoc.
+
+---
+
+# ADR-020: Order Fulfillment as a Separate Entity in the Delivery Module
+
+**Status:** Accepted — not yet implemented
+**Date:** 2026-03-30
+
+---
+
+## Context
+
+The Sales module's `OrderAggregate` manages the commercial lifecycle of an order: drafting, placement, pricing, cancellation, and completion. Once an order reaches `IN_PROGRESS` status (first stock entry assigned), physical execution begins — stock must be collected, loaded onto a vehicle, transported, and handed over to the customer.
+
+These physical execution stages (stock collecting, awaiting dispatch, loaded, in delivery, delivered) are operational concerns that belong to the Delivery module, not Sales. Embedding them in the Sales `OrderAggregate` would:
+
+1. Couple Sales to physical logistics concepts (truck loading, route execution, handover)
+2. Bloat the Order with state that only Delivery/Freight actors care about
+3. Make the Order aggregate responsible for two distinct lifecycles (commercial + physical)
+
+## Decision
+
+Physical order execution is modeled as a **Fulfillment** entity (or aggregate) in the **Delivery module**, separate from the Sales Order.
+
+### Responsibilities
+
+**Sales Order** — commercial lifecycle only:
+- DRAFTED → PLACED → IN_PROGRESS → COMPLETED / CANCELLED
+- Knows: what was ordered, for whom, at what price, which stock entries are assigned
+- Does NOT know: how goods are physically collected, loaded, transported, or delivered
+
+**Fulfillment (Delivery module)** — physical execution lifecycle:
+- Created when a Sales Order enters IN_PROGRESS (reacts to `OrderInProgressDomainEvent`)
+- Tracks substages: STOCK_COLLECTING → AWAITING_DISPATCH → LOADED → IN_DELIVERY → DELIVERED
+- Owns: loading plans, route assignment, delivery confirmation, signature capture
+- Completes the Sales Order (dispatches `CompleteOrderCommand`) when fulfillment reaches DELIVERED
+
+### Communication
+
+- Delivery listens to `OrderInProgressDomainEvent` → creates Fulfillment
+- Delivery reads order data via `GetOrderQuery` (shared query, Sales handles)
+- Delivery completes the order via `CompleteOrderCommand` (command bus)
+- Sales does not import or know about Fulfillment internals
+
+### Why not a substatus on Order?
+
+Adding an `inProgressStage` enum to the Sales Order would work short-term but violates bounded context separation. The stages are Delivery domain concepts — Sales actors (back-office workers, customers) don't need to know if goods are "loaded on truck" vs "awaiting dispatch." They care about: is my order placed, is it being worked on, is it done?
+
+Delivery actors (dispatchers, drivers, warehouse workers) need the granular stages — and they operate through the Delivery module's own UI and workflows.
+
+## Consequences
+
+- The Delivery module must be built before the full order execution flow works end-to-end
+- Sales Order completion is triggered by Delivery, not by a Sales actor directly (though manual completion remains possible for edge cases)
+- Querying "where is my order?" requires joining Sales Order status with Delivery Fulfillment stage — this can be done via a cross-module query or a dedicated read model
