@@ -11,7 +11,7 @@ This app lives in `apps/web/` inside a pnpm monorepo. Shared workspace packages:
 
 ## Stack
 
-- **React 19** with **Vite** (no SSR, SPA only)
+- **React 19** with **Vite** (SPA, PWA via `vite-plugin-pwa`)
 - **TanStack Router** — file-based routing in `src/routes/`
 - **TanStack Query v5** — server state management
 - **TanStack Form** — form handling
