@@ -2,6 +2,7 @@ import { EntityManager, FilterQuery } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { Paginated, PaginatedQueryParameters } from "../../../libs/ports/repository.port.js";
 import { StockTransferRequestAggregate } from "../domain/stock-transfer-request.aggregate.js";
+import { StockTransferRequestStatus } from "../domain/stock-transfer-request-status.enum.js";
 import {
     FindTransferRequestsParams,
     StockTransferRequestRepositoryPort,
@@ -83,6 +84,14 @@ export class StockTransferRequestRepository implements StockTransferRequestRepos
         }
         this.em.remove(record);
         return true;
+    }
+
+    async findPendingByRequestedBy(requestedBy: string): Promise<StockTransferRequestAggregate[]> {
+        const records = await this.em.find(StockTransferRequest, {
+            status: StockTransferRequestStatus.PENDING,
+            requestedBy,
+        });
+        return records.map((r) => this.mapper.toDomain(r));
     }
 
     async transaction<T>(handler: () => Promise<T>): Promise<T> {

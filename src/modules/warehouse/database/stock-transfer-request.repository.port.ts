@@ -12,4 +12,5 @@ export interface FindTransferRequestsParams {
 
 export interface StockTransferRequestRepositoryPort extends RepositoryPort<StockTransferRequestAggregate> {
     findFiltered(params: FindTransferRequestsParams): Promise<Paginated<StockTransferRequestAggregate>>;
+    findPendingByRequestedBy(requestedBy: string): Promise<StockTransferRequestAggregate[]>;
 }

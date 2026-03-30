@@ -1,7 +1,8 @@
 import { Inject } from "@nestjs/common";
-import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
+import { CommandBus, CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
+import { CancelTransferRequestsByRequesterCommand } from "../../../../shared/commands/cancel-transfer-requests-by-requester.command.js";
 import type { JourneyRepositoryPort } from "../../database/journey.repository.port.js";
 import { JourneyNotFoundError } from "../../domain/journey.errors.js";
 import { JOURNEY_REPOSITORY_PORT } from "../../freight.di-tokens.js";
@@ -15,6 +16,8 @@ export class CancelJourneyLoadingCommandHandler implements ICommandHandler<Cance
 
         @Inject(UNIT_OF_WORK_PORT)
         private readonly uow: UnitOfWorkPort,
+
+        private readonly commandBus: CommandBus,
     ) {}
 
     async execute(cmd: CancelJourneyLoadingCommand): Promise<void> {
@@ -27,5 +30,12 @@ export class CancelJourneyLoadingCommandHandler implements ICommandHandler<Cance
 
         await this.journeyRepo.save(journey);
         await this.uow.commit();
+
+        // Cascade: cancel all pending stock transfer requests created for this journey
+        await this.commandBus.execute(
+            new CancelTransferRequestsByRequesterCommand({
+                requestedBy: `freight:journey:${journey.id as string}`,
+            }),
+        );
     }
 }

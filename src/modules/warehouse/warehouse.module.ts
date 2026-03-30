@@ -33,6 +33,7 @@ import { DetachCodeFromGoodCommandHandler } from "./commands/detach-code-from-go
 import { RequestStockTransferCommandHandler } from "./commands/request-stock-transfer/request-stock-transfer.command-handler.js";
 import { FulfillStockTransferRequestCommandHandler } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command-handler.js";
 import { CancelStockTransferRequestCommandHandler } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command-handler.js";
+import { CancelTransferRequestsByRequesterCommandHandler } from "./commands/cancel-transfer-requests-by-requester/cancel-transfer-requests-by-requester.command-handler.js";
 import { RejectStockTransferRequestCommandHandler } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.command-handler.js";
 import { GetGoodQueryHandler } from "./queries/get-good/get-good.query-handler.js";
 import { GetGoodsReceiptQueryHandler } from "./queries/get-goods-receipt/get-goods-receipt.query-handler.js";
@@ -104,6 +105,7 @@ import { WarehouseHttpController } from "./warehouse.http.controller.js";
         RequestStockTransferCommandHandler,
         FulfillStockTransferRequestCommandHandler,
         CancelStockTransferRequestCommandHandler,
+        CancelTransferRequestsByRequesterCommandHandler,
         RejectStockTransferRequestCommandHandler,
         GetGoodQueryHandler,
         GetGoodsReceiptQueryHandler,
