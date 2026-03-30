@@ -17,6 +17,7 @@
         "migration:up": "pnpm --filter @mtct/api migration:up",
         "migration:down": "pnpm --filter @mtct/api migration:down",
         "seed": "pnpm --filter @mtct/api seed",
+        "cli": "pnpm --filter @mtct/api cli",
         "prepare": "husky"
     },
     "devDependencies": {
