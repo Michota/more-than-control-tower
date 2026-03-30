@@ -43,7 +43,7 @@ export class RouteRepository implements RouteRepositoryPort {
     async save(entity: RouteAggregate | RouteAggregate[]): Promise<void> {
         const routes = Array.isArray(entity) ? entity : [entity];
         for (const route of routes) {
-            await this.em.upsert(Route, this.mapper.toPersistence(route));
+            await this.em.upsert(Route, this.mapper.toPersistence(route) as any);
         }
     }
 

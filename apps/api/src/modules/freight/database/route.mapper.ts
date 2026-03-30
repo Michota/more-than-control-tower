@@ -17,8 +17,8 @@ export class RouteMapper implements Mapper<RouteAggregate, RequiredEntityData<Ro
         if (record.scheduleType) {
             schedule = new RouteSchedule({
                 type: record.scheduleType as ScheduleType,
-                daysOfWeek: record.scheduleDaysOfWeek ?? undefined,
-                daysOfMonth: record.scheduleDaysOfMonth ?? undefined,
+                daysOfWeek: record.scheduleDaysOfWeek?.map(Number) ?? undefined,
+                daysOfMonth: record.scheduleDaysOfMonth?.map(Number) ?? undefined,
                 specificDates: record.scheduleSpecificDates ?? undefined,
             });
         }
@@ -79,8 +79,8 @@ export class RouteMapper implements Mapper<RouteAggregate, RequiredEntityData<Ro
                 sequence: s.sequence,
             })),
             scheduleType: domain.schedule?.type ?? null,
-            scheduleDaysOfWeek: domain.schedule?.daysOfWeek ?? null,
-            scheduleDaysOfMonth: domain.schedule?.daysOfMonth ?? null,
+            scheduleDaysOfWeek: domain.schedule?.daysOfWeek?.map(String) ?? null,
+            scheduleDaysOfMonth: domain.schedule?.daysOfMonth?.map(String) ?? null,
             scheduleSpecificDates: domain.schedule?.specificDates ?? null,
         };
     }

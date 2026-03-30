@@ -143,7 +143,7 @@ describe("Freight Module — Integration Tests", () => {
             }),
         );
         // Link employee to userId directly (bypasses SystemModule user lookup)
-        await orm.em.nativeUpdate("Employee", { id: employeeId }, { userId });
+        await orm.em.nativeUpdate("Employee" as any, { id: employeeId }, { userId });
         orm.em.clear();
         await commandBus.execute(new AssignPositionCommand({ employeeId, positionKey, assignedBy: "test-admin" }));
         return { employeeId, userId };

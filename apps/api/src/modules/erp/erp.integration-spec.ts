@@ -95,7 +95,7 @@ describe("ERP Module — Integration Tests", () => {
                 phone: "+48000000001",
             }),
         );
-        await orm.em.nativeUpdate("Employee", { id: managerEmployeeId }, { userId: MANAGER_USER_ID });
+        await orm.em.nativeUpdate("Employee" as any, { id: managerEmployeeId }, { userId: MANAGER_USER_ID });
         orm.em.clear();
         await commandBus.execute(
             new AssignPositionCommand({
@@ -115,7 +115,7 @@ describe("ERP Module — Integration Tests", () => {
             }),
         );
         workerUserId = `erp-worker-user-${randomUUID().slice(0, 8)}`;
-        await orm.em.nativeUpdate("Employee", { id: workerEmployeeId }, { userId: workerUserId });
+        await orm.em.nativeUpdate("Employee" as any, { id: workerEmployeeId }, { userId: workerUserId });
         orm.em.clear();
     });
 

@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id";
 import { StockTransferRequestAggregate } from "./stock-transfer-request.aggregate";
 import { StockTransferRequestStatus } from "./stock-transfer-request-status.enum";
 import { StockTransferRequestNotPendingError } from "./stock-transfer-request.errors";
@@ -115,7 +116,7 @@ describe("StockTransferRequestAggregate", () => {
 
     describe("reconstitute()", () => {
         it("reconstitutes from persisted data", () => {
-            const id = randomUUID();
+            const id = generateEntityId();
             const props = validProps();
             const request = StockTransferRequestAggregate.reconstitute({
                 id,

@@ -55,7 +55,9 @@ export class AvailabilityEntryRepository implements AvailabilityEntryRepositoryP
             const existing = await this.em.findOne(AvailabilityEntry, { id: data.id });
 
             if (existing) {
-                this.em.assign(existing, data);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id: _, ...updateData } = data as Record<string, unknown>;
+                this.em.assign(existing, updateData);
             } else {
                 this.em.persist(this.em.create(AvailabilityEntry, data));
             }

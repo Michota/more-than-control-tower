@@ -21,8 +21,12 @@ export class RouteResponseDto {
     /** @example ["550e8400-e29b-41d4-a716-446655440000"] */
     vehicleIds!: string[];
     crewMembers!: { employeeId: string; employeeName: string; role: string }[];
-    /** @example ["550e8400-e29b-41d4-a716-446655440000"] */
-    visitPointIds!: string[];
+    stops!: {
+        customerId: string;
+        customerName: string;
+        address: { country: string; postalCode: string; state: string; city: string; street: string };
+        sequence: number;
+    }[];
 
     @ApiProperty({ type: RouteScheduleResponseDto, required: false })
     schedule?: RouteScheduleResponseDto;

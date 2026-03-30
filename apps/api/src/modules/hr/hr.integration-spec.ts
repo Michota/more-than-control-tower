@@ -107,7 +107,7 @@ describe("HR Module — Integration Tests", () => {
         linkedUserCounter++;
         const userId = `test-user-${linkedUserCounter}`;
         const employeeId = await createEmployee({ skipUniquenessCheck: true });
-        await orm.em.nativeUpdate("Employee", { id: employeeId }, { userId });
+        await orm.em.nativeUpdate("Employee" as any, { id: employeeId }, { userId });
         orm.em.clear();
         return { employeeId, userId };
     }
@@ -430,7 +430,7 @@ describe("HR Module — Integration Tests", () => {
                 lastName: "Test",
                 skipUniquenessCheck: true,
             });
-            await orm.em.nativeUpdate("Employee", { id: managerId }, { userId: MANAGER_USER_ID });
+            await orm.em.nativeUpdate("Employee" as any, { id: managerId }, { userId: MANAGER_USER_ID });
             orm.em.clear();
             await commandBus.execute(
                 new AssignPositionCommand({ employeeId: managerId, positionKey: "hr:manager", assignedBy: "system" }),

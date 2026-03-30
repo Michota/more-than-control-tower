@@ -2,6 +2,7 @@ import { CodeAggregate } from "./code.aggregate";
 import { CodeType } from "./code-type.enum";
 import { uuidRegex } from "src/shared/utils/uuid-regex";
 import { randomUUID } from "crypto";
+import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id";
 
 describe("CodeAggregate", () => {
     const validGoodId = randomUUID();
@@ -77,7 +78,7 @@ describe("CodeAggregate", () => {
 
     describe("reconstitute()", () => {
         it("reconstitutes a code from persisted data", () => {
-            const id = randomUUID();
+            const id = generateEntityId();
             const code = CodeAggregate.reconstitute({
                 id,
                 properties: {

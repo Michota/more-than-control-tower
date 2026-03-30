@@ -14,7 +14,7 @@ export class WorkingHoursEntryMapper implements Mapper<
             id: record.id as EntityId,
             properties: {
                 employeeId: record.employeeId,
-                date: record.date instanceof Date ? record.date.toISOString().slice(0, 10) : String(record.date),
+                date: String(record.date),
                 hours: Number(record.hours),
                 note: record.note ?? undefined,
                 activityId: record.activityId ?? undefined,
