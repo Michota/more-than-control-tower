@@ -1,10 +1,14 @@
 import { Inject } from "@nestjs/common";
-import { CommandHandler, EventBus, ICommandHandler } from "@nestjs/cqrs";
+import { CommandHandler, EventBus, ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
+import {
+    CanStockEntryBeModifiedQuery,
+    type CanStockEntryBeModifiedResponse,
+} from "../../../../shared/queries/can-stock-entry-be-modified.query.js";
 import type { GoodRepositoryPort } from "../../database/good.repository.port.js";
 import type { StockEntryRepositoryPort } from "../../database/stock-entry.repository.port.js";
-import { StockEntryNotFoundError } from "../../domain/good.errors.js";
+import { StockEntryNotFoundError, StockEntryReservedError } from "../../domain/good.errors.js";
 import { GOOD_REPOSITORY_PORT, STOCK_ENTRY_REPOSITORY_PORT } from "../../warehouse.di-tokens.js";
 import { RemoveStockCommand } from "./remove-stock.command.js";
 
@@ -20,6 +24,7 @@ export class RemoveStockCommandHandler implements ICommandHandler<RemoveStockCom
         @Inject(UNIT_OF_WORK_PORT)
         private readonly uow: UnitOfWorkPort,
 
+        private readonly queryBus: QueryBus,
         private readonly eventBus: EventBus,
     ) {}
 
@@ -31,6 +36,14 @@ export class RemoveStockCommandHandler implements ICommandHandler<RemoveStockCom
             const entry = await this.stockRepo.findByGoodAndWarehouse(goodId, cmd.warehouseId);
             if (!entry) {
                 throw new StockEntryNotFoundError(goodId, cmd.warehouseId);
+            }
+
+            const check: CanStockEntryBeModifiedResponse = await this.queryBus.execute(
+                new CanStockEntryBeModifiedQuery(entry.id as string),
+            );
+
+            if (!check.allowed) {
+                throw new StockEntryReservedError(entry.id as string, check.reason);
             }
 
             entry.remove(cmd.quantity, cmd.reason, cmd.note);

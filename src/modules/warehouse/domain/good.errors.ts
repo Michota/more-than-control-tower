@@ -115,3 +115,11 @@ export class InsufficientStockError extends ConflictDomainException {
         super(`Insufficient stock for good ${goodId}: requested ${requested}, available ${available}`);
     }
 }
+
+export class StockEntryReservedError extends ConflictDomainException {
+    public readonly code = "STOCK_ENTRY.RESERVED";
+
+    constructor(stockEntryId: string, reason?: string) {
+        super(`Stock entry ${stockEntryId} cannot be modified${reason ? `: ${reason}` : ""}`);
+    }
+}
