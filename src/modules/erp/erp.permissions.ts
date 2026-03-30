@@ -9,6 +9,8 @@ export const ErpPermission = {
     VIEW_WORKING_HOURS: "erp:view-working-hours",
     MANAGE_WORKING_HOURS: "erp:manage-working-hours",
     VIEW_ACTIVITY_LOG: "erp:view-activity-log",
+    MANAGE_WALLET: "erp:manage-wallet",
+    VIEW_WALLET: "erp:view-wallet",
 } as const;
 
 export type ErpPermission = (typeof ErpPermission)[keyof typeof ErpPermission];

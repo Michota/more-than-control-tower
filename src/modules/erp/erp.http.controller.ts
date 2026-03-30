@@ -34,6 +34,22 @@ import {
     GetEmployeeActivityLogParams,
     GetEmployeeActivityLogQueryDto,
 } from "./queries/get-employee-activity-log/get-employee-activity-log.request.dto.js";
+import { CreditWalletCommand } from "./commands/credit-wallet/credit-wallet.command.js";
+import { CreditWalletRequest } from "./commands/credit-wallet/credit-wallet.request.dto.js";
+import { DebitWalletCommand } from "./commands/debit-wallet/debit-wallet.command.js";
+import { DebitWalletRequest } from "./commands/debit-wallet/debit-wallet.request.dto.js";
+import {
+    GetWalletBalanceQuery,
+    type WalletBalanceResponse,
+} from "./queries/get-wallet-balance/get-wallet-balance.query.js";
+import {
+    GetWalletTransactionsQuery,
+    type GetWalletTransactionsResponse,
+} from "./queries/get-wallet-transactions/get-wallet-transactions.query.js";
+import {
+    GetWalletTransactionsParams,
+    GetWalletTransactionsQueryDto,
+} from "./queries/get-wallet-transactions/get-wallet-transactions.request.dto.js";
 import { ErpPermission } from "./erp.permissions.js";
 
 @Controller("erp")
@@ -151,5 +167,51 @@ export class ErpHttpController {
         @Query() query: GetEmployeeActivityLogQueryDto,
     ): Promise<GetEmployeeActivityLogResponse> {
         return this.queryBus.execute(new GetEmployeeActivityLogQuery(params.employeeId, query.dateFrom, query.dateTo));
+    }
+
+    // ─── Wallet ──────────────────────────────────────────────
+
+    @RequirePermission(ErpPermission.VIEW_WALLET)
+    @Get("wallet/:employeeId")
+    async getWalletBalance(@Param("employeeId") employeeId: string): Promise<WalletBalanceResponse | null> {
+        return this.queryBus.execute(new GetWalletBalanceQuery(employeeId));
+    }
+
+    @RequirePermission(ErpPermission.VIEW_WALLET)
+    @Get("wallet/:employeeId/transactions")
+    async getWalletTransactions(
+        @Param() params: GetWalletTransactionsParams,
+        @Query() query: GetWalletTransactionsQueryDto,
+    ): Promise<GetWalletTransactionsResponse> {
+        return this.queryBus.execute(new GetWalletTransactionsQuery(params.employeeId, query.dateFrom, query.dateTo));
+    }
+
+    @RequirePermission(ErpPermission.MANAGE_WALLET)
+    @Post("wallet/credit")
+    async creditWallet(@Body() body: CreditWalletRequest, @CurrentUser() user: RequestUser): Promise<void> {
+        await this.commandBus.execute(
+            new CreditWalletCommand({
+                employeeId: body.employeeId,
+                amount: body.amount,
+                currency: body.currency,
+                method: body.method,
+                reason: body.reason,
+                actorId: user.userId,
+            }),
+        );
+    }
+
+    @RequirePermission(ErpPermission.MANAGE_WALLET)
+    @Post("wallet/debit")
+    async debitWallet(@Body() body: DebitWalletRequest, @CurrentUser() user: RequestUser): Promise<void> {
+        await this.commandBus.execute(
+            new DebitWalletCommand({
+                employeeId: body.employeeId,
+                amount: body.amount,
+                method: body.method,
+                reason: body.reason,
+                actorId: user.userId,
+            }),
+        );
     }
 }

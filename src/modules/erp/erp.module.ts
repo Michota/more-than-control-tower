@@ -11,26 +11,37 @@ import { LogWorkingHoursCommandHandler } from "./commands/log-working-hours/log-
 import { EditWorkingHoursCommandHandler } from "./commands/edit-working-hours/edit-working-hours.command-handler.js";
 import { DeleteWorkingHoursCommandHandler } from "./commands/delete-working-hours/delete-working-hours.command-handler.js";
 import { LockWorkingHoursCommandHandler } from "./commands/lock-working-hours/lock-working-hours.command-handler.js";
+import { CreditWalletCommandHandler } from "./commands/credit-wallet/credit-wallet.command-handler.js";
+import { DebitWalletCommandHandler } from "./commands/debit-wallet/debit-wallet.command-handler.js";
 import { ListActivitiesQueryHandler } from "./queries/list-activities/list-activities.query-handler.js";
 import { GetEmployeeWorkingHoursQueryHandler } from "./queries/get-employee-working-hours/get-employee-working-hours.query-handler.js";
 import { GetEmployeeActivityLogQueryHandler } from "./queries/get-employee-activity-log/get-employee-activity-log.query-handler.js";
+import { GetWalletBalanceQueryHandler } from "./queries/get-wallet-balance/get-wallet-balance.query-handler.js";
+import { GetWalletTransactionsQueryHandler } from "./queries/get-wallet-transactions/get-wallet-transactions.query-handler.js";
 import { ErpHttpController } from "./erp.http.controller.js";
 import {
     ACTIVITY_REPOSITORY_PORT,
     WORKING_HOURS_ENTRY_REPOSITORY_PORT,
     ACTIVITY_LOG_ENTRY_REPOSITORY_PORT,
+    WALLET_REPOSITORY_PORT,
 } from "./erp.di-tokens.js";
 import { Activity } from "./database/activity.entity.js";
 import { WorkingHoursEntry } from "./database/working-hours-entry.entity.js";
 import { ActivityLogEntry } from "./database/activity-log-entry.entity.js";
+import { Wallet } from "./database/wallet.entity.js";
+import { WalletTransaction } from "./database/wallet-transaction.entity.js";
 import { ActivityRepository } from "./database/activity.repository.js";
 import { WorkingHoursEntryRepository } from "./database/working-hours-entry.repository.js";
 import { ActivityLogEntryRepository } from "./database/activity-log-entry.repository.js";
+import { WalletRepository } from "./database/wallet.repository.js";
 import { ActivityLogService } from "./infrastructure/activity-log.service.js";
 import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cron.js";
 
 @Module({
-    imports: [MikroOrmModule.forFeature([Activity, WorkingHoursEntry, ActivityLogEntry]), ScheduleModule.forRoot()],
+    imports: [
+        MikroOrmModule.forFeature([Activity, WorkingHoursEntry, ActivityLogEntry, Wallet, WalletTransaction]),
+        ScheduleModule.forRoot(),
+    ],
     controllers: [ErpHttpController],
     providers: [
         CreateActivityCommandHandler,
@@ -39,9 +50,13 @@ import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cr
         EditWorkingHoursCommandHandler,
         DeleteWorkingHoursCommandHandler,
         LockWorkingHoursCommandHandler,
+        CreditWalletCommandHandler,
+        DebitWalletCommandHandler,
         ListActivitiesQueryHandler,
         GetEmployeeWorkingHoursQueryHandler,
         GetEmployeeActivityLogQueryHandler,
+        GetWalletBalanceQueryHandler,
+        GetWalletTransactionsQueryHandler,
         ActivityLogService,
         ActivityLogCleanupCron,
         {
@@ -60,6 +75,11 @@ import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cr
             inject: [EntityManager],
         },
         {
+            provide: WALLET_REPOSITORY_PORT,
+            useFactory: (em: EntityManager) => new WalletRepository(em),
+            inject: [EntityManager],
+        },
+        {
             provide: UNIT_OF_WORK_PORT,
             useFactory: (em: EntityManager) => new MikroOrmUnitOfWork(em),
             inject: [EntityManager],
@@ -69,6 +89,7 @@ import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cr
         ACTIVITY_REPOSITORY_PORT,
         WORKING_HOURS_ENTRY_REPOSITORY_PORT,
         ACTIVITY_LOG_ENTRY_REPOSITORY_PORT,
+        WALLET_REPOSITORY_PORT,
         UNIT_OF_WORK_PORT,
         ActivityLogService,
     ],
@@ -91,6 +112,8 @@ export class ErpModule implements OnModuleInit {
             { key: "manage-working-hours", name: "Manage Working Hours (view/edit/lock anyone)" },
             { key: "view-working-hours", name: "View Working Hours" },
             { key: "view-activity-log", name: "View Activity Log" },
+            { key: "manage-wallet", name: "Manage Wallet (credit/debit)" },
+            { key: "view-wallet", name: "View Wallet Balance & Transactions" },
         ]);
     }
 }

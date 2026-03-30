@@ -31,6 +31,18 @@ import {
 import { ActivityNotFoundError, ActivityInUseError } from "./domain/activity.errors";
 import { ActivityLogService } from "./infrastructure/activity-log.service";
 import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cron";
+import { CreditWalletCommand } from "./commands/credit-wallet/credit-wallet.command";
+import { DebitWalletCommand } from "./commands/debit-wallet/debit-wallet.command";
+import {
+    GetWalletBalanceQuery,
+    type WalletBalanceResponse,
+} from "./queries/get-wallet-balance/get-wallet-balance.query";
+import {
+    GetWalletTransactionsQuery,
+    type GetWalletTransactionsResponse,
+} from "./queries/get-wallet-transactions/get-wallet-transactions.query";
+import { WalletTransactionMethod } from "./domain/wallet-transaction-method.enum";
+import { InsufficientWalletBalanceError, WalletNotFoundError } from "./domain/wallet.errors";
 import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command";
 import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command";
 import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command";
@@ -589,6 +601,115 @@ describe("ERP Module — Integration Tests", () => {
             expect(entries).toHaveLength(2);
             expect(entries[0].date).toBe("2026-04-01");
             expect(entries[1].date).toBe("2026-04-02");
+        });
+    });
+
+    // ─── Wallet ──────────────────────────────────────────────
+
+    describe("Wallet", () => {
+        it("credits a wallet (auto-creates on first credit)", async () => {
+            await commandBus.execute(
+                new CreditWalletCommand({
+                    employeeId: workerEmployeeId,
+                    amount: "100.00",
+                    currency: "PLN",
+                    method: WalletTransactionMethod.CASH,
+                    reason: "Fuel advance",
+                    actorId: MANAGER_USER_ID,
+                }),
+            );
+
+            const balance: WalletBalanceResponse | null = await queryBus.execute(
+                new GetWalletBalanceQuery(workerEmployeeId),
+            );
+
+            expect(balance).not.toBeNull();
+            expect(balance!.balance).toBe("100.00");
+            expect(balance!.currency).toBe("PLN");
+        });
+
+        it("accumulates multiple credits", async () => {
+            await commandBus.execute(
+                new CreditWalletCommand({
+                    employeeId: workerEmployeeId,
+                    amount: "50.00",
+                    currency: "PLN",
+                    method: WalletTransactionMethod.TRANSFER,
+                    reason: "Toll money",
+                    actorId: MANAGER_USER_ID,
+                }),
+            );
+
+            const balance: WalletBalanceResponse | null = await queryBus.execute(
+                new GetWalletBalanceQuery(workerEmployeeId),
+            );
+
+            expect(balance!.balance).toBe("150.00");
+        });
+
+        it("debits a wallet", async () => {
+            await commandBus.execute(
+                new DebitWalletCommand({
+                    employeeId: workerEmployeeId,
+                    amount: "30.00",
+                    method: WalletTransactionMethod.CASH,
+                    reason: "Fuel purchased",
+                    actorId: MANAGER_USER_ID,
+                }),
+            );
+
+            const balance: WalletBalanceResponse | null = await queryBus.execute(
+                new GetWalletBalanceQuery(workerEmployeeId),
+            );
+
+            expect(balance!.balance).toBe("120.00");
+        });
+
+        it("throws InsufficientWalletBalanceError on overdraft", async () => {
+            await expect(
+                commandBus.execute(
+                    new DebitWalletCommand({
+                        employeeId: workerEmployeeId,
+                        amount: "999.00",
+                        method: WalletTransactionMethod.CASH,
+                        reason: "Too much",
+                        actorId: MANAGER_USER_ID,
+                    }),
+                ),
+            ).rejects.toThrow(InsufficientWalletBalanceError);
+        });
+
+        it("throws WalletNotFoundError when debiting non-existent wallet", async () => {
+            await expect(
+                commandBus.execute(
+                    new DebitWalletCommand({
+                        employeeId: randomUUID(),
+                        amount: "10.00",
+                        method: WalletTransactionMethod.CASH,
+                        reason: "No wallet",
+                        actorId: MANAGER_USER_ID,
+                    }),
+                ),
+            ).rejects.toThrow(WalletNotFoundError);
+        });
+
+        it("queries transaction history", async () => {
+            const transactions: GetWalletTransactionsResponse = await queryBus.execute(
+                new GetWalletTransactionsQuery(workerEmployeeId),
+            );
+
+            expect(transactions.length).toBeGreaterThanOrEqual(3);
+            expect(transactions[0].type).toBeDefined();
+            expect(transactions[0].amount).toBeDefined();
+            expect(transactions[0].method).toBeDefined();
+            expect(transactions[0].reason).toBeDefined();
+            expect(transactions[0].initiatedBy).toBe(MANAGER_USER_ID);
+        });
+
+        it("returns null balance for employee without wallet", async () => {
+            const balance = await queryBus.execute(new GetWalletBalanceQuery(randomUUID()));
+
+            expect(balance).toBeNull();
         });
     });
 });
