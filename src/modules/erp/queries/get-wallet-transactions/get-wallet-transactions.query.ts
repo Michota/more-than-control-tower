@@ -16,6 +16,7 @@ export type GetWalletTransactionsResponse = WalletTransactionItem[];
 export class GetWalletTransactionsQuery extends Query<GetWalletTransactionsResponse> {
     constructor(
         public readonly employeeId: string,
+        public readonly actorId: string,
         public readonly dateFrom?: string,
         public readonly dateTo?: string,
     ) {

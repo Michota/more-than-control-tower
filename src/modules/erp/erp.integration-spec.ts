@@ -43,7 +43,8 @@ import {
     type GetWalletTransactionsResponse,
 } from "./queries/get-wallet-transactions/get-wallet-transactions.query";
 import { WalletTransactionMethod } from "./domain/wallet-transaction-method.enum";
-import { InsufficientWalletBalanceError, WalletNotFoundError } from "./domain/wallet.errors";
+import { InsufficientWalletBalanceError, WalletNotFoundError, WalletNotOwnedError } from "./domain/wallet.errors";
+import { ListWalletsQuery, type ListWalletsResponse } from "./queries/list-wallets/list-wallets.query";
 import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command";
 import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command";
 import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command";
@@ -83,7 +84,7 @@ describe("ERP Module — Integration Tests", () => {
             new CreatePositionCommand({
                 key: "erp:manager",
                 displayName: "ERP Manager",
-                permissionKeys: ["erp:manage-working-hours"],
+                permissionKeys: ["erp:manage-working-hours", "erp:manage-wallet"],
             }),
         );
         const managerEmployeeId: string = await commandBus.execute(
@@ -621,7 +622,7 @@ describe("ERP Module — Integration Tests", () => {
             );
 
             const balance: WalletBalanceResponse | null = await queryBus.execute(
-                new GetWalletBalanceQuery(workerEmployeeId),
+                new GetWalletBalanceQuery(workerEmployeeId, MANAGER_USER_ID),
             );
 
             expect(balance).not.toBeNull();
@@ -642,7 +643,7 @@ describe("ERP Module — Integration Tests", () => {
             );
 
             const balance: WalletBalanceResponse | null = await queryBus.execute(
-                new GetWalletBalanceQuery(workerEmployeeId),
+                new GetWalletBalanceQuery(workerEmployeeId, MANAGER_USER_ID),
             );
 
             expect(balance!.balance).toBe("150.00");
@@ -660,7 +661,7 @@ describe("ERP Module — Integration Tests", () => {
             );
 
             const balance: WalletBalanceResponse | null = await queryBus.execute(
-                new GetWalletBalanceQuery(workerEmployeeId),
+                new GetWalletBalanceQuery(workerEmployeeId, MANAGER_USER_ID),
             );
 
             expect(balance!.balance).toBe("120.00");
@@ -696,7 +697,7 @@ describe("ERP Module — Integration Tests", () => {
 
         it("queries transaction history", async () => {
             const transactions: GetWalletTransactionsResponse = await queryBus.execute(
-                new GetWalletTransactionsQuery(workerEmployeeId),
+                new GetWalletTransactionsQuery(workerEmployeeId, MANAGER_USER_ID),
             );
 
             expect(transactions.length).toBeGreaterThanOrEqual(3);
@@ -708,7 +709,7 @@ describe("ERP Module — Integration Tests", () => {
         });
 
         it("returns null balance for employee without wallet", async () => {
-            const balance = await queryBus.execute(new GetWalletBalanceQuery(randomUUID()));
+            const balance = await queryBus.execute(new GetWalletBalanceQuery(randomUUID(), MANAGER_USER_ID));
 
             expect(balance).toBeNull();
         });
@@ -724,7 +725,7 @@ describe("ERP Module — Integration Tests", () => {
             );
 
             const balance: WalletBalanceResponse | null = await queryBus.execute(
-                new GetWalletBalanceQuery(workerEmployeeId),
+                new GetWalletBalanceQuery(workerEmployeeId, MANAGER_USER_ID),
             );
 
             expect(balance!.balance).toBe("95.00");
@@ -741,7 +742,7 @@ describe("ERP Module — Integration Tests", () => {
             );
 
             const balance: WalletBalanceResponse | null = await queryBus.execute(
-                new GetWalletBalanceQuery(workerEmployeeId),
+                new GetWalletBalanceQuery(workerEmployeeId, MANAGER_USER_ID),
             );
 
             expect(Number(balance!.balance)).toBeLessThan(0);
@@ -749,12 +750,36 @@ describe("ERP Module — Integration Tests", () => {
 
         it("charge appears in transaction history with CHARGE type", async () => {
             const transactions: GetWalletTransactionsResponse = await queryBus.execute(
-                new GetWalletTransactionsQuery(workerEmployeeId),
+                new GetWalletTransactionsQuery(workerEmployeeId, MANAGER_USER_ID),
             );
 
             const charges = transactions.filter((tx) => tx.type === "CHARGE");
             expect(charges.length).toBeGreaterThanOrEqual(1);
             expect(charges[0].reason).toBeDefined();
+        });
+
+        it("worker can view own wallet balance", async () => {
+            const balance = await queryBus.execute(new GetWalletBalanceQuery(workerEmployeeId, workerUserId));
+
+            expect(balance).not.toBeNull();
+        });
+
+        it("worker cannot view another employee's wallet", async () => {
+            const otherEmpId = randomUUID();
+
+            await expect(queryBus.execute(new GetWalletBalanceQuery(otherEmpId, workerUserId))).rejects.toThrow(
+                WalletNotOwnedError,
+            );
+        });
+
+        it("manager can list all wallets with pagination", async () => {
+            const result: ListWalletsResponse = await queryBus.execute(new ListWalletsQuery(1, 20));
+
+            expect(result.count).toBeGreaterThanOrEqual(1);
+            expect(result.data.length).toBeGreaterThanOrEqual(1);
+            expect(result.data[0].employeeId).toBeDefined();
+            expect(result.data[0].balance).toBeDefined();
+            expect(result.data[0].currency).toBeDefined();
         });
     });
 });

@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { EntityManager, type FilterQuery } from "@mikro-orm/core";
 import Decimal from "decimal.js";
+import { Paginated } from "../../../libs/ports/repository.port.js";
 import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { WalletAggregate } from "../domain/wallet.aggregate.js";
 import { WalletTransactionEntity } from "../domain/wallet-transaction.entity.js";
@@ -8,7 +9,7 @@ import { WalletTransactionType } from "../domain/wallet-transaction-type.enum.js
 import { WalletTransactionMethod } from "../domain/wallet-transaction-method.enum.js";
 import { Wallet } from "./wallet.entity.js";
 import { WalletTransaction } from "./wallet-transaction.entity.js";
-import { type WalletRepositoryPort } from "./wallet.repository.port.js";
+import { type WalletListItemRecord, type WalletRepositoryPort } from "./wallet.repository.port.js";
 
 @Injectable()
 export class WalletRepository implements WalletRepositoryPort {
@@ -107,5 +108,53 @@ export class WalletRepository implements WalletRepositoryPort {
                 },
             }),
         );
+    }
+
+    async findAllPaginated(page: number, limit: number, search?: string): Promise<Paginated<WalletListItemRecord>> {
+        const connection = this.em.getConnection();
+        const offset = (page - 1) * limit;
+
+        const searchCondition = search ? `AND (e."first_name" ILIKE ? OR e."last_name" ILIKE ?)` : "";
+        const searchParams = search ? [`%${search}%`, `%${search}%`] : [];
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const countResult: { count: string }[] = await connection.execute(
+            `SELECT COUNT(*) AS "count"
+            FROM "wallet" w
+            JOIN "employee" e ON e."id" = w."employee_id"
+            WHERE 1=1 ${searchCondition}`,
+            [...searchParams],
+        );
+
+        const count = Number(countResult[0]?.count ?? 0);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const rows: { employee_id: string; currency: string; balance: string }[] = await connection.execute(
+            `SELECT
+                w."employee_id",
+                w."currency",
+                COALESCE(
+                    (SELECT SUM(CASE WHEN t."type" = 'CREDIT' THEN t."amount" ELSE -t."amount" END)
+                     FROM "wallet_transaction" t WHERE t."wallet_id" = w."id"),
+                    0
+                ) AS "balance"
+            FROM "wallet" w
+            JOIN "employee" e ON e."id" = w."employee_id"
+            WHERE 1=1 ${searchCondition}
+            ORDER BY e."last_name" ASC, e."first_name" ASC
+            LIMIT ? OFFSET ?`,
+            [...searchParams, limit, offset],
+        );
+
+        return new Paginated({
+            data: rows.map((r) => ({
+                employeeId: r.employee_id,
+                currency: r.currency,
+                balance: new Decimal(r.balance).toFixed(2),
+            })),
+            count,
+            limit,
+            page,
+        });
     }
 }

@@ -1,6 +1,7 @@
 import {
     BadRequestDomainException,
     ConflictDomainException,
+    ForbiddenDomainException,
     NotFoundDomainException,
 } from "../../../libs/exceptions/http-domain.exceptions.js";
 
@@ -28,5 +29,14 @@ export class InsufficientWalletBalanceError extends BadRequestDomainException {
 
     constructor(walletId: string) {
         super(InsufficientWalletBalanceError.message, undefined, { walletId });
+    }
+}
+
+export class WalletNotOwnedError extends ForbiddenDomainException {
+    static readonly message = "You can only access your own wallet.";
+    public readonly code = "ERP.WALLET.NOT_OWNED";
+
+    constructor(employeeId: string) {
+        super(WalletNotOwnedError.message, undefined, { employeeId });
     }
 }

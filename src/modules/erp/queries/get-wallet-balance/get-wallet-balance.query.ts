@@ -7,7 +7,10 @@ export interface WalletBalanceResponse {
 }
 
 export class GetWalletBalanceQuery extends Query<WalletBalanceResponse | null> {
-    constructor(public readonly employeeId: string) {
+    constructor(
+        public readonly employeeId: string,
+        public readonly actorId: string,
+    ) {
         super();
     }
 }

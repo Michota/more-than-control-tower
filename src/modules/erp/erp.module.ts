@@ -19,6 +19,7 @@ import { GetEmployeeWorkingHoursQueryHandler } from "./queries/get-employee-work
 import { GetEmployeeActivityLogQueryHandler } from "./queries/get-employee-activity-log/get-employee-activity-log.query-handler.js";
 import { GetWalletBalanceQueryHandler } from "./queries/get-wallet-balance/get-wallet-balance.query-handler.js";
 import { GetWalletTransactionsQueryHandler } from "./queries/get-wallet-transactions/get-wallet-transactions.query-handler.js";
+import { ListWalletsQueryHandler } from "./queries/list-wallets/list-wallets.query-handler.js";
 import { ErpHttpController } from "./erp.http.controller.js";
 import {
     ACTIVITY_REPOSITORY_PORT,
@@ -59,6 +60,7 @@ import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cr
         GetEmployeeActivityLogQueryHandler,
         GetWalletBalanceQueryHandler,
         GetWalletTransactionsQueryHandler,
+        ListWalletsQueryHandler,
         ActivityLogService,
         ActivityLogCleanupCron,
         {

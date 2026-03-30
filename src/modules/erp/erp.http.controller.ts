@@ -40,6 +40,8 @@ import { DebitWalletCommand } from "./commands/debit-wallet/debit-wallet.command
 import { DebitWalletRequest } from "./commands/debit-wallet/debit-wallet.request.dto.js";
 import { ChargeWalletCommand } from "./commands/charge-wallet/charge-wallet.command.js";
 import { ChargeWalletRequest } from "./commands/charge-wallet/charge-wallet.request.dto.js";
+import { ListWalletsQuery, type ListWalletsResponse } from "./queries/list-wallets/list-wallets.query.js";
+import { ListWalletsRequestDto } from "./queries/list-wallets/list-wallets.request.dto.js";
 import {
     GetWalletBalanceQuery,
     type WalletBalanceResponse,
@@ -173,10 +175,19 @@ export class ErpHttpController {
 
     // ─── Wallet ──────────────────────────────────────────────
 
+    @RequirePermission(ErpPermission.MANAGE_WALLET)
+    @Get("wallets")
+    async listWallets(@Query() query: ListWalletsRequestDto): Promise<ListWalletsResponse> {
+        return this.queryBus.execute(new ListWalletsQuery(query.page ?? 1, query.limit ?? 20, query.search));
+    }
+
     @RequirePermission(ErpPermission.VIEW_WALLET)
     @Get("wallet/:employeeId")
-    async getWalletBalance(@Param("employeeId") employeeId: string): Promise<WalletBalanceResponse | null> {
-        return this.queryBus.execute(new GetWalletBalanceQuery(employeeId));
+    async getWalletBalance(
+        @Param("employeeId") employeeId: string,
+        @CurrentUser() user: RequestUser,
+    ): Promise<WalletBalanceResponse | null> {
+        return this.queryBus.execute(new GetWalletBalanceQuery(employeeId, user.userId));
     }
 
     @RequirePermission(ErpPermission.VIEW_WALLET)
@@ -184,8 +195,11 @@ export class ErpHttpController {
     async getWalletTransactions(
         @Param() params: GetWalletTransactionsParams,
         @Query() query: GetWalletTransactionsQueryDto,
+        @CurrentUser() user: RequestUser,
     ): Promise<GetWalletTransactionsResponse> {
-        return this.queryBus.execute(new GetWalletTransactionsQuery(params.employeeId, query.dateFrom, query.dateTo));
+        return this.queryBus.execute(
+            new GetWalletTransactionsQuery(params.employeeId, user.userId, query.dateFrom, query.dateTo),
+        );
     }
 
     @RequirePermission(ErpPermission.MANAGE_WALLET)
