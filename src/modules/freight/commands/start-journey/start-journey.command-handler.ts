@@ -2,6 +2,7 @@ import { Inject } from "@nestjs/common";
 import { CommandHandler, EventBus, ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { UNIT_OF_WORK_PORT } from "../../../../shared/ports/tokens.js";
 import type { UnitOfWorkPort } from "../../../../shared/ports/unit-of-work.port.js";
+import { GetEmployeeQuery, GetEmployeeResponse } from "../../../../shared/queries/get-employee.query.js";
 import {
     GetEmployeePermissionsQuery,
     GetEmployeePermissionsResponse,
@@ -51,10 +52,22 @@ export class StartJourneyCommandHandler implements ICommandHandler<StartJourneyC
 
         // Validate crew permissions before starting
         for (const member of journey.crewMembers) {
+            // Resolve employeeId → userId for permission lookup
+            const employee = await this.queryBus.execute<GetEmployeeQuery, GetEmployeeResponse | null>(
+                new GetEmployeeQuery(member.employeeId),
+            );
+            if (!employee?.userId) {
+                throw new CrewMemberMissingPermissionError(
+                    member.employeeId,
+                    member.role,
+                    "employee not found or not linked to a user",
+                );
+            }
+
             const { effectivePermissions } = await this.queryBus.execute<
                 GetEmployeePermissionsQuery,
                 GetEmployeePermissionsResponse
-            >(new GetEmployeePermissionsQuery(member.employeeId));
+            >(new GetEmployeePermissionsQuery(employee.userId));
 
             if (member.role === CrewMemberRole.DRIVER && requiredLicensePermission) {
                 if (!effectivePermissions.includes(requiredLicensePermission)) {

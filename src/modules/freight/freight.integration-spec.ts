@@ -53,37 +53,12 @@ import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query";
 import { GetJourneyQuery } from "./queries/get-journey/get-journey.query";
 
 import { FreightModule } from "./freight.module";
+import { HrModule } from "../hr/hr.module";
 import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
-import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import {
-    GetEmployeePermissionsQuery,
-    GetEmployeePermissionsResponse,
-} from "../../shared/queries/get-employee-permissions.query";
-
-/**
- * Mock HR handler: returns all freight + sales permissions for any employee.
- * In production, HR module resolves these from positions.
- */
-@QueryHandler(GetEmployeePermissionsQuery)
-class MockGetEmployeePermissionsQueryHandler implements IQueryHandler<
-    GetEmployeePermissionsQuery,
-    GetEmployeePermissionsResponse
-> {
-    execute(query: GetEmployeePermissionsQuery): Promise<GetEmployeePermissionsResponse> {
-        return Promise.resolve({
-            userId: query.userId,
-            effectivePermissions: [
-                "freight:driver-license-b",
-                "freight:driver-license-c",
-                "freight:driver-license-c-e",
-                "sales:complete-order",
-                "sales:view-orders",
-                "sales:draft-order",
-            ],
-            positionKeys: [],
-        });
-    }
-}
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry";
+import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command";
+import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command";
+import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command";
 
 describe("Freight Module — Integration Tests", () => {
     let moduleRef: TestingModule;
@@ -93,8 +68,13 @@ describe("Freight Module — Integration Tests", () => {
 
     beforeAll(async () => {
         moduleRef = await Test.createTestingModule({
-            imports: [TestMikroOrmDatabaseModule(), CqrsModule.forRoot(), PermissionRegistryModule, FreightModule],
-            providers: [MockGetEmployeePermissionsQueryHandler],
+            imports: [
+                TestMikroOrmDatabaseModule(),
+                CqrsModule.forRoot(),
+                PermissionRegistryModule,
+                FreightModule,
+                HrModule,
+            ],
         }).compile();
 
         await moduleRef.init();
@@ -102,6 +82,15 @@ describe("Freight Module — Integration Tests", () => {
         commandBus = moduleRef.get(CommandBus);
         queryBus = moduleRef.get(QueryBus);
         orm = moduleRef.get(MikroORM);
+
+        // Register sales permissions so HR positions can reference them
+        // (SalesModule not loaded due to dependency chain — permissions only)
+        const registry = moduleRef.get<PermissionRegistry>(PERMISSION_REGISTRY);
+        registry.registerForModule("sales", [
+            { key: "complete-order", name: "Complete Order" },
+            { key: "view-orders", name: "View Orders" },
+            { key: "draft-order", name: "Draft Order" },
+        ]);
 
         await orm.schema.refresh();
     });
@@ -112,6 +101,41 @@ describe("Freight Module — Integration Tests", () => {
     });
 
     // ─── Helpers ───────────────────────────────────────────────
+
+    let employeeCounter = 0;
+
+    async function ensurePosition(key: string, displayName: string, permissionKeys: string[]): Promise<void> {
+        try {
+            await commandBus.execute(new CreatePositionCommand({ key, displayName, permissionKeys }));
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            if (!msg.includes("already exists")) {
+                throw new Error(`Failed to create position "${key}": ${msg}`);
+            }
+        }
+    }
+
+    async function createEmployeeWithPosition(
+        firstName: string,
+        positionKey: string,
+    ): Promise<{ employeeId: string; userId: string }> {
+        employeeCounter++;
+        const userId = `freight-test-user-${employeeCounter}`;
+        const employeeId: string = await commandBus.execute(
+            new CreateEmployeeCommand({
+                firstName,
+                lastName: "Test",
+                email: `freight-${employeeCounter}@test.com`,
+                phone: `+4800000${String(employeeCounter).padStart(4, "0")}`,
+                skipUniquenessCheck: true,
+            }),
+        );
+        // Link employee to userId directly (bypasses SystemModule user lookup)
+        await orm.em.nativeUpdate("Employee", { id: employeeId }, { userId });
+        orm.em.clear();
+        await commandBus.execute(new AssignPositionCommand({ employeeId, positionKey, assignedBy: "test-admin" }));
+        return { employeeId, userId };
+    }
 
     async function createVehicle(overrides: Partial<CreateVehicleCommand> = {}): Promise<string> {
         return commandBus.execute(
@@ -130,6 +154,20 @@ describe("Freight Module — Integration Tests", () => {
     }
 
     async function createRouteWithCrew(name = "Test Route"): Promise<string> {
+        await ensurePosition("freight:driver", "Driver", [
+            "freight:driver-license-b",
+            "freight:driver-license-c",
+            "freight:driver-license-c-e",
+        ]);
+        await ensurePosition("freight:rsr", "Sales Representative", [
+            "sales:complete-order",
+            "sales:view-orders",
+            "sales:draft-order",
+        ]);
+
+        const driver = await createEmployeeWithPosition("Adam", "freight:driver");
+        const rsr = await createEmployeeWithPosition("Jan", "freight:rsr");
+
         const vehicleId = await createVehicle({ name: "Crew Vehicle" });
         const routeId = await createRoute(name);
         await commandBus.execute(
@@ -137,8 +175,8 @@ describe("Freight Module — Integration Tests", () => {
                 routeId,
                 vehicleIds: [vehicleId],
                 crewMembers: [
-                    { employeeId: "d1", employeeName: "Adam Nowak", role: CrewMemberRole.DRIVER },
-                    { employeeId: "r1", employeeName: "Jan Kowalski", role: CrewMemberRole.RSR },
+                    { employeeId: driver.employeeId, employeeName: "Adam Test", role: CrewMemberRole.DRIVER },
+                    { employeeId: rsr.employeeId, employeeName: "Jan Test", role: CrewMemberRole.RSR },
                 ],
             }),
         );
