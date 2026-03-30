@@ -6,6 +6,9 @@ dist
 # Turbo
 .turbo
 
+# TanStack Router
+.tanstack
+
 # Logs
 logs
 *.log
