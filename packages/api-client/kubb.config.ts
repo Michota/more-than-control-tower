@@ -9,9 +9,8 @@
  * The custom Ky client adapter lives at src/client.ts — generated code
  * imports it via the relative importPath "../../client".
  *
- * Naming: "HrHttpControllerListEmployees" → "hrListEmployeesApi" (functions)
- *   - "HttpController" is always stripped (NestJS implementation detail)
- *   - "Api" suffix added only to functions/hooks, not types or constants
+ * Naming: operationIds come clean from the backend (no "HttpController").
+ * Functions/hooks get an "Api" suffix to hint they're generated.
  */
 import { defineConfig } from "@kubb/core";
 import { pluginOas } from "@kubb/plugin-oas";
@@ -20,15 +19,9 @@ import { pluginClient } from "@kubb/plugin-client";
 import { pluginReactQuery } from "@kubb/plugin-react-query";
 import { pluginZod } from "@kubb/plugin-zod";
 
-/** Strip "HttpController" from Kubb-generated names. */
-function stripHttpController(name: string): string {
-    return name.replace(/HttpController/g, "");
-}
-
-/** Strip "HttpController", add "Api" suffix only to functions (hooks, clients, mutations). */
+/** Add "Api" suffix only to functions (hooks, clients, mutations). */
 function apiName(name: string, type?: string): string {
-    const clean = stripHttpController(name);
-    return type === "function" ? clean + "Api" : clean;
+    return type === "function" ? name + "Api" : name;
 }
 
 export default defineConfig({
@@ -42,10 +35,7 @@ export default defineConfig({
     },
     plugins: [
         pluginOas({ validate: false }),
-        pluginTs({
-            output: { path: "models" },
-            transformers: { name: (name) => stripHttpController(name) },
-        }),
+        pluginTs({ output: { path: "models" } }),
         pluginClient({
             output: { path: "clients" },
             importPath: "../../client",
@@ -56,9 +46,6 @@ export default defineConfig({
             client: { importPath: "../../client" },
             transformers: { name: apiName },
         }),
-        pluginZod({
-            output: { path: "zod" },
-            transformers: { name: (name) => stripHttpController(name) },
-        }),
+        pluginZod({ output: { path: "zod" } }),
     ],
 });
