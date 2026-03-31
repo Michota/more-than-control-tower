@@ -12,8 +12,8 @@ export const Route = createFileRoute("/login")({
 });
 
 const loginSchema = z.object({
-    email: z.email(m.auth_email_label()),
-    password: z.string().min(1, m.auth_password_label()),
+    email: z.email(),
+    password: z.string().min(1),
 });
 
 function LoginPage() {

@@ -6,6 +6,9 @@ import { RouterProvider } from "@tanstack/react-router";
 import { queryClient } from "./lib/query-client";
 import { router } from "./router";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { initLocale } from "@/lib/locale-store";
+
+initLocale();
 
 // eslint-disable-next-line react-refresh/only-export-components
 function InnerApp() {
