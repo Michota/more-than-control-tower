@@ -5,11 +5,18 @@ import { queryClient } from "./lib/query-client";
 
 export interface RouterContext {
     queryClient: QueryClient;
+    auth: {
+        isAuthenticated: boolean;
+        isLoading: boolean;
+    };
 }
 
 export const router = createRouter({
     routeTree,
-    context: { queryClient },
+    context: {
+        queryClient,
+        auth: undefined!,
+    },
 });
 
 declare module "@tanstack/react-router" {

@@ -1,3 +1,9 @@
 {
-    "hello": "Welcome to MTCT"
+    "hello": "Welcome to MTCT",
+    "auth_login_title": "Sign in",
+    "auth_email_label": "Email address",
+    "auth_password_label": "Password",
+    "auth_login_button": "Sign in",
+    "auth_invalid_credentials": "Invalid email or password",
+    "auth_logout": "Sign out"
 }
