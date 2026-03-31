@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { CommandBus } from "@nestjs/cqrs";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Public } from "../../shared/auth/decorators/public.decorator.js";
 import { ActivateAccountCommand, ActivateAccountResult } from "./commands/activate-account/activate-account.command.js";
 import { ActivateAccountRequestDto } from "./commands/activate-account/activate-account.request.dto.js";
@@ -13,7 +13,7 @@ import {
     GenerateActivationTokenResult,
 } from "./commands/generate-activation-token/generate-activation-token.command.js";
 import { GenerateActivationTokenRequestDto } from "./commands/generate-activation-token/generate-activation-token.request.dto.js";
-import { ActivationTokenResponseDto, AuthTokensResponseDto } from "./dtos/auth.response.dto.js";
+import { ActivationTokenResponseDto } from "./dtos/auth.response.dto.js";
 import { parseCookies, setAuthCookies, clearAuthCookies } from "./infrastructure/auth-cookies.js";
 
 @ApiTags("Authentication")
@@ -24,11 +24,11 @@ export class AuthHttpController {
     @Public()
     @Post("activate")
     @ApiOperation({ summary: "Activate account and set password" })
-    @ApiResponse({ status: 201, type: AuthTokensResponseDto })
+    @ApiCreatedResponse()
     async activateAccount(
         @Body() body: ActivateAccountRequestDto,
         @Res({ passthrough: true }) res: Response,
-    ): Promise<AuthTokensResponseDto> {
+    ): Promise<{ ok: true }> {
         const tokens = await this.commandBus.execute<ActivateAccountCommand, ActivateAccountResult>(
             new ActivateAccountCommand({
                 activationToken: body.activationToken,
@@ -36,18 +36,15 @@ export class AuthHttpController {
             }),
         );
         setAuthCookies(res, tokens);
-        return tokens;
+        return { ok: true };
     }
 
     @Public()
     @Post("login")
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: "Log in with email and password" })
-    @ApiResponse({ status: 200, type: AuthTokensResponseDto })
-    async login(
-        @Body() body: LoginRequestDto,
-        @Res({ passthrough: true }) res: Response,
-    ): Promise<AuthTokensResponseDto> {
+    @ApiOkResponse()
+    async login(@Body() body: LoginRequestDto, @Res({ passthrough: true }) res: Response): Promise<{ ok: true }> {
         const tokens = await this.commandBus.execute<LoginCommand, LoginResult>(
             new LoginCommand({
                 email: body.email,
@@ -55,19 +52,19 @@ export class AuthHttpController {
             }),
         );
         setAuthCookies(res, tokens);
-        return tokens;
+        return { ok: true };
     }
 
     @Public()
     @Post("refresh")
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: "Refresh access token using cookie or request body" })
-    @ApiResponse({ status: 200, type: AuthTokensResponseDto })
+    @ApiOkResponse()
     async refreshToken(
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
         @Body() body: { refreshToken?: string },
-    ): Promise<AuthTokensResponseDto> {
+    ): Promise<{ ok: true }> {
         const cookies = parseCookies(req.headers.cookie ?? "");
         const refreshToken = cookies.refreshToken ?? body.refreshToken;
 
@@ -79,7 +76,7 @@ export class AuthHttpController {
             new RefreshTokenCommand({ refreshToken }),
         );
         setAuthCookies(res, tokens);
-        return tokens;
+        return { ok: true };
     }
 
     @Public()
@@ -93,14 +90,14 @@ export class AuthHttpController {
 
     @Get("session")
     @ApiOperation({ summary: "Check if current session is valid" })
-    @ApiResponse({ status: 200 })
+    @ApiOkResponse()
     session(): { authenticated: true } {
         return { authenticated: true };
     }
 
     @Post("activation-token")
     @ApiOperation({ summary: "Generate activation token for an unactivated user (admin-only)" })
-    @ApiResponse({ status: 201, type: ActivationTokenResponseDto })
+    @ApiCreatedResponse({ type: ActivationTokenResponseDto })
     async generateActivationToken(
         @Body() body: GenerateActivationTokenRequestDto,
     ): Promise<ActivationTokenResponseDto> {
