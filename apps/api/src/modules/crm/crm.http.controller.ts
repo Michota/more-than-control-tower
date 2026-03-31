@@ -1,5 +1,6 @@
 import { Body, Controller, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { ApiTags } from "@nestjs/swagger";
 import { type UUID } from "crypto";
 import {
     GetCustomerDetailQuery,
@@ -12,6 +13,7 @@ import { UpdateCustomerRequest } from "./commands/update-customer/update-custome
 import { SearchCustomersQuery, SearchCustomersResponse } from "./queries/search-customers/search-customers.query.js";
 import { SearchCustomersRequestDto } from "./queries/search-customers/search-customers.request.dto.js";
 
+@ApiTags("CRM")
 @Controller("customer")
 export class CrmHttpController {
     constructor(

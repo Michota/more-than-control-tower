@@ -12,7 +12,7 @@ import {
     Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { type UUID } from "crypto";
 import { GetEmployeeQuery, GetEmployeeResponse } from "../../shared/queries/get-employee.query.js";
 import { CreateEmployeeCommand } from "./commands/create-employee/create-employee.command.js";
@@ -54,6 +54,7 @@ import {
 } from "./dtos/employee.response.dto.js";
 import { PositionIdResponseDto, ListPositionsResponseDto } from "./dtos/position.response.dto.js";
 import { GetEmployeeAvailabilityResponseDto } from "./dtos/availability.response.dto.js";
+@ApiTags("HR")
 @Controller("employees")
 export class HrHttpController {
     constructor(
