@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useHrHttpControllerListEmployees } from "@mtct/api-client/hooks/useHrHttpControllerListEmployees";
+import { useHrHttpControllerListEmployees } from "@mtct/api-client";
 
 export const Route = createFileRoute("/test-employees")({
     component: TestEmployeesPage,

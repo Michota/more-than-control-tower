@@ -1,1 +1,2 @@
-export type { RequestConfig, ResponseConfig, ResponseErrorConfig } from "./client.js";
+export type { RequestConfig, ResponseConfig, ResponseErrorConfig } from "./client";
+export * from "./gen/index";
