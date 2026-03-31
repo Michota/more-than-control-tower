@@ -1017,7 +1017,7 @@ Use **Kubb** (v3) for API client code generation. Kubb generates into clean subd
 
 ### Package structure
 
-```
+```text
 packages/api-client/
 ├── kubb.config.ts        Kubb plugin configuration
 ├── src/

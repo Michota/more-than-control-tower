@@ -21,7 +21,7 @@ const isTestEnv = process.env.NODE_ENV === "test";
 
 const apiEnvSchema = envSchema.extend({
     // Testing-purposes environment variables
-    TEST_DB_NAME: isTestEnv ? z.string().optional() : z.string().min(1),
+    TEST_DB_NAME: isTestEnv ? z.string().min(1) : z.string().optional(),
 });
 
 export type { Env };
