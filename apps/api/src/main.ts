@@ -22,7 +22,13 @@ async function bootstrap() {
         .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "access-token")
         .addSecurityRequirements("access-token")
         .build();
-    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    const documentFactory = () =>
+        SwaggerModule.createDocument(app, config, {
+            operationIdFactory: (controllerKey, methodKey) => {
+                const cleanController = controllerKey.replace(/(?:Http)?Controller$/, "");
+                return `${methodKey}${cleanController}`;
+            },
+        });
     SwaggerModule.setup("api", app, documentFactory);
 
     await app.listen(env.SERVER_PORT);
