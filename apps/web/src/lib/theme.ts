@@ -8,7 +8,11 @@ const STORAGE_KEY = "mtct-theme";
 const listeners = new Set<() => void>();
 
 function getStoredTheme(): Theme {
-    return (localStorage.getItem(STORAGE_KEY) as Theme) ?? "system";
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "system" || stored === "light" || stored === "dark") {
+        return stored;
+    }
+    return "system";
 }
 
 function getSystemTheme(): ResolvedTheme {
