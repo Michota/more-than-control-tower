@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { ApiTags } from "@nestjs/swagger";
 import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
 import { AddProductToOrderCommand } from "./commands/add-product-to-order/add-product-to-order.command.js";
 import {
@@ -33,6 +34,7 @@ import { ListOrdersQuery, type ListOrdersResponse } from "./queries/list-orders/
 import { ListOrdersRequestDto } from "./queries/list-orders/list-orders.request.dto.js";
 import { SalesPermission } from "./sales.permissions.js";
 
+@ApiTags("Sales")
 @Controller("order")
 export class SalesHttpController {
     constructor(

@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { ApiTags } from "@nestjs/swagger";
 import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
 import { CurrentUser, type RequestUser } from "../../shared/auth/decorators/current-user.decorator.js";
 import { CreateActivityCommand } from "./commands/create-activity/create-activity.command.js";
@@ -56,6 +57,7 @@ import {
 } from "./queries/get-wallet-transactions/get-wallet-transactions.request.dto.js";
 import { ErpPermission } from "./erp.permissions.js";
 
+@ApiTags("ERP")
 @Controller("erp")
 export class ErpHttpController {
     constructor(

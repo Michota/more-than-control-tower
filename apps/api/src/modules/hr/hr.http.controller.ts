@@ -12,6 +12,7 @@ import {
     Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { type UUID } from "crypto";
 import { GetEmployeeQuery, GetEmployeeResponse } from "../../shared/queries/get-employee.query.js";
 import { CreateEmployeeCommand } from "./commands/create-employee/create-employee.command.js";
@@ -46,6 +47,15 @@ import { type ListPositionsResponse } from "./queries/list-positions/list-positi
 import { GetEmployeeAvailabilityQuery } from "./queries/get-employee-availability/get-employee-availability.query.js";
 import { GetEmployeeAvailabilityRequestDto } from "./queries/get-employee-availability/get-employee-availability.request.dto.js";
 import { type GetEmployeeAvailabilityResponse } from "./queries/get-employee-availability/get-employee-availability.query-handler.js";
+import {
+    EmployeeResponseDto,
+    EmployeeIdResponseDto,
+    PaginatedEmployeesResponseDto,
+} from "./dtos/employee.response.dto.js";
+import { PositionIdResponseDto, ListPositionsResponseDto } from "./dtos/position.response.dto.js";
+import { GetEmployeeAvailabilityResponseDto } from "./dtos/availability.response.dto.js";
+
+@ApiTags("HR")
 @Controller("employees")
 export class HrHttpController {
     constructor(
@@ -56,7 +66,9 @@ export class HrHttpController {
     // ─── Positions ───────────────────────────────────────────
 
     @Post("positions")
-    async createPosition(@Body() body: CreatePositionRequest): Promise<{ positionId: string }> {
+    @ApiOperation({ summary: "Create a new position" })
+    @ApiResponse({ status: 201, type: PositionIdResponseDto })
+    async createPosition(@Body() body: CreatePositionRequest): Promise<PositionIdResponseDto> {
         const positionId = await this.commandBus.execute(
             new CreatePositionCommand({
                 key: body.key,
@@ -68,6 +80,8 @@ export class HrHttpController {
     }
 
     @Patch("positions/:id")
+    @ApiOperation({ summary: "Update a position" })
+    @ApiResponse({ status: 200 })
     async updatePosition(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: CreatePositionRequest): Promise<void> {
         await this.commandBus.execute(
             new UpdatePositionCommand({
@@ -79,6 +93,8 @@ export class HrHttpController {
     }
 
     @Get("positions")
+    @ApiOperation({ summary: "List all positions" })
+    @ApiResponse({ status: 200, type: ListPositionsResponseDto })
     async listPositions(): Promise<ListPositionsResponse> {
         return this.queryBus.execute(new ListPositionsQuery());
     }
@@ -86,7 +102,9 @@ export class HrHttpController {
     // ─── Employees ───────────────────────────────────────────
 
     @Post()
-    async createEmployee(@Body() body: CreateEmployeeRequest): Promise<{ employeeId: string }> {
+    @ApiOperation({ summary: "Create a new employee" })
+    @ApiResponse({ status: 201, type: EmployeeIdResponseDto })
+    async createEmployee(@Body() body: CreateEmployeeRequest): Promise<EmployeeIdResponseDto> {
         const employeeId = await this.commandBus.execute(
             new CreateEmployeeCommand({
                 firstName: body.firstName,
@@ -100,6 +118,8 @@ export class HrHttpController {
     }
 
     @Patch(":id")
+    @ApiOperation({ summary: "Update an employee" })
+    @ApiResponse({ status: 200 })
     async updateEmployee(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: UpdateEmployeeRequest): Promise<void> {
         await this.commandBus.execute(
             new UpdateEmployeeCommand({
@@ -113,6 +133,8 @@ export class HrHttpController {
     }
 
     @Post(":id/link-user")
+    @ApiOperation({ summary: "Link an employee to a system user" })
+    @ApiResponse({ status: 200 })
     async linkToUser(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: LinkEmployeeToUserRequest): Promise<void> {
         await this.commandBus.execute(
             new LinkEmployeeToUserCommand({
@@ -123,6 +145,8 @@ export class HrHttpController {
     }
 
     @Post(":id/positions")
+    @ApiOperation({ summary: "Assign a position to an employee" })
+    @ApiResponse({ status: 200 })
     async assignPosition(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Body() body: AssignPositionRequest,
@@ -138,6 +162,8 @@ export class HrHttpController {
     }
 
     @Delete(":id/positions/:positionKey")
+    @ApiOperation({ summary: "Unassign a position from an employee" })
+    @ApiResponse({ status: 200 })
     async unassignPosition(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Param("positionKey") positionKey: string,
@@ -151,11 +177,15 @@ export class HrHttpController {
     }
 
     @Post(":id/deactivate")
+    @ApiOperation({ summary: "Deactivate an employee" })
+    @ApiResponse({ status: 200 })
     async deactivateEmployee(@Param("id", ParseUUIDPipe) id: UUID): Promise<void> {
         await this.commandBus.execute(new DeactivateEmployeeCommand({ employeeId: id }));
     }
 
     @Post(":id/permission-overrides")
+    @ApiOperation({ summary: "Set permission overrides for an employee" })
+    @ApiResponse({ status: 200 })
     async setPermissionOverrides(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Body() body: SetPermissionOverrideRequest,
@@ -172,6 +202,8 @@ export class HrHttpController {
     }
 
     @Get(":id")
+    @ApiOperation({ summary: "Get employee details" })
+    @ApiResponse({ status: 200, type: EmployeeResponseDto })
     async getEmployee(@Param("id", ParseUUIDPipe) id: UUID): Promise<GetEmployeeResponse> {
         const employee = await this.queryBus.execute<GetEmployeeQuery, GetEmployeeResponse | null>(
             new GetEmployeeQuery(id),
@@ -183,6 +215,8 @@ export class HrHttpController {
     }
 
     @Get()
+    @ApiOperation({ summary: "List employees (paginated)" })
+    @ApiResponse({ status: 200, type: PaginatedEmployeesResponseDto })
     async listEmployees(@Query() dto: ListEmployeesRequestDto): Promise<ListEmployeesResponse> {
         return this.queryBus.execute(new ListEmployeesQuery(dto.page, dto.limit, dto.positionKey, dto.status));
     }
@@ -190,6 +224,8 @@ export class HrHttpController {
     // ─── Availability ────────────────────────────────────────
 
     @Put(":id/availability")
+    @ApiOperation({ summary: "Set availability entries for an employee" })
+    @ApiResponse({ status: 200 })
     async setAvailability(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Body() body: SetAvailabilityRequest,
@@ -205,6 +241,8 @@ export class HrHttpController {
     }
 
     @Post(":id/availability/confirm")
+    @ApiOperation({ summary: "Confirm availability entries" })
+    @ApiResponse({ status: 200 })
     async confirmAvailability(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Body() body: ConfirmAvailabilityRequest,
@@ -218,6 +256,8 @@ export class HrHttpController {
     }
 
     @Post(":id/availability/reject")
+    @ApiOperation({ summary: "Reject availability entries" })
+    @ApiResponse({ status: 200 })
     async rejectAvailability(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Body() body: RejectAvailabilityRequest,
@@ -231,6 +271,8 @@ export class HrHttpController {
     }
 
     @Post(":id/availability/lock")
+    @ApiOperation({ summary: "Lock availability entries" })
+    @ApiResponse({ status: 200 })
     async lockAvailability(@Param("id", ParseUUIDPipe) id: UUID, @Body() body: LockAvailabilityRequest): Promise<void> {
         await this.commandBus.execute(
             new LockAvailabilityCommand({
@@ -241,6 +283,8 @@ export class HrHttpController {
     }
 
     @Get(":id/availability")
+    @ApiOperation({ summary: "Get employee availability entries" })
+    @ApiResponse({ status: 200, type: GetEmployeeAvailabilityResponseDto })
     async getEmployeeAvailability(
         @Param("id", ParseUUIDPipe) id: UUID,
         @Query() dto: GetEmployeeAvailabilityRequestDto,
