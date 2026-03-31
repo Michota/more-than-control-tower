@@ -1,0 +1,4 @@
+{
+    "extends": "@mtct/typescript-config/react-spa.json",
+    "include": ["src"]
+}
