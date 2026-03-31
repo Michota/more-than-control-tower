@@ -5,10 +5,10 @@
     "type": "module",
     "exports": {
         ".": "./src/index.ts",
-        "./gen/hooks/*": "./src/gen/hooks/*.ts",
-        "./gen/clients/*": "./src/gen/clients/*.ts",
-        "./gen/models/*": "./src/gen/models/*.ts",
-        "./gen/zod/*": "./src/gen/zod/*.ts"
+        "./hooks/*": "./src/gen/hooks/*.ts",
+        "./clients/*": "./src/gen/clients/*.ts",
+        "./models/*": "./src/gen/models/*.ts",
+        "./zod/*": "./src/gen/zod/*.ts"
     },
     "scripts": {
         "export:openapi": "curl -sf http://localhost:3000/api-json | npx prettier --parser json > openapi.json",

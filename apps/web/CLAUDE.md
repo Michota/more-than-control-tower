@@ -59,8 +59,8 @@ The router has `QueryClient` in its context for loader-level data fetching.
 Prefer **generated hooks and clients** from `@mtct/api-client` (Kubb codegen from the OpenAPI spec):
 
 ```typescript
-import { useListEmployees } from "@mtct/api-client/gen/hooks/useListEmployees";
-import { listEmployeesQueryOptions } from "@mtct/api-client/gen/hooks/useListEmployees";
+import { useListEmployees } from "@mtct/api-client/hooks/useListEmployees";
+import { listEmployeesQueryOptions } from "@mtct/api-client/hooks/useListEmployees";
 ```
 
 For endpoints not yet covered by codegen, fall back to the shared Ky client from `@/lib/api-client`:
