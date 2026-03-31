@@ -1,8 +1,11 @@
 import z from "zod";
+import { NodeEnv } from "./node-env.js";
 
 export const portSchema = z.coerce.number().int().min(1).max(65535).default(3000);
 
 export const envSchema = z.object({
+    NODE_ENV: z.enum(NodeEnv).default(NodeEnv.Development),
+
     // Database configuration
     DB_HOST: z.string().min(1),
     DB_PORT: portSchema,

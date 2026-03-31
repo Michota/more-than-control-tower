@@ -5,6 +5,7 @@ import { QueryBus } from "@nestjs/cqrs";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator.js";
 import { env } from "../../../config/env.js";
 import { GetSystemUserQuery, GetSystemUserResponse } from "../../queries/get-system-user.query.js";
+import { parseCookies } from "../../../modules/auth/infrastructure/auth-cookies.js";
 
 interface JwtPayload {
     sub: string;
@@ -17,8 +18,8 @@ interface JwtPayload {
 /**
  * Global guard that validates JWT access tokens on every request.
  *
- * Reads `Authorization: Bearer <token>` header, verifies the JWT,
- * and sets `req.user = { userId }` for downstream guards and handlers.
+ * Reads token from `Authorization: Bearer <token>` header or `accessToken` cookie,
+ * verifies the JWT, and sets `req.user = { userId }` for downstream guards and handlers.
  *
  * Rejects refresh tokens, activation tokens, and suspended/unactivated users.
  * Routes decorated with @Public() bypass this guard.
@@ -44,7 +45,7 @@ export class JwtAuthGuard implements CanActivate {
         const request = context
             .switchToHttp()
             .getRequest<{ headers: Record<string, string>; user?: { userId: string } }>();
-        const token = this.extractTokenFromHeader(request.headers);
+        const token = this.extractToken(request.headers);
 
         if (!token) {
             throw new UnauthorizedException("Missing access token");
@@ -82,6 +83,14 @@ export class JwtAuthGuard implements CanActivate {
         return true;
     }
 
+    private extractToken(headers: Record<string, string>): string | undefined {
+        const fromHeader = this.extractTokenFromHeader(headers);
+        if (fromHeader) {
+            return fromHeader;
+        }
+        return this.extractTokenFromCookie(headers);
+    }
+
     private extractTokenFromHeader(headers: Record<string, string>): string | undefined {
         const authorization = headers.authorization;
         if (!authorization) {
@@ -90,5 +99,14 @@ export class JwtAuthGuard implements CanActivate {
 
         const [type, token] = authorization.split(" ");
         return type === "Bearer" ? token : undefined;
+    }
+
+    private extractTokenFromCookie(headers: Record<string, string>): string | undefined {
+        const cookieHeader = headers.cookie;
+        if (!cookieHeader) {
+            return undefined;
+        }
+        const cookies = parseCookies(cookieHeader);
+        return cookies.accessToken || undefined;
     }
 }
