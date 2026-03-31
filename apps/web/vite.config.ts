@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
@@ -9,7 +9,7 @@ import path from "path";
 export default defineConfig({
     plugins: [
         tailwindcss(),
-        TanStackRouterVite(),
+        tanstackRouter(),
         react(),
         paraglideVitePlugin({
             project: "../../packages/i18n/project.inlang",
