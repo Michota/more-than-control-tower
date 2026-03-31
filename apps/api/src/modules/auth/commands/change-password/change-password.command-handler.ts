@@ -8,7 +8,7 @@ import type { AuthCredentialsRepositoryPort } from "../../database/auth-credenti
 import { AUTH_CREDENTIALS_REPOSITORY_PORT, PASSWORD_HASHER_PORT } from "../../auth.di-tokens.js";
 import type { PasswordHasherPort } from "../../infrastructure/password-hasher.port.js";
 import { NotFoundException } from "../../../../libs/exceptions/index.js";
-import { passwordSchema } from "../../domain/password.schema.js";
+import { passwordSchema } from "@mtct/shared-types";
 import { ChangePasswordCommand } from "./change-password.command.js";
 
 @CommandHandler(ChangePasswordCommand)
