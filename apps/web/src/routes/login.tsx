@@ -2,9 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { HTTPError } from "ky";
 import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Languages } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useAppForm } from "@/hooks/use-app-form";
+import { useLocale } from "@/hooks/use-locale";
 import * as m from "@/lib/paraglide/messages";
 
 export const Route = createFileRoute("/login")({
@@ -16,10 +19,18 @@ const loginSchema = z.object({
     password: z.string().min(1),
 });
 
+const localeLabels: Record<string, string> = {
+    pl: "PL",
+    en: "EN",
+};
+
 function LoginPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const { locale, setLocale } = useLocale();
     const [formError, setFormError] = useState<string | null>(null);
+
+    const nextLocale = locale === "pl" ? "en" : "pl";
 
     const form = useAppForm({
         defaultValues: {
@@ -49,6 +60,12 @@ function LoginPage() {
             <Card className="w-full max-w-sm">
                 <CardHeader>
                     <CardTitle className="text-2xl">{m.auth_login_title()}</CardTitle>
+                    <CardAction>
+                        <Button variant="ghost" size="sm" onClick={() => void setLocale(nextLocale, { reload: false })}>
+                            <Languages className="size-4" />
+                            {localeLabels[nextLocale]}
+                        </Button>
+                    </CardAction>
                 </CardHeader>
                 <CardContent>
                     <form
