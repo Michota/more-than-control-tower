@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@inlang/paraglide-js": "^2.0.0",
+        "@mtct/api-client": "workspace:*",
         "@mtct/i18n": "workspace:*",
         "@mtct/shared-types": "workspace:*",
         "@tanstack/react-form": "^1.28.0",

@@ -13,6 +13,8 @@
         "lint": "turbo run lint",
         "check-types": "turbo run check-types",
         "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json}\" --no-error-on-unmatched-pattern",
+        "export:openapi": "pnpm --filter @mtct/api-client export:openapi",
+        "generate:api-client": "pnpm --filter @mtct/api-client generate",
         "migration:create": "pnpm --filter @mtct/api migration:create",
         "migration:up": "pnpm --filter @mtct/api migration:up",
         "migration:down": "pnpm --filter @mtct/api migration:down",

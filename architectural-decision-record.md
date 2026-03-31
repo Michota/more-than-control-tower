@@ -990,3 +990,61 @@ The service is built and exported, but **no cross-module event handlers consume 
   - Warehouse: goods receipt confirmed, stock transfer completed
   - Sales: order placed, order completed
 - Each handler imports only the event class from the publishing module's `domain/events/` — no other cross-module imports
+
+---
+
+# ADR-022: API Client Code Generation with Kubb
+
+**Status:** Accepted
+**Date:** 2026-03-31
+
+## Context
+
+The frontend needs typed API communication with the backend. The backend already serves an OpenAPI spec at `/api-json` via `@nestjs/swagger`. Manual type duplication is error-prone and unsustainable as the API surface grows.
+
+A previous attempt with Hey API failed due to module resolution clashes (`@tanstack/` directory naming), `noImplicitAny` errors in generated code, and types collapsing to `unknown`.
+
+## Decision
+
+Use **Kubb** (v3) for API client code generation. Kubb generates into clean subdirectories, supports a custom client adapter pattern (compatible with Ky), and produces proper `queryOptions()` factories for TanStack Query.
+
+### Pipeline
+
+1. Backend serves OpenAPI spec at `/api-json`
+2. `curl` exports the spec to `packages/api-client/openapi.json` (gitignored)
+3. `kubb generate` produces TypeScript types, client functions, TanStack Query hooks, and Zod schemas into `packages/api-client/src/gen/` (gitignored)
+4. `apps/web` consumes `@mtct/api-client` as a workspace dependency
+
+### Package structure
+
+```
+packages/api-client/
+├── kubb.config.ts        Kubb plugin configuration
+├── src/
+│   ├── client.ts         Ky-based HTTP adapter (Kubb client contract)
+│   ├── index.ts          Barrel re-exports
+│   └── gen/              Generated code (gitignored)
+│       ├── models/       TypeScript types
+│       ├── clients/      Client functions
+│       ├── hooks/        TanStack Query hooks + queryOptions
+│       └── zod/          Zod schemas
+```
+
+### Why not Hey API
+
+- Hey API outputs a flat `@tanstack/` directory that confused module resolution
+- Generated code had `noImplicitAny` violations under strict TS
+- Generic response types collapsed to `unknown`
+
+Kubb avoids all three: subdirectory output, clean type generation, and explicit response models.
+
+### Swagger DTO requirement
+
+Generic TypeScript interfaces (e.g. `Paginated<T>`) produce `{ type: "object" }` in OpenAPI. Controllers must use concrete DTO classes with `@ApiProperty` decorators to produce proper schemas. This is an API-layer concern — domain types remain unchanged.
+
+## Consequences
+
+- **Generated code is gitignored** — CI must run `kubb generate` before type checks
+- **Concrete response DTOs** are required for all controller return types that need typed OpenAPI output
+- **Ky adapter** in `src/client.ts` is the single HTTP layer — no direct `fetch` calls in generated code
+- Frontend gets fully typed API access: types, client functions, query hooks, and runtime validation schemas

@@ -4,6 +4,7 @@
 
 This app lives in `apps/web/` inside a pnpm monorepo. Shared workspace packages:
 
+- `@mtct/api-client` (`packages/api-client`) — generated API client (types, hooks, Zod schemas) from OpenAPI spec
 - `@mtct/i18n` (`packages/i18n`) — Paraglide.js i18n source messages
 - `@mtct/shared-types` (`packages/shared-types`) — shared TypeScript types
 - `@mtct/typescript-config` (`packages/typescript-config`) — shared tsconfig
@@ -55,12 +56,24 @@ The router has `QueryClient` in its context for loader-level data fetching.
 
 ## API Communication
 
-Use the shared Ky client from `@/lib/api-client`:
+Prefer **generated hooks and clients** from `@mtct/api-client` (Kubb codegen from the OpenAPI spec):
+
+```typescript
+import { useListEmployees } from "@mtct/api-client/gen/hooks/useListEmployees";
+import { listEmployeesQueryOptions } from "@mtct/api-client/gen/hooks/useListEmployees";
+```
+
+For endpoints not yet covered by codegen, fall back to the shared Ky client from `@/lib/api-client`:
 
 ```typescript
 import { api } from "@/lib/api-client";
 const data = await api.get("endpoint").json<ResponseType>();
 ```
+
+To regenerate the API client after backend changes:
+1. `pnpm dev:api` — ensure backend is running
+2. `pnpm export:openapi` — export OpenAPI spec
+3. `pnpm generate:api-client` — regenerate client code
 
 In dev, `/api` is proxied to `http://localhost:3000`.
 
