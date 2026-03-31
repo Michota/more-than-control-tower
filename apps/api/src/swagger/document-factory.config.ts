@@ -2,6 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import { DocumentBuilder, OpenAPIObject, SwaggerDocumentOptions, SwaggerModule } from "@nestjs/swagger";
 
 const config = new DocumentBuilder()
+    .setTitle("DSC Distribution Management API")
     .setVersion("1.0")
     .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "access-token")
     .addSecurityRequirements("access-token")
@@ -15,8 +16,7 @@ const options: SwaggerDocumentOptions = {
 };
 
 export const createDocumentFactory =
-    <T extends INestApplication>(app: T, documentModifiers?: ((document: OpenAPIObject) => OpenAPIObject)[]) =>
-    () => {
+    (app: INestApplication, documentModifiers?: ((document: OpenAPIObject) => OpenAPIObject)[]) => () => {
         const document = SwaggerModule.createDocument(app, config, options);
         if (documentModifiers) {
             return documentModifiers.reduce((prev, curr) => curr(prev), document);

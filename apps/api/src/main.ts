@@ -6,7 +6,7 @@ import "tsconfig-paths/register"; // <-- Must be first import to work with tscon
 import { AppModule } from "./app.module";
 import { env } from "./config/env";
 import { DomainExceptionFilter } from "./libs/exceptions/domain-exception.filter";
-import { createDocumentFactory } from "./swagger/document-factory.config";
+import { createDocumentFactory } from "./swagger";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);

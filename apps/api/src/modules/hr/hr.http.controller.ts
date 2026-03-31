@@ -54,6 +54,7 @@ import {
 } from "./dtos/employee.response.dto.js";
 import { PositionIdResponseDto, ListPositionsResponseDto } from "./dtos/position.response.dto.js";
 import { GetEmployeeAvailabilityResponseDto } from "./dtos/availability.response.dto.js";
+
 @ApiTags("HR")
 @Controller("employees")
 export class HrHttpController {

@@ -13,7 +13,7 @@ export const ApiEnum = (enumObj: object, options?: Omit<ApiPropertyOptions, "enu
     return ApiProperty({
         ...(options as ApiPropertyOptions),
         enum: enumObj,
-        description: `${description}. ${options?.description ?? ""}`.trim(),
+        description: `${description}${options?.description ? `. ${options.description}` : ""}`,
     } as ApiPropertyOptions);
 };
 
