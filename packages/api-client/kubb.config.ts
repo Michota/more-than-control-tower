@@ -8,6 +8,10 @@
  * All plugins write into subdirectories of src/gen/ (gitignored).
  * The custom Ky client adapter lives at src/client.ts — generated code
  * imports it via the relative importPath "../../client".
+ *
+ * Naming: "HrHttpControllerListEmployees" → "hrListEmployeesApi" (functions)
+ *   - "HttpController" is always stripped (NestJS implementation detail)
+ *   - "Api" suffix added only to functions/hooks, not types or constants
  */
 import { defineConfig } from "@kubb/core";
 import { pluginOas } from "@kubb/plugin-oas";
@@ -15,6 +19,17 @@ import { pluginTs } from "@kubb/plugin-ts";
 import { pluginClient } from "@kubb/plugin-client";
 import { pluginReactQuery } from "@kubb/plugin-react-query";
 import { pluginZod } from "@kubb/plugin-zod";
+
+/** Strip "HttpController" from Kubb-generated names. */
+function stripHttpController(name: string): string {
+    return name.replace(/HttpController/g, "");
+}
+
+/** Strip "HttpController", add "Api" suffix only to functions (hooks, clients, mutations). */
+function apiName(name: string, type?: string): string {
+    const clean = stripHttpController(name);
+    return type === "function" ? clean + "Api" : clean;
+}
 
 export default defineConfig({
     root: ".",
@@ -27,9 +42,23 @@ export default defineConfig({
     },
     plugins: [
         pluginOas({ validate: false }),
-        pluginTs({ output: { path: "models" } }),
-        pluginClient({ output: { path: "clients" }, importPath: "../../client" }),
-        pluginReactQuery({ output: { path: "hooks" }, client: { importPath: "../../client" } }),
-        pluginZod({ output: { path: "zod" } }),
+        pluginTs({
+            output: { path: "models" },
+            transformers: { name: (name) => stripHttpController(name) },
+        }),
+        pluginClient({
+            output: { path: "clients" },
+            importPath: "../../client",
+            transformers: { name: apiName },
+        }),
+        pluginReactQuery({
+            output: { path: "hooks" },
+            client: { importPath: "../../client" },
+            transformers: { name: apiName },
+        }),
+        pluginZod({
+            output: { path: "zod" },
+            transformers: { name: (name) => stripHttpController(name) },
+        }),
     ],
 });

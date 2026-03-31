@@ -12,7 +12,8 @@
     },
     "scripts": {
         "export:openapi": "curl -sf http://localhost:3000/api-json | npx prettier --parser json > openapi.json",
-        "generate": "kubb generate"
+        "generate": "kubb generate",
+        "sync": "pnpm export:openapi && pnpm generate"
     },
     "dependencies": {
         "ky": "^1.8.1"
