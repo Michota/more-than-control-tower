@@ -1,15 +1,9 @@
-import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { HTTPError } from "ky";
 import { Languages } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth";
-import { useAppForm } from "@/hooks/use-app-form";
 import { useLocale } from "@/hooks/use-locale";
-import { loginSchema } from "@/features/auth/validation/login-schema";
+import { useLoginForm } from "@/features/auth/hooks/use-login-form";
 import * as m from "@/lib/paraglide/messages";
-import type { z } from "zod";
 
 const localeLabels: Record<string, string> = {
     pl: "PL",
@@ -17,35 +11,10 @@ const localeLabels: Record<string, string> = {
 };
 
 export function LoginPage() {
-    const { login } = useAuth();
-    const navigate = useNavigate();
     const { locale, setLocale } = useLocale();
-    const [formError, setFormError] = useState<string | null>(null);
+    const { form, formError } = useLoginForm();
 
     const nextLocale = locale === "pl" ? "en" : "pl";
-
-    const form = useAppForm({
-        defaultValues: {
-            email: "",
-            password: "",
-        } as z.infer<typeof loginSchema>,
-        validators: {
-            onSubmit: loginSchema,
-        },
-        onSubmit: async ({ value }) => {
-            setFormError(null);
-            try {
-                await login(value.email, value.password);
-                await navigate({ to: "/" });
-            } catch (err) {
-                if (err instanceof HTTPError && err.response.status === 401) {
-                    setFormError(m.auth_invalid_credentials());
-                } else {
-                    setFormError(m.auth_invalid_credentials());
-                }
-            }
-        },
-    });
 
     return (
         <div className="flex min-h-screen items-center justify-center px-4">
