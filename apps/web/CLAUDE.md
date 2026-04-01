@@ -35,7 +35,7 @@ All UI must be **responsive** (mobile-first). Use Tailwind responsive prefixes (
 
 Feature-first architecture. Domain logic is grouped by feature; shared code stays in lean top-level directories.
 
-```
+```text
 src/
   routes/              # TanStack Router file-based routes — thin shells only
   features/            # Domain feature modules (the bulk of the app)

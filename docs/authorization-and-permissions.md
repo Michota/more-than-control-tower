@@ -4,7 +4,7 @@
 
 The system has three layers of access control:
 
-1. **Authentication** — JWT-based. Every request (except `@Public()` routes) must include a valid `Authorization: Bearer <token>` header. Handled globally by `JwtAuthGuard`.
+1. **Authentication** — JWT-based, transported via httpOnly cookies. Every request (except `@Public()` routes) must include valid auth cookies. Handled globally by `JwtAuthGuard`.
 
 2. **Permission checks** — Per-endpoint. The `@RequirePermission()` decorator checks whether the authenticated user has a specific permission. Uses `AuthorizationPort` to resolve effective permissions.
 
@@ -21,11 +21,31 @@ POST /auth/login
 { "email": "admin@example.com", "password": "..." }
 ```
 
-Returns a JWT access token. Include it in all subsequent requests:
+Returns `{ ok: true }` and sets httpOnly cookies (`accessToken`, `refreshToken`). The browser sends them automatically with every subsequent request — no manual `Authorization` header is needed.
+
+### Session check
 
 ```
-Authorization: Bearer <token>
+GET /auth/session
 ```
+
+Returns `{ authenticated: true }` if the session is valid (cookies present and access token not expired). Used by the frontend to determine auth state on page load.
+
+### Logout
+
+```
+POST /auth/logout
+```
+
+Clears auth cookies. Returns `{ ok: true }`.
+
+### Token refresh
+
+```
+POST /auth/refresh
+```
+
+Reads the `refreshToken` from the httpOnly cookie, issues a new token pair, and sets updated cookies. The frontend API client performs this automatically on 401 responses.
 
 ### Public routes
 

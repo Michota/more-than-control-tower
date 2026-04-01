@@ -1116,8 +1116,19 @@ Implement **structured audit logging for all authentication events**. Every secu
 - **Alerting**: whether to trigger alerts on suspicious patterns (e.g. N failed logins from same IP)
 - **Query interface**: admin UI for browsing audit logs, or API-only
 
+### Privacy and compliance
+
+IP addresses and user-agent strings are personal data under GDPR. Since the platform is multi-tenant B2B, each tenant may operate under different data protection requirements. The implementation must address:
+
+- **Retention limits** — audit records containing personal data must be purged or anonymized after a defined period (per-tenant configurable)
+- **Data minimization** — store only what is necessary for the audit purpose; consider hashing or truncating IP addresses after a short forensic window
+- **Access control** — audit log queries must be restricted to authorized personnel (e.g. tenant admins, not all employees)
+- **Right of erasure** — evaluate whether audit logs fall under a legal obligation exemption; document the justification per GDPR Art. 17(3)(b)
+- **Data processing agreement** — tenants must be informed that authentication events are logged, including what personal data is captured
+
 ## Consequences
 
 - Auth command handlers gain audit log writes (via a port, not direct DB access)
 - IP and user-agent must be passed from controllers to command handlers
 - Storage decision may depend on ADR-021 (ERP Activity Log) direction
+- Privacy impact assessment should be completed before implementation begins
