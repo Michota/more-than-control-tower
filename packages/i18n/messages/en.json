@@ -1,3 +1,10 @@
 {
-    "hello": "Welcome to MTCT"
+    "hello": "Welcome to MTCT",
+    "sidebar_warehouse": "Warehouse",
+    "sidebar_warehouse_warehouses": "Warehouses",
+    "sidebar_warehouse_goods": "Goods",
+    "sidebar_warehouse_stock": "Stock",
+    "sidebar_warehouse_goods_receipts": "Goods Receipts",
+    "sidebar_warehouse_stock_transfers": "Stock Transfers",
+    "sidebar_warehouse_sectors": "Sectors"
 }
