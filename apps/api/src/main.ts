@@ -1,6 +1,7 @@
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule } from "@nestjs/swagger";
+import { NodeEnv } from "@mtct/shared-types";
 
 import "tsconfig-paths/register"; // <-- Must be first import to work with tsconfig paths
 import { AppModule } from "./app.module";
@@ -18,9 +19,11 @@ async function bootstrap() {
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     app.useGlobalFilters(new DomainExceptionFilter());
 
-    SwaggerModule.setup("api", app, createDocumentFactory(app), {
-        swaggerOptions: { persistAuthorization: true },
-    });
+    if (env.NODE_ENV !== NodeEnv.Production) {
+        SwaggerModule.setup("api", app, createDocumentFactory(app), {
+            swaggerOptions: { persistAuthorization: true },
+        });
+    }
 
     await app.listen(env.SERVER_PORT);
 }

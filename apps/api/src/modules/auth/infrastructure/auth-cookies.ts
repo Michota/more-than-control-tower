@@ -31,14 +31,13 @@ export function setAuthCookies(res: Response, tokens: { accessToken: string; ref
 
     res.cookie("refreshToken", tokens.refreshToken, {
         ...COOKIE_OPTIONS_BASE,
-        path: "/auth/refresh",
         maxAge: durationToMs(env.JWT_REFRESH_EXPIRES_IN),
     });
 }
 
 export function clearAuthCookies(res: Response): void {
     res.clearCookie("accessToken", COOKIE_OPTIONS_BASE);
-    res.clearCookie("refreshToken", { ...COOKIE_OPTIONS_BASE, path: "/auth/refresh" });
+    res.clearCookie("refreshToken", COOKIE_OPTIONS_BASE);
 }
 
 export function parseCookies(cookieHeader: string): Record<string, string> {
