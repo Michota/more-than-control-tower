@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, Unauthoriz
 import type { Request, Response } from "express";
 import { CommandBus } from "@nestjs/cqrs";
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Throttle } from "@nestjs/throttler";
 import { Public } from "../../shared/auth/decorators/public.decorator.js";
 import { ActivateAccountCommand, ActivateAccountResult } from "./commands/activate-account/activate-account.command.js";
 import { ActivateAccountRequestDto } from "./commands/activate-account/activate-account.request.dto.js";
@@ -23,6 +24,7 @@ export class AuthHttpController {
 
     @Public()
     @Post("activate")
+    @Throttle({ default: { ttl: 60_000, limit: 5 } })
     @ApiOperation({ summary: "Activate account and set password" })
     @ApiCreatedResponse()
     async activateAccount(
@@ -41,6 +43,7 @@ export class AuthHttpController {
 
     @Public()
     @Post("login")
+    @Throttle({ default: { ttl: 60_000, limit: 5 } })
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: "Log in with email and password" })
     @ApiOkResponse()
@@ -57,6 +60,7 @@ export class AuthHttpController {
 
     @Public()
     @Post("refresh")
+    @Throttle({ default: { ttl: 60_000, limit: 10 } })
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: "Refresh access token using cookie or request body" })
     @ApiOkResponse()
