@@ -31,20 +31,57 @@ All files and directories use **kebab-case**. No PascalCase or camelCase file na
 
 All UI must be **responsive** (mobile-first). Use Tailwind responsive prefixes (`sm:`, `md:`, `lg:`, etc.). The app must work on mobile devices in field conditions.
 
-## Component Structure
+## Project Structure
 
-- **shadcn/ui primitives** go in `src/components/ui/` — these are managed by shadcn CLI, avoid heavy customization
-- **Feature/domain components** go in `src/components/` organized by feature (e.g. `src/components/orders/`)
-- Colocate component-specific hooks, types, and utilities next to the component
-- Use CVA (class-variance-authority) for component variants
+Feature-first architecture. Domain logic is grouped by feature; shared code stays in lean top-level directories.
+
+```
+src/
+  routes/              # TanStack Router file-based routes — thin shells only
+  features/            # Domain feature modules (the bulk of the app)
+    orders/
+      components/      # Feature-specific components
+      hooks/           # Feature-specific hooks
+      utils/           # Feature-specific helpers
+      validation/      # Feature-specific Zod schemas
+    warehouse/
+      ...
+  components/
+    ui/                # shadcn/ui primitives (managed by CLI, avoid heavy customization)
+    forms/             # Shared form building blocks (form-field-input, etc.)
+    layout/            # Shared layout components (sidebar, header, etc.)
+  hooks/               # Shared hooks (useAppForm, useLocale, etc.)
+  lib/                 # Shared infra: api-client, theme, config, query-client, locale-store
+  types/               # App-wide TypeScript types not covered by @mtct/shared-types
+```
+
+### Rules
+
+- **Routes are thin shells.** Route files in `src/routes/` define the route and import the page component from `src/features/`. They should contain minimal logic — just the `createFileRoute` call, loader if needed, and a component import.
+- **Features own their code.** Each feature folder (`src/features/<name>/`) contains its own `components/`, `hooks/`, `utils/`, `validation/` subdirectories as needed. Not every subdirectory is required — create them when the feature needs them.
+- **Shared code is the exception, not the rule.** Only promote something to a top-level shared directory (`src/hooks/`, `src/components/`, `src/lib/`) when it is used by 2+ features. Start colocated, extract when reuse appears.
+- **shadcn/ui primitives** live in `src/components/ui/` and are managed by the shadcn CLI — avoid heavy customization.
+- Use CVA (class-variance-authority) for component variants.
 
 ## Routing
 
-TanStack Router with file-based routing. Route files live in `src/routes/`.
+TanStack Router with file-based routing. Route files live in `src/routes/`. Every file in this directory is treated as a route by the router — do not place non-route code here.
 
 - `__root.tsx` — root layout
 - `index.tsx` — `/` route
 - `routeTree.gen.ts` — auto-generated, never edit
+
+Route files should be thin — delegate to feature components:
+
+```tsx
+// src/routes/orders/index.tsx
+import { createFileRoute } from "@tanstack/react-router";
+import { OrdersPage } from "@/features/orders/components/orders-page";
+
+export const Route = createFileRoute("/orders/")({
+  component: OrdersPage,
+});
+```
 
 The router has `QueryClient` in its context for loader-level data fetching.
 

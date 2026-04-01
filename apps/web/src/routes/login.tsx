@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { HTTPError } from "ky";
 import { z } from "zod";
@@ -11,6 +11,12 @@ import { useLocale } from "@/hooks/use-locale";
 import * as m from "@/lib/paraglide/messages";
 
 export const Route = createFileRoute("/login")({
+    beforeLoad: ({ context }) => {
+        if (context.auth.isAuthenticated) {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error
+            throw redirect({ to: "/" });
+        }
+    },
     component: LoginPage,
 });
 

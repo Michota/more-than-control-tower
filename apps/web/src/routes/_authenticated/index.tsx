@@ -4,7 +4,7 @@ import { useTheme } from "@/lib/theme";
 import { Moon, Sun } from "lucide-react";
 import * as m from "@/lib/paraglide/messages";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
     component: HomePage,
 });
 
