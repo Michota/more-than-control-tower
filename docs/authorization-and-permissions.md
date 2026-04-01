@@ -65,13 +65,34 @@ A permission is a string key that represents an action or capability in the syst
 
 Permissions serve dual purpose: gating actions on endpoints and describing capabilities for employee assignment.
 
-### How modules register permissions
+### How modules define and register permissions
 
-Each module registers its permissions at startup in `onModuleInit()`:
+All permissions are defined in `@mtct/shared-types` using the `defineModulePermissions()` helper. This is the single source of truth — keys, display names, and descriptions are co-located and shared between API and web:
 
 ```typescript
-import { Inject, Module, OnModuleInit } from "@nestjs/common";
-import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
+// packages/shared-types/src/permissions/warehouse.permissions.ts
+import { defineModulePermissions } from "./define-module-permissions.js";
+
+const { Keys, definitions } = defineModulePermissions("warehouse", {
+    CREATE_GOOD: { key: "create-good", name: "Create Good" },
+    EDIT_GOOD: { key: "edit-good", name: "Edit Good" },
+    VIEW_GOODS: { key: "view-goods", name: "View Goods" },
+    // ...
+});
+
+export const WarehousePermission = Keys;
+export type WarehousePermission = (typeof WarehousePermission)[keyof typeof WarehousePermission];
+export const warehousePermissionDefinitions = definitions;
+```
+
+The `defineModulePermissions()` helper returns:
+- `Keys` — const object with full keys (module-prefixed) for use with `@RequirePermission`. E.g., `Keys.CREATE_GOOD === "warehouse:create-good"`.
+- `definitions` — `PermissionInput[]` for passing to `permissionRegistry.registerForModule()`.
+
+The backend re-exports everything from `libs/permissions/` barrel. The module registers definitions at startup in `onModuleInit()`:
+
+```typescript
+import { warehousePermissionDefinitions } from "../../libs/permissions/index.js";
 
 @Module({ ... })
 export class WarehouseModule implements OnModuleInit {
@@ -81,19 +102,12 @@ export class WarehouseModule implements OnModuleInit {
     ) {}
 
     onModuleInit(): void {
-        this.permissionRegistry.registerForModule("warehouse", [
-            { key: "create-good", name: "Create Good" },
-            { key: "edit-good", name: "Edit Good" },
-            { key: "view-goods", name: "View Goods" },
-            // ...
-        ]);
+        this.permissionRegistry.registerForModule("warehouse", warehousePermissionDefinitions);
     }
 }
 ```
 
 The registry automatically prefixes each key with the module name: `"create-good"` becomes `"warehouse:create-good"`.
-
-Modules only provide bare keys. They never hardcode the prefix.
 
 ### Permission definition fields
 
@@ -103,24 +117,6 @@ Modules only provide bare keys. They never hardcode the prefix.
 | `name` | yes | Display name for UI (e.g., `"Create Good"`) |
 | `description` | no | Human-readable description |
 
-### Permission enum per module
-
-Each module defines a const object with all its permission keys for compile-time safety:
-
-```typescript
-// src/modules/warehouse/warehouse.permissions.ts
-export const WarehousePermission = {
-    CREATE_GOOD: "warehouse:create-good",
-    EDIT_GOOD: "warehouse:edit-good",
-    VIEW_GOODS: "warehouse:view-goods",
-    // ...
-} as const;
-
-export type WarehousePermission = (typeof WarehousePermission)[keyof typeof WarehousePermission];
-```
-
-The values are the full keys (with prefix), matching what the registry stores.
-
 ---
 
 ## Protecting endpoints
@@ -129,7 +125,7 @@ The values are the full keys (with prefix), matching what the registry stores.
 
 ```typescript
 import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
-import { WarehousePermission } from "./warehouse.permissions.js";
+import { WarehousePermission } from "../../libs/permissions/index.js";
 
 @RequirePermission(WarehousePermission.CREATE_GOOD)
 @Post("goods")
@@ -302,22 +298,30 @@ This respects overrides — an employee with a DENIED override won't appear even
 
 Step-by-step for a new module (e.g., `Delivery`):
 
-### 1. Create the permissions file
+### 1. Define permissions in `@mtct/shared-types`
 
 ```typescript
-// src/modules/delivery/delivery.permissions.ts
-export const DeliveryPermission = {
-    CREATE_VISIT: "delivery:create-visit",
-    VIEW_VISITS: "delivery:view-visits",
-    CLOSE_VISIT: "delivery:close-visit",
-} as const;
+// packages/shared-types/src/permissions/delivery.permissions.ts
+import { defineModulePermissions } from "./define-module-permissions.js";
 
+const { Keys, definitions } = defineModulePermissions("delivery", {
+    CREATE_VISIT: { key: "create-visit", name: "Create Visit" },
+    VIEW_VISITS: { key: "view-visits", name: "View Visits" },
+    CLOSE_VISIT: { key: "close-visit", name: "Close Visit" },
+});
+
+export const DeliveryPermission = Keys;
 export type DeliveryPermission = (typeof DeliveryPermission)[keyof typeof DeliveryPermission];
+export const deliveryPermissionDefinitions = definitions;
 ```
+
+Re-export from `packages/shared-types/src/permissions/index.ts` and `apps/api/src/libs/permissions/index.ts`.
 
 ### 2. Register in the module
 
 ```typescript
+import { deliveryPermissionDefinitions } from "../../libs/permissions/index.js";
+
 @Module({ ... })
 export class DeliveryModule implements OnModuleInit {
     constructor(
@@ -326,11 +330,7 @@ export class DeliveryModule implements OnModuleInit {
     ) {}
 
     onModuleInit(): void {
-        this.permissionRegistry.registerForModule("delivery", [
-            { key: "create-visit", name: "Create Visit" },
-            { key: "view-visits", name: "View Visits" },
-            { key: "close-visit", name: "Close Visit" },
-        ]);
+        this.permissionRegistry.registerForModule("delivery", deliveryPermissionDefinitions);
     }
 }
 ```
