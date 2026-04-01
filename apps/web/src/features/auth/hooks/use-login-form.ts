@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useAppForm } from "@/hooks/use-app-form";
 import { loginSchema } from "@/features/auth/validation/login-schema";
 import { t } from "@mtct/i18n";
+import * as m from "@/lib/paraglide/messages";
 import type { z } from "zod";
 
 export function useLoginForm() {
@@ -30,10 +31,13 @@ export function useLoginForm() {
                     const body: { message?: string } = await err.response
                         .json<{ message?: string }>()
                         .catch(() => ({}));
-                    const messageKey = body.message ?? "error_auth_invalid_credentials";
-                    setFormError(t(messageKey));
+                    setFormError(
+                        body.message
+                            ? t(body.message)
+                            : m.error_auth_invalid_credentials(),
+                    );
                 } else {
-                    setFormError(t("error_auth_invalid_credentials"));
+                    setFormError(m.error_auth_invalid_credentials());
                 }
             }
         },
