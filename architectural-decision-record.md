@@ -1048,3 +1048,38 @@ Generic TypeScript interfaces (e.g. `Paginated<T>`) produce `{ type: "object" }`
 - **Concrete response DTOs** are required for all controller return types that need typed OpenAPI output
 - **Ky adapter** in `src/client.ts` is the single HTTP layer — no direct `fetch` calls in generated code
 - Frontend gets fully typed API access: types, client functions, query hooks, and runtime validation schemas
+
+---
+
+# ADR-023: Two-Factor Authentication — Planned
+
+**Status:** Planned
+**Date:** 2026-04-01
+
+## Context
+
+The platform handles B2B field sales operations involving financial transactions (payment collection, order pricing, returns). Currently, authentication relies on a single factor (password). For a system where field workers handle money and dispatchers control logistics, a second authentication factor adds meaningful protection against credential theft.
+
+## Decision
+
+Implement **two-factor authentication (2FA)** as an optional-per-tenant feature. Tenants can enforce 2FA for specific roles (e.g. dispatchers, accountants) while leaving it optional for field workers where UX friction matters more.
+
+### Planned approach
+
+- Login flow with 2FA: email+password → 2FA challenge (separate step) → tokens issued
+- Per-tenant and per-role enforcement policy
+- Recovery codes generated at enrollment time (one-time use, hashed in DB)
+
+### Not yet decided
+
+- **2FA method**: TOTP (authenticator app), email-based codes, WebAuthn/FIDO2, or a combination
+- Whether to issue a short-lived intermediate token during the 2FA challenge step, or use a session-based approach
+- Exact recovery code count and format
+- SMS is likely ruled out (unreliable in field conditions)
+
+## Consequences
+
+- Auth module gains 2FA enrollment and verification commands
+- Login flow becomes two-step when 2FA is enabled
+- Recovery codes require secure storage (hashed, not plaintext)
+- Frontend needs 2FA enrollment and verification UI components
