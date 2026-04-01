@@ -1,7 +1,7 @@
 import { ConflictDomainException, NotFoundDomainException } from "../../../libs/exceptions/http-domain.exceptions.js";
 
 export class ActivityNotFoundError extends NotFoundDomainException {
-    static readonly message = "Activity not found.";
+    static readonly message = "error_erp_activity_not_found";
     public readonly code = "ERP.ACTIVITY.NOT_FOUND";
 
     constructor(id: string) {
@@ -10,7 +10,7 @@ export class ActivityNotFoundError extends NotFoundDomainException {
 }
 
 export class ActivityInUseError extends ConflictDomainException {
-    static readonly message = "Cannot delete activity that is assigned to working hours entries.";
+    static readonly message = "error_erp_activity_in_use";
     public readonly code = "ERP.ACTIVITY.IN_USE";
 
     constructor(id: string) {

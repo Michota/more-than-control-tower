@@ -218,11 +218,11 @@ describe("Stock entry deletion invariant", () => {
         expect(entry.quantity).toBe(0);
     });
 
-    it("StockEntryNotEmptyError contains entry id and quantity", () => {
+    it("StockEntryNotEmptyError contains entry id and quantity in metadata", () => {
         const error = new StockEntryNotEmptyError("test-id", 42);
 
         expect(error.code).toBe("STOCK_ENTRY.NOT_EMPTY");
-        expect(error.message).toContain("test-id");
-        expect(error.message).toContain("42");
+        expect(error.message).toBe("error_stock_entry_not_empty");
+        expect(error.metadata).toEqual({ id: "test-id", quantity: 42 });
     });
 });

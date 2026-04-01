@@ -5,7 +5,7 @@ import {
 } from "../../../libs/exceptions/http-domain.exceptions.js";
 
 export class WorkingHoursEntryNotFoundError extends NotFoundDomainException {
-    static readonly message = "Working hours entry not found.";
+    static readonly message = "error_erp_working_hours_not_found";
     public readonly code = "ERP.WORKING_HOURS.NOT_FOUND";
 
     constructor(id: string) {
@@ -14,7 +14,7 @@ export class WorkingHoursEntryNotFoundError extends NotFoundDomainException {
 }
 
 export class WorkingHoursEntryLockedError extends ConflictDomainException {
-    static readonly message = "Cannot modify locked working hours entry.";
+    static readonly message = "error_erp_working_hours_locked";
     public readonly code = "ERP.WORKING_HOURS.LOCKED";
 
     constructor(id: string) {
@@ -23,7 +23,7 @@ export class WorkingHoursEntryLockedError extends ConflictDomainException {
 }
 
 export class WorkingHoursEntryAlreadyLockedError extends ConflictDomainException {
-    static readonly message = "Working hours entry is already locked.";
+    static readonly message = "error_erp_working_hours_already_locked";
     public readonly code = "ERP.WORKING_HOURS.ALREADY_LOCKED";
 
     constructor(id: string) {
@@ -32,7 +32,7 @@ export class WorkingHoursEntryAlreadyLockedError extends ConflictDomainException
 }
 
 export class WorkingHoursNotOwnedError extends ForbiddenDomainException {
-    static readonly message = "You can only access your own working hours.";
+    static readonly message = "error_erp_working_hours_not_owned";
     public readonly code = "ERP.WORKING_HOURS.NOT_OWNED";
 
     constructor(employeeId: string) {
