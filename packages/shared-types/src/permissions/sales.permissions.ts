@@ -1,14 +1,14 @@
 import { defineModulePermissions } from "./define-module-permissions.js";
 
 const { Keys, definitions } = defineModulePermissions("sales", {
-    DRAFT_ORDER: { key: "draft-order", name: "Draft Order" },
-    EDIT_DRAFT: { key: "edit-draft", name: "Edit Draft Order" },
-    PLACE_ORDER: { key: "place-order", name: "Place Order" },
-    CANCEL_ORDER: { key: "cancel-order", name: "Cancel Order" },
-    COMPLETE_ORDER: { key: "complete-order", name: "Complete Order" },
-    ASSIGN_GOOD: { key: "assign-good", name: "Assign Good to Order" },
-    ASSIGN_STOCK_ENTRY: { key: "assign-stock-entry", name: "Assign Stock Entry to Order" },
-    VIEW_ORDERS: { key: "view-orders", name: "View Orders" },
+    DRAFT_ORDER: { key: "draft-order", messageKey: "permission_sales_draft_order" },
+    EDIT_DRAFT: { key: "edit-draft", messageKey: "permission_sales_edit_draft" },
+    PLACE_ORDER: { key: "place-order", messageKey: "permission_sales_place_order" },
+    CANCEL_ORDER: { key: "cancel-order", messageKey: "permission_sales_cancel_order" },
+    COMPLETE_ORDER: { key: "complete-order", messageKey: "permission_sales_complete_order" },
+    ASSIGN_GOOD: { key: "assign-good", messageKey: "permission_sales_assign_good" },
+    ASSIGN_STOCK_ENTRY: { key: "assign-stock-entry", messageKey: "permission_sales_assign_stock_entry" },
+    VIEW_ORDERS: { key: "view-orders", messageKey: "permission_sales_view_orders" },
 });
 
 export const SalesPermission = Keys;

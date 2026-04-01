@@ -9,14 +9,20 @@ describe("PermissionRegistry", () => {
 
     describe("registerForModule()", () => {
         it("registers permissions with module prefix", () => {
-            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
+            registry.registerForModule("warehouse", [
+                { key: "create-receipt", messageKey: "permission_warehouse_create_receipt" },
+            ]);
 
             expect(registry.has("warehouse:create-receipt")).toBe(true);
         });
 
         it("stores full key and module on the definition", () => {
             registry.registerForModule("warehouse", [
-                { key: "create-receipt", name: "Create Receipt", description: "Create a new goods receipt" },
+                {
+                    key: "create-receipt",
+                    messageKey: "permission_warehouse_create_receipt",
+                    descriptionKey: "permission_warehouse_create_receipt_desc",
+                },
             ]);
 
             const result = registry.get("warehouse:create-receipt");
@@ -24,14 +30,14 @@ describe("PermissionRegistry", () => {
             expect(result?.key).toBe("create-receipt");
             expect(result?.fullKey).toBe("warehouse:create-receipt");
             expect(result?.module).toBe("warehouse");
-            expect(result?.name).toBe("Create Receipt");
-            expect(result?.description).toBe("Create a new goods receipt");
+            expect(result?.messageKey).toBe("permission_warehouse_create_receipt");
+            expect(result?.descriptionKey).toBe("permission_warehouse_create_receipt_desc");
         });
 
         it("registers multiple permissions for a module", () => {
             registry.registerForModule("freight", [
-                { key: "execute-route", name: "Execute Route" },
-                { key: "view-routes", name: "View Routes" },
+                { key: "execute-route", messageKey: "permission_freight_execute_route" },
+                { key: "view-routes", messageKey: "permission_freight_view_routes" },
             ]);
 
             expect(registry.has("freight:execute-route")).toBe(true);
@@ -39,17 +45,23 @@ describe("PermissionRegistry", () => {
         });
 
         it("registers permissions from different modules", () => {
-            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
-            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
+            registry.registerForModule("warehouse", [
+                { key: "create-receipt", messageKey: "permission_warehouse_create_receipt" },
+            ]);
+            registry.registerForModule("freight", [
+                { key: "execute-route", messageKey: "permission_freight_execute_route" },
+            ]);
 
             expect(registry.has("warehouse:create-receipt")).toBe(true);
             expect(registry.has("freight:execute-route")).toBe(true);
         });
 
-        it("description is optional", () => {
-            registry.registerForModule("warehouse", [{ key: "view-stock", name: "View Stock" }]);
+        it("descriptionKey is optional", () => {
+            registry.registerForModule("warehouse", [
+                { key: "view-stock", messageKey: "permission_warehouse_view_stock" },
+            ]);
 
-            expect(registry.get("warehouse:view-stock")?.description).toBeUndefined();
+            expect(registry.get("warehouse:view-stock")?.descriptionKey).toBeUndefined();
         });
     });
 
@@ -67,8 +79,12 @@ describe("PermissionRegistry", () => {
 
     describe("getAll()", () => {
         it("returns all registered permissions", () => {
-            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
-            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
+            registry.registerForModule("warehouse", [
+                { key: "create-receipt", messageKey: "permission_warehouse_create_receipt" },
+            ]);
+            registry.registerForModule("freight", [
+                { key: "execute-route", messageKey: "permission_freight_execute_route" },
+            ]);
 
             expect(registry.getAll()).toHaveLength(2);
         });
@@ -81,10 +97,12 @@ describe("PermissionRegistry", () => {
     describe("getByModule()", () => {
         it("filters by module", () => {
             registry.registerForModule("warehouse", [
-                { key: "create-receipt", name: "Create Receipt" },
-                { key: "view-stock", name: "View Stock" },
+                { key: "create-receipt", messageKey: "permission_warehouse_create_receipt" },
+                { key: "view-stock", messageKey: "permission_warehouse_view_stock" },
             ]);
-            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
+            registry.registerForModule("freight", [
+                { key: "execute-route", messageKey: "permission_freight_execute_route" },
+            ]);
 
             const warehousePerms = registry.getByModule("warehouse");
 
@@ -93,7 +111,9 @@ describe("PermissionRegistry", () => {
         });
 
         it("returns empty array for unknown module", () => {
-            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
+            registry.registerForModule("warehouse", [
+                { key: "create-receipt", messageKey: "permission_warehouse_create_receipt" },
+            ]);
 
             expect(registry.getByModule("crm")).toEqual([]);
         });
@@ -101,8 +121,12 @@ describe("PermissionRegistry", () => {
 
     describe("getAllKeys()", () => {
         it("returns full keys with module prefix", () => {
-            registry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
-            registry.registerForModule("freight", [{ key: "execute-route", name: "Execute Route" }]);
+            registry.registerForModule("warehouse", [
+                { key: "create-receipt", messageKey: "permission_warehouse_create_receipt" },
+            ]);
+            registry.registerForModule("freight", [
+                { key: "execute-route", messageKey: "permission_freight_execute_route" },
+            ]);
 
             const keys = registry.getAllKeys();
 
