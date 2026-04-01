@@ -10,6 +10,7 @@
         "dev:web": "turbo run dev --filter=@mtct/web",
         "test": "turbo run test",
         "test:integration": "turbo run test:integration",
+        "test:all": "turbo run test test:integration",
         "lint": "turbo run lint",
         "check-types": "turbo run check-types",
         "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json}\" --no-error-on-unmatched-pattern",

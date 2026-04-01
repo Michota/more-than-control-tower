@@ -8,7 +8,7 @@ import { GetEmployeeQuery, GetEmployeeResponse } from "../../../../shared/querie
 import { WalletNotFoundError, WalletNotOwnedError } from "../../domain/wallet.errors.js";
 import type { WalletRepositoryPort } from "../../database/wallet.repository.port.js";
 import { WALLET_REPOSITORY_PORT } from "../../erp.di-tokens.js";
-import { ErpPermission } from "../../erp.permissions.js";
+import { ErpPermission } from "../../../../libs/permissions/index.js";
 import {
     GetWalletTransactionsQuery,
     type GetWalletTransactionsResponse,

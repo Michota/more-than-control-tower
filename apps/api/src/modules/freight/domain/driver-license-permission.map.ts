@@ -1,5 +1,5 @@
 import { DriverLicenseCategory } from "./driver-license-category.enum.js";
-import { FreightPermission } from "../freight.permissions.js";
+import { FreightPermission } from "../../../libs/permissions/index.js";
 
 const LICENSE_TO_PERMISSION: Record<DriverLicenseCategory, FreightPermission> = {
     [DriverLicenseCategory.B]: FreightPermission.DRIVER_LICENSE_B,

@@ -13,7 +13,7 @@ import { ActivityNotFoundError } from "../../domain/activity.errors.js";
 import type { ActivityRepositoryPort } from "../../database/activity.repository.port.js";
 import type { WorkingHoursEntryRepositoryPort } from "../../database/working-hours-entry.repository.port.js";
 import { ACTIVITY_REPOSITORY_PORT, WORKING_HOURS_ENTRY_REPOSITORY_PORT } from "../../erp.di-tokens.js";
-import { ErpPermission } from "../../erp.permissions.js";
+import { ErpPermission } from "../../../../libs/permissions/index.js";
 import { LogWorkingHoursCommand } from "./log-working-hours.command.js";
 
 @CommandHandler(LogWorkingHoursCommand)

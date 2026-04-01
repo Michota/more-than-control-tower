@@ -1048,3 +1048,87 @@ Generic TypeScript interfaces (e.g. `Paginated<T>`) produce `{ type: "object" }`
 - **Concrete response DTOs** are required for all controller return types that need typed OpenAPI output
 - **Ky adapter** in `src/client.ts` is the single HTTP layer — no direct `fetch` calls in generated code
 - Frontend gets fully typed API access: types, client functions, query hooks, and runtime validation schemas
+
+---
+
+# ADR-023: Two-Factor Authentication — Planned
+
+**Status:** Planned
+**Date:** 2026-04-01
+
+## Context
+
+The platform handles B2B field sales operations involving financial transactions (payment collection, order pricing, returns). Currently, authentication relies on a single factor (password). For a system where field workers handle money and dispatchers control logistics, a second authentication factor adds meaningful protection against credential theft.
+
+## Decision
+
+Implement **two-factor authentication (2FA)** as an optional-per-tenant feature. Tenants can enforce 2FA for specific roles (e.g. dispatchers, accountants) while leaving it optional for field workers where UX friction matters more.
+
+### Planned approach
+
+- Login flow with 2FA: email+password → 2FA challenge (separate step) → tokens issued
+- Per-tenant and per-role enforcement policy
+- Recovery codes generated at enrollment time (one-time use, hashed in DB)
+
+### Not yet decided
+
+- **2FA method**: TOTP (authenticator app), email-based codes, WebAuthn/FIDO2, or a combination
+- Whether to issue a short-lived intermediate token during the 2FA challenge step, or use a session-based approach
+- Exact recovery code count and format
+- SMS is likely ruled out (unreliable in field conditions)
+
+## Consequences
+
+- Auth module gains 2FA enrollment and verification commands
+- Login flow becomes two-step when 2FA is enabled
+- Recovery codes require secure storage (hashed, not plaintext)
+- Frontend needs 2FA enrollment and verification UI components
+
+---
+
+# ADR-024: Auth Event Audit Logging — Planned
+
+**Status:** Planned
+**Date:** 2026-04-01
+
+## Context
+
+The platform currently has no structured logging of authentication events. For a B2B system handling financial operations, audit trails are essential for security monitoring, incident investigation, and compliance. There is no way to answer questions like "when did this user last log in?", "were there failed login attempts against this account?", or "who generated an activation token for this user?".
+
+## Decision
+
+Implement **structured audit logging for all authentication events**. Every security-relevant action in the auth module will produce an audit record.
+
+### Events to log
+
+- Login success (userId, IP, userAgent)
+- Login failure (email attempted, reason — invalid credentials / account suspended / account not activated, IP, userAgent)
+- Token refresh (userId, IP)
+- Logout (userId)
+- Account activation (userId)
+- Password change (userId, initiator — self or admin)
+- Activation token generation (targetUserId, generatedBy)
+
+### Not yet decided
+
+- **Storage**: dedicated `auth_audit_log` table vs general-purpose event log shared with ADR-021 (ERP Activity Log)
+- **Retention policy**: how long to keep records, whether to archive or rotate
+- **Alerting**: whether to trigger alerts on suspicious patterns (e.g. N failed logins from same IP)
+- **Query interface**: admin UI for browsing audit logs, or API-only
+
+### Privacy and compliance
+
+IP addresses and user-agent strings are personal data under GDPR. Since the platform is multi-tenant B2B, each tenant may operate under different data protection requirements. The implementation must address:
+
+- **Retention limits** — audit records containing personal data must be purged or anonymized after a defined period (per-tenant configurable)
+- **Data minimization** — store only what is necessary for the audit purpose; consider hashing or truncating IP addresses after a short forensic window
+- **Access control** — audit log queries must be restricted to authorized personnel (e.g. tenant admins, not all employees)
+- **Right of erasure** — evaluate whether audit logs fall under a legal obligation exemption; document the justification per GDPR Art. 17(3)(b)
+- **Data processing agreement** — tenants must be informed that authentication events are logged, including what personal data is captured
+
+## Consequences
+
+- Auth command handlers gain audit log writes (via a port, not direct DB access)
+- IP and user-agent must be passed from controllers to command handlers
+- Storage decision may depend on ADR-021 (ERP Activity Log) direction
+- Privacy impact assessment should be completed before implementation begins

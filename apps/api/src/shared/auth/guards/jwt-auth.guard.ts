@@ -17,8 +17,8 @@ interface JwtPayload {
 /**
  * Global guard that validates JWT access tokens on every request.
  *
- * Reads `Authorization: Bearer <token>` header, verifies the JWT,
- * and sets `req.user = { userId }` for downstream guards and handlers.
+ * Reads token from `Authorization: Bearer <token>` header or `accessToken` cookie,
+ * verifies the JWT, and sets `req.user = { userId }` for downstream guards and handlers.
  *
  * Rejects refresh tokens, activation tokens, and suspended/unactivated users.
  * Routes decorated with @Public() bypass this guard.
@@ -41,10 +41,12 @@ export class JwtAuthGuard implements CanActivate {
             return true;
         }
 
-        const request = context
-            .switchToHttp()
-            .getRequest<{ headers: Record<string, string>; user?: { userId: string } }>();
-        const token = this.extractTokenFromHeader(request.headers);
+        const request = context.switchToHttp().getRequest<{
+            headers: Record<string, string>;
+            cookies?: Record<string, string>;
+            user?: { userId: string };
+        }>();
+        const token = this.extractToken(request);
 
         if (!token) {
             throw new UnauthorizedException("Missing access token");
@@ -80,6 +82,17 @@ export class JwtAuthGuard implements CanActivate {
         }
 
         return true;
+    }
+
+    private extractToken(request: {
+        headers: Record<string, string>;
+        cookies?: Record<string, string>;
+    }): string | undefined {
+        const fromHeader = this.extractTokenFromHeader(request.headers);
+        if (fromHeader) {
+            return fromHeader;
+        }
+        return request.cookies?.accessToken || undefined;
     }
 
     private extractTokenFromHeader(headers: Record<string, string>): string | undefined {

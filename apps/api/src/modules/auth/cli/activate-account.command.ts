@@ -2,7 +2,7 @@ import { Inject } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Command, CommandRunner, Option } from "nest-commander";
 import z from "zod";
-import { passwordSchema } from "../domain/password.schema.js";
+import { passwordSchema } from "@mtct/shared-types";
 import { SetPasswordCommand } from "../commands/set-password/set-password.command.js";
 
 const cliOptionsSchema = z.object({
