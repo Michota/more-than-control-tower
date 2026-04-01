@@ -1,9 +1,10 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UnauthorizedException } from "@nestjs/common";
 import type { Request, Response } from "express";
-import { CommandBus } from "@nestjs/cqrs";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import { Public } from "../../shared/auth/decorators/public.decorator.js";
+import { CurrentUser, type RequestUser } from "../../shared/auth/decorators/current-user.decorator.js";
 import { ActivateAccountCommand, ActivateAccountResult } from "./commands/activate-account/activate-account.command.js";
 import { ActivateAccountRequestDto } from "./commands/activate-account/activate-account.request.dto.js";
 import { LoginCommand, LoginResult } from "./commands/login/login.command.js";
@@ -15,12 +16,20 @@ import {
 } from "./commands/generate-activation-token/generate-activation-token.command.js";
 import { GenerateActivationTokenRequestDto } from "./commands/generate-activation-token/generate-activation-token.request.dto.js";
 import { ActivationTokenResponseDto } from "./dtos/auth.response.dto.js";
+import { PermissionsResponseDto } from "./dtos/permissions.response.dto.js";
 import { setAuthCookies, clearAuthCookies } from "./infrastructure/auth-cookies.js";
+import {
+    GetEmployeePermissionsQuery,
+    type GetEmployeePermissionsResponse,
+} from "../../shared/queries/get-employee-permissions.query.js";
 
 @ApiTags("Authentication")
 @Controller("auth")
 export class AuthHttpController {
-    constructor(private readonly commandBus: CommandBus) {}
+    constructor(
+        private readonly commandBus: CommandBus,
+        private readonly queryBus: QueryBus,
+    ) {}
 
     @Public()
     @Post("activate")
@@ -109,5 +118,15 @@ export class AuthHttpController {
                 userId: body.userId,
             }),
         );
+    }
+
+    @Get("permissions")
+    @ApiOperation({ summary: "Get current user's effective permissions" })
+    @ApiOkResponse({ type: PermissionsResponseDto })
+    async getPermissions(@CurrentUser() user: RequestUser): Promise<PermissionsResponseDto> {
+        const result = await this.queryBus.execute<GetEmployeePermissionsQuery, GetEmployeePermissionsResponse | null>(
+            new GetEmployeePermissionsQuery(user.userId),
+        );
+        return { permissions: result?.effectivePermissions ?? [] };
     }
 }

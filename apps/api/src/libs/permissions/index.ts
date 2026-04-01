@@ -1,5 +1,6 @@
 // Re-export all permission keys + definitions from shared-types
 export {
+    type Permission,
     type PermissionInput,
     defineModulePermissions,
     WarehousePermission,
