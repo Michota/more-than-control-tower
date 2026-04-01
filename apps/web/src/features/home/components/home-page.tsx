@@ -25,8 +25,8 @@ export function HomePage() {
             <h1 className="text-4xl font-bold">{m.hello()}</h1>
             <p className="text-muted-foreground">More Than Control Tower</p>
             <div className="flex gap-3">
-                {canPerform(WarehousePermission.VIEW_GOODS) && <Button>View Goods</Button>}
-                {canPerform(SalesPermission.DRAFT_ORDER) && <Button>Draft Order</Button>}
+                {canPerform(WarehousePermission.VIEW_GOODS) && <Button>{m.warehouse_view_goods()}</Button>}
+                {canPerform(SalesPermission.DRAFT_ORDER) && <Button>{m.sales_draft_order()}</Button>}
                 <ThemeToggle />
             </div>
         </div>

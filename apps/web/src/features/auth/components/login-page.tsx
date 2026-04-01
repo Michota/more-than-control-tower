@@ -5,9 +5,9 @@ import { useLocale } from "@/hooks/use-locale";
 import { useLoginForm } from "@/features/auth/hooks/use-login-form";
 import * as m from "@/lib/paraglide/messages";
 
-const localeLabels: Record<string, string> = {
-    pl: "PL",
-    en: "EN",
+const localeLabels: Record<string, () => string> = {
+    pl: m.locale_pl,
+    en: m.locale_en,
 };
 
 export function LoginPage() {
@@ -24,7 +24,7 @@ export function LoginPage() {
                     <CardAction>
                         <Button variant="ghost" size="sm" onClick={() => void setLocale(nextLocale, { reload: false })}>
                             <Languages className="size-4" />
-                            {localeLabels[nextLocale]}
+                            {localeLabels[nextLocale]?.()}
                         </Button>
                     </CardAction>
                 </CardHeader>

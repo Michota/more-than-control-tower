@@ -1,5 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import ky from "ky";
+import { createContext, useCallback, useContext, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSessionAuthApi, sessionAuthQueryKey } from "@mtct/api-client/hooks/useSessionAuth";
+import { useLoginAuthApi } from "@mtct/api-client/hooks/useLoginAuth";
+import { useLogoutAuthApi } from "@mtct/api-client/hooks/useLogoutAuth";
 
 interface AuthContextValue {
     isAuthenticated: boolean;
@@ -10,30 +13,41 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const api = ky.create({ prefixUrl: "/api", credentials: "include" });
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
 
-    // Tokens are stored as httpOnly cookies — JavaScript cannot read them.
-    // The only way to know if a session exists is to ask the server.
-    useEffect(() => {
-        api.get("auth/session")
-            .then(() => setIsAuthenticated(true))
-            .catch(() => setIsAuthenticated(false))
-            .finally(() => setIsLoading(false));
-    }, []);
+    const { data, isLoading, isError } = useSessionAuthApi({
+        query: { retry: false },
+    });
 
-    const login = useCallback(async (email: string, password: string) => {
-        await api.post("auth/login", { json: { email, password } });
-        setIsAuthenticated(true);
-    }, []);
+    const isAuthenticated = !isError && !!data;
+
+    const loginMutation = useLoginAuthApi({
+        mutation: {
+            onSuccess: () => {
+                void queryClient.invalidateQueries({ queryKey: sessionAuthQueryKey() });
+            },
+        },
+    });
+
+    const logoutMutation = useLogoutAuthApi({
+        mutation: {
+            onSettled: () => {
+                void queryClient.invalidateQueries({ queryKey: sessionAuthQueryKey() });
+            },
+        },
+    });
+
+    const login = useCallback(
+        async (email: string, password: string) => {
+            await loginMutation.mutateAsync({ data: { email, password } });
+        },
+        [loginMutation],
+    );
 
     const logout = useCallback(async () => {
-        await api.post("auth/logout").catch(() => {});
-        setIsAuthenticated(false);
-    }, []);
+        await logoutMutation.mutateAsync().catch(() => {});
+    }, [logoutMutation]);
 
     return <AuthContext value={{ isAuthenticated, isLoading, login, logout }}>{children}</AuthContext>;
 }

@@ -5,5 +5,10 @@
     "auth_password_label": "Password",
     "auth_login_button": "Sign in",
     "auth_invalid_credentials": "Invalid email or password",
-    "auth_logout": "Sign out"
+    "auth_logout": "Sign out",
+    "common_save": "Save",
+    "locale_pl": "PL",
+    "locale_en": "EN",
+    "warehouse_view_goods": "View Goods",
+    "sales_draft_order": "Draft Order"
 }

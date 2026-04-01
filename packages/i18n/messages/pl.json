@@ -5,5 +5,10 @@
     "auth_password_label": "Hasło",
     "auth_login_button": "Zaloguj",
     "auth_invalid_credentials": "Nieprawidłowy e-mail lub hasło",
-    "auth_logout": "Wyloguj"
+    "auth_logout": "Wyloguj",
+    "common_save": "Zapisz",
+    "locale_pl": "PL",
+    "locale_en": "EN",
+    "warehouse_view_goods": "Przeglądaj towary",
+    "sales_draft_order": "Utwórz zamówienie"
 }

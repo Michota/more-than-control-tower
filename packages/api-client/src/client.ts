@@ -49,7 +49,7 @@ const api = ky.create({
 
                     if (refreshResponse.ok) {
                         // Retry original request with new cookies
-                        return ky(request, { credentials: "include" });
+                        return ky(request, { credentials: "include", retry: 0 });
                     }
                 } catch {
                     // Refresh failed — redirect to login

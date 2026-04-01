@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
 function Field({ className, ...props }: React.ComponentProps<"div"> & { "data-invalid"?: boolean }) {
-    return <div role="group" data-slot="field" className={cn("flex flex-col gap-2", className)} {...props} />;
+    return <div role="group" data-slot="field" className={cn("group/field flex flex-col gap-2", className)} {...props} />;
 }
 
 function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>) {
