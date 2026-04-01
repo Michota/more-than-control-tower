@@ -2,6 +2,7 @@ import { EntityManager } from "@mikro-orm/core";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Inject, Module, type OnModuleInit } from "@nestjs/common";
 import { PERMISSION_REGISTRY, type PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
+import { hrPermissionDefinitions } from "./hr.permissions.js";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
 import { CreateEmployeeCommandHandler } from "./commands/create-employee/create-employee.command-handler.js";
@@ -107,12 +108,6 @@ export class HrModule implements OnModuleInit {
     ) {}
 
     onModuleInit(): void {
-        this.permissionRegistry.registerForModule("hr", [
-            {
-                key: "manage-availability",
-                name: "Manage Availability",
-                description: "Confirm/reject availability and set availability without approval",
-            },
-        ]);
+        this.permissionRegistry.registerForModule("hr", hrPermissionDefinitions);
     }
 }

@@ -5,6 +5,7 @@ import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-o
 import { NestJsLoggerAdapter } from "../../shared/infrastructure/nestjs-logger.adapter.js";
 import { LOGGER_PORT, UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
 import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
+import { freightPermissionDefinitions } from "./freight.permissions.js";
 
 // Vehicle
 import { CreateVehicleCommandHandler } from "./commands/create-vehicle/create-vehicle.command-handler.js";
@@ -134,35 +135,6 @@ export class FreightModule implements OnModuleInit {
     ) {}
 
     onModuleInit(): void {
-        this.permissionRegistry.registerForModule("freight", [
-            // Vehicles
-            { key: "create-vehicle", name: "Create Vehicle" },
-            { key: "edit-vehicle", name: "Edit Vehicle" },
-            { key: "change-vehicle-status", name: "Change Vehicle Status" },
-            { key: "view-vehicles", name: "View Vehicles" },
-
-            // Routes
-            { key: "create-route", name: "Create Route" },
-            { key: "edit-route", name: "Edit Route" },
-            { key: "archive-route", name: "Archive Route" },
-            { key: "change-route-status", name: "Change Route Status" },
-            { key: "view-routes", name: "View Routes" },
-
-            // Journeys
-            { key: "create-journey", name: "Create Journey" },
-            { key: "start-journey", name: "Start Journey" },
-            { key: "complete-journey", name: "Complete Journey" },
-            { key: "cancel-journey", name: "Cancel Journey" },
-            { key: "view-journeys", name: "View Journeys" },
-
-            // Driver License Categories
-            { key: "driver-license-b", name: "Driver License Category B", description: "Vehicles up to 3.5t" },
-            { key: "driver-license-c", name: "Driver License Category C", description: "Vehicles over 3.5t" },
-            {
-                key: "driver-license-c-e",
-                name: "Driver License Category C+E",
-                description: "Vehicles over 3.5t with trailer",
-            },
-        ]);
+        this.permissionRegistry.registerForModule("freight", freightPermissionDefinitions);
     }
 }

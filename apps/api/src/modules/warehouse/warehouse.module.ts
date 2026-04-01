@@ -6,6 +6,7 @@ import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-o
 import { NestJsLoggerAdapter } from "../../shared/infrastructure/nestjs-logger.adapter.js";
 import { LOGGER_PORT, UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
 import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
+import { warehousePermissionDefinitions } from "./warehouse.permissions.js";
 import { SetGoodsReceiptLinesCommandHandler } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command-handler.js";
 import { ConfirmGoodsReceiptCommandHandler } from "./commands/confirm-goods-receipt/confirm-goods-receipt.command-handler.js";
 import { CreateGoodCommandHandler } from "./commands/create-good/create-good.command-handler.js";
@@ -176,35 +177,6 @@ export class WarehouseModule implements OnModuleInit {
     ) {}
 
     onModuleInit(): void {
-        this.permissionRegistry.registerForModule("warehouse", [
-            { key: "create-good", name: "Create Good" },
-            { key: "edit-good", name: "Edit Good" },
-            { key: "delete-goods", name: "Delete Goods" },
-            { key: "view-goods", name: "View Goods" },
-            { key: "attach-code", name: "Attach Code to Good" },
-            { key: "detach-code", name: "Detach Code from Good" },
-            { key: "view-codes", name: "View Codes" },
-            { key: "create-warehouse", name: "Create Warehouse" },
-            { key: "edit-warehouse", name: "Edit Warehouse" },
-            { key: "change-warehouse-status", name: "Change Warehouse Status" },
-            { key: "view-warehouses", name: "View Warehouses" },
-            { key: "create-sector", name: "Create Sector" },
-            { key: "edit-sector", name: "Edit Sector" },
-            { key: "change-sector-status", name: "Change Sector Status" },
-            { key: "move-stock-to-sector", name: "Move Stock to Sector" },
-            { key: "view-sectors", name: "View Sectors" },
-            { key: "open-goods-receipt", name: "Open Goods Receipt" },
-            { key: "set-goods-receipt-lines", name: "Set Goods Receipt Lines" },
-            { key: "confirm-goods-receipt", name: "Confirm Goods Receipt" },
-            { key: "delete-goods-receipt", name: "Delete Goods Receipt" },
-            { key: "view-goods-receipts", name: "View Goods Receipts" },
-            { key: "view-transfer-requests", name: "View Transfer Requests" },
-            { key: "fulfill-transfer-request", name: "Fulfill Transfer Request" },
-            { key: "cancel-transfer-request", name: "Cancel Transfer Request" },
-            { key: "reject-transfer-request", name: "Reject Transfer Request" },
-            { key: "transfer-stock", name: "Transfer Stock" },
-            { key: "remove-stock", name: "Remove Stock" },
-            { key: "view-stock", name: "View Stock" },
-        ]);
+        this.permissionRegistry.registerForModule("warehouse", warehousePermissionDefinitions);
     }
 }

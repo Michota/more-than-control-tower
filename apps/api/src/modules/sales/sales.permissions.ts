@@ -1,18 +1,16 @@
-/**
- * All permission keys for the Sales module.
- *
- * Values are the full keys (with module prefix) as stored in the PermissionRegistry.
- * Used with @RequirePermission decorator for compile-time safety.
- */
-export const SalesPermission = {
-    DRAFT_ORDER: "sales:draft-order",
-    EDIT_DRAFT: "sales:edit-draft",
-    PLACE_ORDER: "sales:place-order",
-    CANCEL_ORDER: "sales:cancel-order",
-    COMPLETE_ORDER: "sales:complete-order",
-    ASSIGN_GOOD: "sales:assign-good",
-    ASSIGN_STOCK_ENTRY: "sales:assign-stock-entry",
-    VIEW_ORDERS: "sales:view-orders",
-} as const;
+import { defineModulePermissions } from "../../shared/infrastructure/define-module-permissions.js";
 
+const { Keys, definitions } = defineModulePermissions("sales", {
+    DRAFT_ORDER: { key: "draft-order", name: "Draft Order" },
+    EDIT_DRAFT: { key: "edit-draft", name: "Edit Draft Order" },
+    PLACE_ORDER: { key: "place-order", name: "Place Order" },
+    CANCEL_ORDER: { key: "cancel-order", name: "Cancel Order" },
+    COMPLETE_ORDER: { key: "complete-order", name: "Complete Order" },
+    ASSIGN_GOOD: { key: "assign-good", name: "Assign Good to Order" },
+    ASSIGN_STOCK_ENTRY: { key: "assign-stock-entry", name: "Assign Stock Entry to Order" },
+    VIEW_ORDERS: { key: "view-orders", name: "View Orders" },
+});
+
+export const SalesPermission = Keys;
 export type SalesPermission = (typeof SalesPermission)[keyof typeof SalesPermission];
+export const salesPermissionDefinitions = definitions;
