@@ -71,14 +71,13 @@ export class AuthHttpController {
     @Post("refresh")
     @Throttle({ default: { ttl: 60_000, limit: 10 } })
     @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: "Refresh access token using cookie or request body" })
+    @ApiOperation({ summary: "Refresh access token using cookie" })
     @ApiOkResponse()
     async refreshToken(
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
-        @Body() body: { refreshToken?: string },
     ): Promise<{ ok: true }> {
-        const refreshToken = (req.cookies as Record<string, string>)?.refreshToken ?? body.refreshToken;
+        const refreshToken = (req.cookies as Record<string, string>)?.refreshToken;
 
         if (!refreshToken) {
             throw new UnauthorizedException("Missing refresh token");
