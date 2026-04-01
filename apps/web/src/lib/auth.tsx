@@ -16,6 +16,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Tokens are stored as httpOnly cookies — JavaScript cannot read them.
+    // The only way to know if a session exists is to ask the server.
     useEffect(() => {
         api.get("auth/session")
             .then(() => setIsAuthenticated(true))
