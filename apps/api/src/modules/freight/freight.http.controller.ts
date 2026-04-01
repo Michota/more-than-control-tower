@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, 
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { RequirePermission } from "../../shared/auth/decorators/require-permission.decorator.js";
-import { FreightPermission } from "./freight.permissions.js";
+import { FreightPermission } from "../../libs/permissions/index.js";
 import type { UUID } from "crypto";
 
 // Vehicle imports

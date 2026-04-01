@@ -1,20 +1,5 @@
 import { Injectable } from "@nestjs/common";
-
-export interface PermissionInput {
-    /** Permission key without module prefix (e.g., "create-receipt") */
-    key: string;
-    /** Display name for UI / translations (e.g., "Create Receipt") */
-    name: string;
-    /** Human-readable description of what this permission grants */
-    description?: string;
-}
-
-export interface PermissionDefinition extends PermissionInput {
-    /** Full key with module prefix (e.g., "warehouse:create-receipt") — set by the registry */
-    fullKey: string;
-    /** Module that registered this permission */
-    module: string;
-}
+import type { PermissionInput, PermissionDefinition } from "../../libs/permissions/index.js";
 
 /**
  * Runtime registry of all permission keys in the system.

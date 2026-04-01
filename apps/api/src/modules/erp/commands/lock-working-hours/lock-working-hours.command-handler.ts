@@ -9,7 +9,7 @@ import {
 import { WorkingHoursNotOwnedError } from "../../domain/working-hours-entry.errors.js";
 import type { WorkingHoursEntryRepositoryPort } from "../../database/working-hours-entry.repository.port.js";
 import { WORKING_HOURS_ENTRY_REPOSITORY_PORT } from "../../erp.di-tokens.js";
-import { ErpPermission } from "../../erp.permissions.js";
+import { ErpPermission } from "../../../../libs/permissions/index.js";
 import { LockWorkingHoursCommand } from "./lock-working-hours.command.js";
 
 @CommandHandler(LockWorkingHoursCommand)

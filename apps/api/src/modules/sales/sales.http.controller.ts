@@ -32,7 +32,7 @@ import {
 import { GetOrderQuery, type OrderResponse } from "./queries/get-order/get-order.query.js";
 import { ListOrdersQuery, type ListOrdersResponse } from "./queries/list-orders/list-orders.query.js";
 import { ListOrdersRequestDto } from "./queries/list-orders/list-orders.request.dto.js";
-import { SalesPermission } from "./sales.permissions.js";
+import { SalesPermission } from "../../libs/permissions/index.js";
 
 @ApiTags("Sales")
 @Controller("order")

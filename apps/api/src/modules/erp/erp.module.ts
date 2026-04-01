@@ -3,6 +3,7 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Inject, Module, OnModuleInit } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
 import { MikroOrmUnitOfWork } from "../../shared/infrastructure/mikro-orm-unit-of-work.js";
+import { erpPermissionDefinitions } from "../../libs/permissions/index.js";
 import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
 import { UNIT_OF_WORK_PORT } from "../../shared/ports/tokens.js";
 import { CreateActivityCommandHandler } from "./commands/create-activity/create-activity.command-handler.js";
@@ -105,19 +106,6 @@ export class ErpModule implements OnModuleInit {
     ) {}
 
     onModuleInit(): void {
-        this.permissionRegistry.registerForModule("erp", [
-            { key: "create-activity", name: "Create Activity" },
-            { key: "delete-activity", name: "Delete Activity" },
-            { key: "view-activities", name: "View Activities" },
-            { key: "log-working-hours", name: "Log Working Hours" },
-            { key: "edit-working-hours", name: "Edit Working Hours" },
-            { key: "delete-working-hours", name: "Delete Working Hours" },
-            { key: "lock-working-hours", name: "Lock Working Hours" },
-            { key: "manage-working-hours", name: "Manage Working Hours (view/edit/lock anyone)" },
-            { key: "view-working-hours", name: "View Working Hours" },
-            { key: "view-activity-log", name: "View Activity Log" },
-            { key: "manage-wallet", name: "Manage Wallet (credit/debit)" },
-            { key: "view-wallet", name: "View Wallet Balance & Transactions" },
-        ]);
+        this.permissionRegistry.registerForModule("erp", erpPermissionDefinitions);
     }
 }

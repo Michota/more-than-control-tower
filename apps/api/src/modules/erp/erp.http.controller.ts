@@ -55,7 +55,7 @@ import {
     GetWalletTransactionsParams,
     GetWalletTransactionsQueryDto,
 } from "./queries/get-wallet-transactions/get-wallet-transactions.request.dto.js";
-import { ErpPermission } from "./erp.permissions.js";
+import { ErpPermission } from "../../libs/permissions/index.js";
 
 @ApiTags("ERP")
 @Controller("erp")
