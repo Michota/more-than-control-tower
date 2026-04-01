@@ -7,6 +7,10 @@
     "auth_invalid_credentials": "Nieprawidłowy e-mail lub hasło",
     "auth_logout": "Wyloguj",
 
+    "error_not_found": "Nie znaleziono zasobu.",
+    "error_internal_server_error": "Wystąpił nieoczekiwany błąd.",
+    "error_validation_failed": "Walidacja nie powiodła się.",
+
     "error_auth_invalid_credentials": "Nieprawidłowy e-mail lub hasło.",
     "error_auth_account_not_activated": "Konto nie zostało jeszcze aktywowane.",
     "error_auth_account_already_activated": "Konto zostało już aktywowane.",

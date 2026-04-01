@@ -7,6 +7,10 @@
     "auth_invalid_credentials": "Invalid email or password",
     "auth_logout": "Sign out",
 
+    "error_not_found": "Resource not found.",
+    "error_internal_server_error": "An unexpected error occurred.",
+    "error_validation_failed": "Validation failed.",
+
     "error_auth_invalid_credentials": "Invalid email or password.",
     "error_auth_account_not_activated": "Account has not been activated yet.",
     "error_auth_account_already_activated": "Account has already been activated.",

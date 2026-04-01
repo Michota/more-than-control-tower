@@ -15,7 +15,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
             response.status(HttpStatus.BAD_REQUEST).json({
                 statusCode: HttpStatus.BAD_REQUEST,
                 code: "VALIDATION_ERROR",
-                message: "Validation failed",
+                message: "error_validation_failed",
                 errors: exception.issues.map((issue) => ({
                     path: issue.path.join("."),
                     message: issue.message,
@@ -30,6 +30,8 @@ export class DomainExceptionFilter implements ExceptionFilter {
             this.logger.error(`Unhandled domain exception: ${exception.code} — ${exception.message}`, exception.stack);
         }
 
+        // metadata is intentionally excluded — it may contain internal IDs,
+        // quantities, or other data that should not leak outside the backend.
         response.status(status).json({
             statusCode: status,
             code: exception.code,

@@ -123,7 +123,7 @@ describe("DomainExceptionFilter", () => {
         expect(json.mock.calls[0][0]).toMatchObject({
             statusCode: HttpStatus.BAD_REQUEST,
             code: "VALIDATION_ERROR",
-            message: "Validation failed",
+            message: "error_validation_failed",
         });
         const body = json.mock.calls[0][0] as { errors: { path: string; message: string }[] };
         expect(body.errors).toBeInstanceOf(Array);
