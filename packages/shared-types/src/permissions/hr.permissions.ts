@@ -3,8 +3,8 @@ import { defineModulePermissions } from "./define-module-permissions.js";
 const { Keys, definitions } = defineModulePermissions("hr", {
     MANAGE_AVAILABILITY: {
         key: "manage-availability",
-        name: "Manage Availability",
-        description: "Confirm/reject availability and set availability without approval",
+        messageKey: "permission_hr_manage_availability",
+        descriptionKey: "permission_hr_manage_availability_desc",
     },
 });
 

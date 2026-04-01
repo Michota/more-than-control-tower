@@ -1,20 +1,16 @@
 export interface PermissionInput {
     /** Permission key without module prefix (e.g., "create-receipt") */
     key: string;
-    /**
-     * Display name for UI / translations (e.g., "Create Receipt").
-     * TODO: Replace with a translationKey (Paraglide message ID) once backend-frontend
-     * translation strategy is established. Currently hardcoded English strings.
-     */
-    name: string;
-    /** Human-readable description of what this permission grants */
-    description?: string;
+    /** Paraglide message ID for the display name (e.g., "permission_warehouse_create_good") */
+    messageKey: string;
+    /** Paraglide message ID for the description (e.g., "permission_warehouse_create_good_desc") */
+    descriptionKey?: string;
 }
 
 interface PermissionDef {
     readonly key: string;
-    readonly name: string;
-    readonly description?: string;
+    readonly messageKey: string;
+    readonly descriptionKey?: string;
 }
 
 /**
@@ -27,12 +23,12 @@ interface PermissionDef {
  * @example
  * ```ts
  * const { Keys, definitions } = defineModulePermissions("warehouse", {
- *     CREATE_GOOD: { key: "create-good", name: "Create Good" },
- *     VIEW_GOODS: { key: "view-goods", name: "View Goods" },
+ *     CREATE_GOOD: { key: "create-good", messageKey: "permission_warehouse_create_good" },
+ *     VIEW_GOODS: { key: "view-goods", messageKey: "permission_warehouse_view_goods" },
  * });
  *
  * // Keys.CREATE_GOOD === "warehouse:create-good" (typed as string literal)
- * // definitions === [{ key: "create-good", name: "Create Good" }, ...]
+ * // definitions === [{ key: "create-good", messageKey: "permission_warehouse_create_good" }, ...]
  * ```
  */
 export function defineModulePermissions<TModule extends string, const TDefs extends Record<string, PermissionDef>>(
@@ -47,7 +43,7 @@ export function defineModulePermissions<TModule extends string, const TDefs exte
 
     for (const [enumKey, def] of Object.entries(definitions)) {
         keys[enumKey] = `${module}:${def.key}`;
-        inputs.push({ key: def.key, name: def.name, description: def.description });
+        inputs.push({ key: def.key, messageKey: def.messageKey, descriptionKey: def.descriptionKey });
     }
 
     return { Keys: keys as any, definitions: inputs };
