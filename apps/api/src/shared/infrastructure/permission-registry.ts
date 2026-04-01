@@ -3,7 +3,11 @@ import { Injectable } from "@nestjs/common";
 export interface PermissionInput {
     /** Permission key without module prefix (e.g., "create-receipt") */
     key: string;
-    /** Display name for UI / translations (e.g., "Create Receipt") */
+    /**
+     * Display name for UI / translations (e.g., "Create Receipt").
+     * TODO: Replace with a translationKey (Paraglide message ID) once backend–frontend
+     * translation strategy is established. Currently hardcoded English strings.
+     */
     name: string;
     /** Human-readable description of what this permission grants */
     description?: string;
