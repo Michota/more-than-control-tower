@@ -17,22 +17,21 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-
-const AuthenticatedWarehouseIndexRoute = AuthenticatedWarehouseIndexRouteImport.update({
-  id: '/warehouse/',
-  path: '/warehouse/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
+const AuthenticatedWarehouseIndexRoute =
+  AuthenticatedWarehouseIndexRouteImport.update({
+    id: '/warehouse/',
+    path: '/warehouse/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
-  '/warehouse': typeof AuthenticatedWarehouseIndexRoute
+  '/warehouse/': typeof AuthenticatedWarehouseIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
@@ -40,21 +39,21 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_authenticated': typeof AuthenticatedRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/warehouse/': typeof AuthenticatedWarehouseIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/warehouse'
+  fullPaths: '/' | '/warehouse/'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/warehouse'
-  id: '__root__' | '/_authenticated' | '/_authenticated/' | '/_authenticated/warehouse/'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/_authenticated/'
+    | '/_authenticated/warehouse/'
   fileRoutesById: FileRoutesById
-}
-export interface AuthenticatedRouteChildren {
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedWarehouseIndexRoute: typeof AuthenticatedWarehouseIndexRoute
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
@@ -65,7 +64,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -74,16 +73,21 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/warehouse/': {
       id: '/_authenticated/warehouse/'
       path: '/warehouse'
-      fullPath: '/warehouse'
+      fullPath: '/warehouse/'
       preLoaderRoute: typeof AuthenticatedWarehouseIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
+}
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedWarehouseIndexRoute: typeof AuthenticatedWarehouseIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -91,7 +95,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedWarehouseIndexRoute: AuthenticatedWarehouseIndexRoute,
 }
 
-const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(AuthenticatedRouteChildren)
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,

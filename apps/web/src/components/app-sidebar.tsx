@@ -72,10 +72,10 @@ export function AppSidebar() {
                             {warehouseItems.map((item) => (
                                 <SidebarMenuItem key={item.href}>
                                     <SidebarMenuButton asChild isActive={location.pathname.startsWith(item.href)}>
-                                        <a href={item.href}>
+                                        <Link to={item.href}>
                                             <item.icon />
                                             <span>{item.label()}</span>
-                                        </a>
+                                        </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}
