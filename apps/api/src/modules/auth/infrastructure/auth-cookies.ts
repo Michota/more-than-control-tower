@@ -39,17 +39,3 @@ export function clearAuthCookies(res: Response): void {
     res.clearCookie("accessToken", COOKIE_OPTIONS_BASE);
     res.clearCookie("refreshToken", COOKIE_OPTIONS_BASE);
 }
-
-export function parseCookies(cookieHeader: string): Record<string, string> {
-    const cookies: Record<string, string> = {};
-    for (const pair of cookieHeader.split(";")) {
-        const eqIndex = pair.indexOf("=");
-        if (eqIndex === -1) {
-            continue;
-        }
-        const key = pair.slice(0, eqIndex).trim();
-        const value = pair.slice(eqIndex + 1).trim();
-        cookies[key] = decodeURIComponent(value);
-    }
-    return cookies;
-}

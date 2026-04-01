@@ -2,6 +2,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { SwaggerModule } from "@nestjs/swagger";
 import { NodeEnv } from "@mtct/shared-types";
+import cookieParser from "cookie-parser";
 
 import "tsconfig-paths/register"; // <-- Must be first import to work with tsconfig paths
 import { AppModule } from "./app.module";
@@ -12,6 +13,7 @@ import { createDocumentFactory } from "./swagger";
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
+    app.use(cookieParser());
     app.enableCors({
         origin: env.CORS_ORIGIN?.split(",") ?? [],
         credentials: true,

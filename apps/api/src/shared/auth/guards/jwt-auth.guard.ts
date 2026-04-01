@@ -5,7 +5,6 @@ import { QueryBus } from "@nestjs/cqrs";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator.js";
 import { env } from "../../../config/env.js";
 import { GetSystemUserQuery, GetSystemUserResponse } from "../../queries/get-system-user.query.js";
-import { parseCookies } from "../../../modules/auth/infrastructure/auth-cookies.js";
 
 interface JwtPayload {
     sub: string;
@@ -42,10 +41,12 @@ export class JwtAuthGuard implements CanActivate {
             return true;
         }
 
-        const request = context
-            .switchToHttp()
-            .getRequest<{ headers: Record<string, string>; user?: { userId: string } }>();
-        const token = this.extractToken(request.headers);
+        const request = context.switchToHttp().getRequest<{
+            headers: Record<string, string>;
+            cookies?: Record<string, string>;
+            user?: { userId: string };
+        }>();
+        const token = this.extractToken(request);
 
         if (!token) {
             throw new UnauthorizedException("Missing access token");
@@ -83,12 +84,15 @@ export class JwtAuthGuard implements CanActivate {
         return true;
     }
 
-    private extractToken(headers: Record<string, string>): string | undefined {
-        const fromHeader = this.extractTokenFromHeader(headers);
+    private extractToken(request: {
+        headers: Record<string, string>;
+        cookies?: Record<string, string>;
+    }): string | undefined {
+        const fromHeader = this.extractTokenFromHeader(request.headers);
         if (fromHeader) {
             return fromHeader;
         }
-        return this.extractTokenFromCookie(headers);
+        return request.cookies?.accessToken || undefined;
     }
 
     private extractTokenFromHeader(headers: Record<string, string>): string | undefined {
@@ -99,14 +103,5 @@ export class JwtAuthGuard implements CanActivate {
 
         const [type, token] = authorization.split(" ");
         return type === "Bearer" ? token : undefined;
-    }
-
-    private extractTokenFromCookie(headers: Record<string, string>): string | undefined {
-        const cookieHeader = headers.cookie;
-        if (!cookieHeader) {
-            return undefined;
-        }
-        const cookies = parseCookies(cookieHeader);
-        return cookies.accessToken || undefined;
     }
 }

@@ -15,7 +15,7 @@ import {
 } from "./commands/generate-activation-token/generate-activation-token.command.js";
 import { GenerateActivationTokenRequestDto } from "./commands/generate-activation-token/generate-activation-token.request.dto.js";
 import { ActivationTokenResponseDto } from "./dtos/auth.response.dto.js";
-import { parseCookies, setAuthCookies, clearAuthCookies } from "./infrastructure/auth-cookies.js";
+import { setAuthCookies, clearAuthCookies } from "./infrastructure/auth-cookies.js";
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -69,8 +69,7 @@ export class AuthHttpController {
         @Res({ passthrough: true }) res: Response,
         @Body() body: { refreshToken?: string },
     ): Promise<{ ok: true }> {
-        const cookies = parseCookies(req.headers.cookie ?? "");
-        const refreshToken = cookies.refreshToken ?? body.refreshToken;
+        const refreshToken = (req.cookies as Record<string, string>)?.refreshToken ?? body.refreshToken;
 
         if (!refreshToken) {
             throw new UnauthorizedException("Missing refresh token");
