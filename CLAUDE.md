@@ -28,6 +28,8 @@ After completing any requested feature, always write tests at all relevant level
 
 Tests are not optional follow-up work — they are part of the feature.
 
+**Always run `pnpm test` before pushing.** A push with failing tests is not acceptable. If tests fail, fix them before pushing. Use `pnpm test:all` to run both unit and integration tests together, or `pnpm check-types` for a quick type-check.
+
 ## Commits
 
 - Prefer atomic commits — group logically related changes together rather than committing everything at once. For example, separate domain logic, infrastructure, and test commits when it makes sense. Don't over-split either; use judgment.
