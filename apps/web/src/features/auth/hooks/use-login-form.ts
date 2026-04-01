@@ -4,7 +4,7 @@ import { HTTPError } from "ky";
 import { useAuth } from "@/lib/auth";
 import { useAppForm } from "@/hooks/use-app-form";
 import { loginSchema } from "@/features/auth/validation/login-schema";
-import * as m from "@/lib/paraglide/messages";
+import { t } from "@mtct/i18n";
 import type { z } from "zod";
 
 export function useLoginForm() {
@@ -26,10 +26,14 @@ export function useLoginForm() {
                 await login(value.email, value.password);
                 await navigate({ to: "/" });
             } catch (err) {
-                if (err instanceof HTTPError && err.response.status === 401) {
-                    setFormError(m.auth_invalid_credentials());
+                if (err instanceof HTTPError) {
+                    const body: { message?: string } = await err.response
+                        .json<{ message?: string }>()
+                        .catch(() => ({}));
+                    const messageKey = body.message ?? "error_auth_invalid_credentials";
+                    setFormError(t(messageKey));
                 } else {
-                    setFormError(m.auth_invalid_credentials());
+                    setFormError(t("error_auth_invalid_credentials"));
                 }
             }
         },
