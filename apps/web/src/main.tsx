@@ -7,8 +7,11 @@ import { queryClient } from "./lib/query-client";
 import { router } from "./router";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { initLocale } from "@/lib/locale-store";
+import { setMessageSource } from "@mtct/i18n";
+import * as messages from "@/lib/paraglide/messages";
 
 initLocale();
+setMessageSource(messages as Record<string, () => string>);
 
 // eslint-disable-next-line react-refresh/only-export-components
 function InnerApp() {
