@@ -4,7 +4,7 @@ import { useTheme } from "@/lib/theme";
 import { Moon, Sun } from "lucide-react";
 import * as m from "@/lib/paraglide/messages";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
     component: HomePage,
 });
 
@@ -22,7 +22,7 @@ function ThemeToggle() {
 
 function HomePage() {
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-6">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 p-6">
             <h1 className="text-4xl font-bold">{m.hello()}</h1>
             <p className="text-muted-foreground">More Than Control Tower</p>
             <div className="flex gap-3">
