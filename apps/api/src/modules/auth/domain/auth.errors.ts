@@ -6,41 +6,46 @@ import {
 } from "../../../libs/exceptions/http-domain.exceptions.js";
 
 export class InvalidCredentialsError extends UnauthorizedDomainException {
+    static readonly message = "error_auth_invalid_credentials";
     readonly code = "AUTH.INVALID_CREDENTIALS";
 
     constructor() {
-        super("Invalid email or password");
+        super(InvalidCredentialsError.message);
     }
 }
 
 export class AccountNotActivatedError extends ForbiddenDomainException {
+    static readonly message = "error_auth_account_not_activated";
     readonly code = "AUTH.ACCOUNT_NOT_ACTIVATED";
 
     constructor() {
-        super("Account has not been activated yet");
+        super(AccountNotActivatedError.message);
     }
 }
 
 export class AccountAlreadyActivatedError extends ConflictDomainException {
+    static readonly message = "error_auth_account_already_activated";
     readonly code = "AUTH.ACCOUNT_ALREADY_ACTIVATED";
 
     constructor() {
-        super("Account has already been activated");
+        super(AccountAlreadyActivatedError.message);
     }
 }
 
 export class AccountSuspendedError extends ForbiddenDomainException {
+    static readonly message = "error_auth_account_suspended";
     readonly code = "AUTH.ACCOUNT_SUSPENDED";
 
     constructor() {
-        super("Account is suspended");
+        super(AccountSuspendedError.message);
     }
 }
 
 export class InvalidActivationTokenError extends BadRequestDomainException {
+    static readonly message = "error_auth_invalid_activation_token";
     readonly code = "AUTH.INVALID_ACTIVATION_TOKEN";
 
     constructor() {
-        super("Activation token is invalid or expired");
+        super(InvalidActivationTokenError.message);
     }
 }

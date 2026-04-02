@@ -19,7 +19,7 @@ export class ConflictException extends ConflictDomainException {
 }
 
 export class NotFoundException extends NotFoundDomainException {
-    static readonly message = "Not found";
+    static readonly message = "error_not_found";
 
     constructor(message = NotFoundException.message) {
         super(message);
@@ -29,7 +29,7 @@ export class NotFoundException extends NotFoundDomainException {
 }
 
 export class InternalServerErrorException extends InternalDomainException {
-    static readonly message = "Internal server error";
+    static readonly message = "error_internal_server_error";
 
     constructor(message = InternalServerErrorException.message) {
         super(message);

@@ -25,8 +25,8 @@ export function getSnapshot(): Locale {
 export function initLocale(): void {
     const originalSetLocale = paraglideSetLocale;
 
-    overwriteSetLocale((newLocale, options) => {
-        void Promise.resolve(originalSetLocale(newLocale, options)).then(() => {
+    overwriteSetLocale((newLocale: Locale) => {
+        void Promise.resolve(originalSetLocale(newLocale)).then(() => {
             syncZodLocale();
             document.documentElement.lang = newLocale;
             notifyListeners();
