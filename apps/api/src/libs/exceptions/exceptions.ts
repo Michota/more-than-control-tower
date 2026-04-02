@@ -1,10 +1,10 @@
-import { ExceptionCode } from "./exception.codes.js";
+import { ExceptionCode } from "./exception.codes";
 import {
     BadRequestDomainException,
     ConflictDomainException,
     InternalDomainException,
     NotFoundDomainException,
-} from "./http-domain.exceptions.js";
+} from "./http-domain.exceptions";
 
 export class ArgumentInvalidException extends BadRequestDomainException {
     readonly code = ExceptionCode.ARGUMENT_INVALID;

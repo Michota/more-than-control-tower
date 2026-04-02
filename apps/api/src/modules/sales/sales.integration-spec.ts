@@ -3,17 +3,17 @@ import { EntityManager, MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule } from "@nestjs/cqrs";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
-import { DraftOrderCommand } from "./commands/draft-order/draft-order.command.js";
-import { PlaceOrderCommand } from "./commands/place-order/place-order.command.js";
-import { CancelOrderCommand } from "./commands/cancel-order/cancel-order.command.js";
-import { CompleteOrderCommand } from "./commands/complete-order/complete-order.command.js";
-import { AddProductToOrderCommand } from "./commands/add-product-to-order/add-product-to-order.command.js";
-import { AssignGoodCommand } from "./commands/assign-good/assign-good.command.js";
-import { AssignStockEntryCommand } from "./commands/assign-stock-entry/assign-stock-entry.command.js";
-import { ChangeProductQuantityCommand } from "./commands/change-product-quantity/change-product-quantity.command.js";
-import { OrderSource } from "./domain/order-source.enum.js";
-import { OrderStatus } from "./domain/order-status.enum.js";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
+import { DraftOrderCommand } from "./commands/draft-order/draft-order.command";
+import { PlaceOrderCommand } from "./commands/place-order/place-order.command";
+import { CancelOrderCommand } from "./commands/cancel-order/cancel-order.command";
+import { CompleteOrderCommand } from "./commands/complete-order/complete-order.command";
+import { AddProductToOrderCommand } from "./commands/add-product-to-order/add-product-to-order.command";
+import { AssignGoodCommand } from "./commands/assign-good/assign-good.command";
+import { AssignStockEntryCommand } from "./commands/assign-stock-entry/assign-stock-entry.command";
+import { ChangeProductQuantityCommand } from "./commands/change-product-quantity/change-product-quantity.command";
+import { OrderSource } from "./domain/order-source.enum";
+import { OrderStatus } from "./domain/order-status.enum";
 import {
     CustomerNotFoundForOrderError,
     OrderCannotBePlacedError,
@@ -24,41 +24,38 @@ import {
     OrderNotFoundError,
     PriceNotFoundForOrderLineError,
     GoodNotFoundForAssignmentError,
-} from "./domain/order.errors.js";
-import { Order } from "./database/order.entity.js";
-import { Product } from "./database/product.entity.js";
-import { Price } from "./database/price.entity.js";
-import { ItemCategory } from "./database/item-category.entity.js";
-import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module.js";
-import { SalesModule } from "./sales.module.js";
-import { CrmModule } from "../crm/crm.module.js";
-import { WarehouseModule } from "../warehouse/warehouse.module.js";
-import { Customer } from "../crm/database/customer.entity.js";
-import { CustomerType } from "../crm/domain/customer-type.enum.js";
-import { CreateGoodCommand } from "../warehouse/commands/create-good/create-good.command.js";
-import { CreateWarehouseCommand } from "../warehouse/commands/create-warehouse/create-warehouse.command.js";
-import { OpenGoodsReceiptCommand } from "../warehouse/commands/open-goods-receipt/open-goods-receipt.command.js";
-import { SetGoodsReceiptLinesCommand } from "../warehouse/commands/set-goods-receipt-lines/set-goods-receipt-lines.command.js";
-import { ConfirmGoodsReceiptCommand } from "../warehouse/commands/confirm-goods-receipt/confirm-goods-receipt.command.js";
-import { DimensionUnit } from "../warehouse/domain/good-dimensions.value-object.js";
-import { WeightUnit } from "../warehouse/domain/good-weight.value-object.js";
-import { StockEntry } from "../warehouse/database/stock-entry.entity.js";
+} from "./domain/order.errors";
+import { Order } from "./database/order.entity";
+import { Product } from "./database/product.entity";
+import { Price } from "./database/price.entity";
+import { ItemCategory } from "./database/item-category.entity";
+import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
+import { SalesModule } from "./sales.module";
+import { CrmModule } from "../crm/crm.module";
+import { WarehouseModule } from "../warehouse/warehouse.module";
+import { Customer } from "../crm/database/customer.entity";
+import { CustomerType } from "../crm/domain/customer-type.enum";
+import { CreateGoodCommand } from "../warehouse/commands/create-good/create-good.command";
+import { CreateWarehouseCommand } from "../warehouse/commands/create-warehouse/create-warehouse.command";
+import { OpenGoodsReceiptCommand } from "../warehouse/commands/open-goods-receipt/open-goods-receipt.command";
+import { SetGoodsReceiptLinesCommand } from "../warehouse/commands/set-goods-receipt-lines/set-goods-receipt-lines.command";
+import { ConfirmGoodsReceiptCommand } from "../warehouse/commands/confirm-goods-receipt/confirm-goods-receipt.command";
+import { DimensionUnit } from "../warehouse/domain/good-dimensions.value-object";
+import { WeightUnit } from "../warehouse/domain/good-weight.value-object";
+import { StockEntry } from "../warehouse/database/stock-entry.entity";
 import { QueryBus } from "@nestjs/cqrs";
-import { GetOrderQuery, type OrderResponse } from "./queries/get-order/get-order.query.js";
-import { ListOrdersQuery } from "./queries/list-orders/list-orders.query.js";
+import { GetOrderQuery, type OrderResponse } from "./queries/get-order/get-order.query";
+import { ListOrdersQuery } from "./queries/list-orders/list-orders.query";
 import {
     CannotAssignStockEntryError,
     StockEntryAlreadyAssignedError,
     StockEntryGoodMismatchError,
     StockEntryNotFoundForAssignmentError,
     CannotChangeQuantityOfPlacedOrderError,
-} from "./domain/order.errors.js";
-import { RemoveProductFromOrderCommand } from "./commands/remove-product-from-order/remove-product-from-order.command.js";
-import {
-    GetCustomerOrdersQuery,
-    type GetCustomerOrdersResponse,
-} from "../../shared/queries/get-customer-orders.query.js";
-import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
+} from "./domain/order.errors";
+import { RemoveProductFromOrderCommand } from "./commands/remove-product-from-order/remove-product-from-order.command";
+import { GetCustomerOrdersQuery, type GetCustomerOrdersResponse } from "../../shared/queries/get-customer-orders.query";
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry";
 
 describe("Sales Module — Integration Tests", () => {
     let moduleRef: TestingModule;

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method */
-import { Decimal } from "decimal.js";
+import Decimal from "decimal.js";
 import { randomUUID } from "crypto";
 import { CancelOrderCommandHandler } from "./cancel-order.command-handler.js";
 import { CancelOrderCommand } from "./cancel-order.command.js";

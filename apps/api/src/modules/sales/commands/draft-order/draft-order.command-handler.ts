@@ -1,4 +1,4 @@
-import { Decimal } from "decimal.js";
+import Decimal from "decimal.js";
 import { Inject } from "@nestjs/common";
 import { CommandHandler, EventBus, ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { IdOfEntity } from "../../../../libs/ddd/aggregate-root.abstract.js";

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method */
-import { Decimal } from "decimal.js";
+import Decimal from "decimal.js";
 import { randomUUID } from "crypto";
 import { AssignGoodCommandHandler } from "./assign-good.command-handler.js";
 import { AssignGoodCommand } from "./assign-good.command.js";

@@ -1,5 +1,5 @@
 import { ZodError } from "zod";
-import { ContactHistoryEntry } from "./contact-history-entry.value-object.js";
+import { ContactHistoryEntry } from "./contact-history-entry.value-object";
 
 describe("ContactHistoryEntry", () => {
     it("creates a valid history entry", () => {

@@ -1,4 +1,4 @@
-import { Decimal } from "decimal.js";
+import Decimal from "decimal.js";
 import { Paginated } from "../../../libs/ports/repository.port.js";
 import { WalletAggregate } from "../domain/wallet.aggregate.js";
 import { WalletTransactionEntity } from "../domain/wallet-transaction.entity.js";

@@ -1,71 +1,67 @@
 import { MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule, QueryBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
-import { DriverLicenseCategory } from "./domain/driver-license-category.enum.js";
-import { VehicleStatus } from "./domain/vehicle-status.enum.js";
-import { RouteStatus } from "./domain/route-status.enum.js";
-import { JourneyStatus } from "./domain/journey-status.enum.js";
-import { CrewMemberRole } from "./domain/crew-member-role.enum.js";
-import { ScheduleType } from "./domain/route-schedule.value-object.js";
-import {
-    VehicleAlreadyActiveError,
-    VehicleAlreadyInactiveError,
-    VehicleNotFoundError,
-} from "./domain/vehicle.errors.js";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
+import { DriverLicenseCategory } from "./domain/driver-license-category.enum";
+import { VehicleStatus } from "./domain/vehicle-status.enum";
+import { RouteStatus } from "./domain/route-status.enum";
+import { JourneyStatus } from "./domain/journey-status.enum";
+import { CrewMemberRole } from "./domain/crew-member-role.enum";
+import { ScheduleType } from "./domain/route-schedule.value-object";
+import { VehicleAlreadyActiveError, VehicleAlreadyInactiveError, VehicleNotFoundError } from "./domain/vehicle.errors";
 import {
     RouteAlreadyArchivedError,
     RouteArchivedCannotBeModifiedError,
     RouteNotFoundError,
-} from "./domain/route.errors.js";
+} from "./domain/route.errors";
 import {
     JourneyAlreadyCompletedError,
     JourneyNotAwaitingDepartureError,
     JourneyNotInProgressError,
     JourneyNotAwaitingLoadingError,
-} from "./domain/journey.errors.js";
+} from "./domain/journey.errors";
 
 // Vehicle commands & queries
-import { CreateVehicleCommand } from "./commands/create-vehicle/create-vehicle.command.js";
-import { EditVehicleCommand } from "./commands/edit-vehicle/edit-vehicle.command.js";
+import { CreateVehicleCommand } from "./commands/create-vehicle/create-vehicle.command";
+import { EditVehicleCommand } from "./commands/edit-vehicle/edit-vehicle.command";
 import {
     ActivateVehicleCommand,
     DeactivateVehicleCommand,
-} from "./commands/change-vehicle-status/change-vehicle-status.command.js";
-import { ListVehiclesQuery } from "./queries/list-vehicles/list-vehicles.query.js";
-import { GetVehicleQuery } from "./queries/get-vehicle/get-vehicle.query.js";
+} from "./commands/change-vehicle-status/change-vehicle-status.command";
+import { ListVehiclesQuery } from "./queries/list-vehicles/list-vehicles.query";
+import { GetVehicleQuery } from "./queries/get-vehicle/get-vehicle.query";
 
 // Route commands & queries
-import { CreateRouteCommand } from "./commands/create-route/create-route.command.js";
-import { EditRouteCommand } from "./commands/edit-route/edit-route.command.js";
-import { ArchiveRouteCommand } from "./commands/archive-route/archive-route.command.js";
+import { CreateRouteCommand } from "./commands/create-route/create-route.command";
+import { EditRouteCommand } from "./commands/edit-route/edit-route.command";
+import { ArchiveRouteCommand } from "./commands/archive-route/archive-route.command";
 import {
     ActivateRouteCommand,
     DeactivateRouteCommand,
-} from "./commands/change-route-status/change-route-status.command.js";
-import { ListRoutesQuery } from "./queries/list-routes/list-routes.query.js";
-import { GetRouteQuery } from "./queries/get-route/get-route.query.js";
+} from "./commands/change-route-status/change-route-status.command";
+import { ListRoutesQuery } from "./queries/list-routes/list-routes.query";
+import { GetRouteQuery } from "./queries/get-route/get-route.query";
 
 // Journey commands & queries
-import { CreateJourneyCommand } from "./commands/create-journey/create-journey.command.js";
-import { StartJourneyCommand } from "./commands/start-journey/start-journey.command.js";
-import { CompleteJourneyCommand } from "./commands/complete-journey/complete-journey.command.js";
-import { CancelJourneyCommand } from "./commands/cancel-journey/cancel-journey.command.js";
-import { RequestJourneyLoadingCommand } from "./commands/request-journey-loading/request-journey-loading.command.js";
-import { CancelJourneyLoadingCommand } from "./commands/cancel-journey-loading/cancel-journey-loading.command.js";
-import { MarkReadyForDepartureCommand } from "./commands/mark-ready-for-departure/mark-ready-for-departure.command.js";
-import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query.js";
-import { GetJourneyQuery } from "./queries/get-journey/get-journey.query.js";
+import { CreateJourneyCommand } from "./commands/create-journey/create-journey.command";
+import { StartJourneyCommand } from "./commands/start-journey/start-journey.command";
+import { CompleteJourneyCommand } from "./commands/complete-journey/complete-journey.command";
+import { CancelJourneyCommand } from "./commands/cancel-journey/cancel-journey.command";
+import { RequestJourneyLoadingCommand } from "./commands/request-journey-loading/request-journey-loading.command";
+import { CancelJourneyLoadingCommand } from "./commands/cancel-journey-loading/cancel-journey-loading.command";
+import { MarkReadyForDepartureCommand } from "./commands/mark-ready-for-departure/mark-ready-for-departure.command";
+import { ListJourneysQuery } from "./queries/list-journeys/list-journeys.query";
+import { GetJourneyQuery } from "./queries/get-journey/get-journey.query";
 
-import { FreightModule } from "./freight.module.js";
-import { HrModule } from "../hr/hr.module.js";
-import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module.js";
-import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
-import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command.js";
-import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command.js";
-import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command.js";
+import { FreightModule } from "./freight.module";
+import { HrModule } from "../hr/hr.module";
+import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry";
+import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command";
+import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command";
+import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command";
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
-import { CancelTransferRequestsByRequesterCommand } from "../../shared/commands/cancel-transfer-requests-by-requester.command.js";
+import { CancelTransferRequestsByRequesterCommand } from "../../shared/commands/cancel-transfer-requests-by-requester.command";
 
 /** No-op handler — Warehouse module not loaded in Freight integration tests */
 @CommandHandler(CancelTransferRequestsByRequesterCommand)

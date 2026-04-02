@@ -1,8 +1,8 @@
 import { Except } from "type-fest";
-import { generateEntityId } from "../utils/randomize-entity-id.js";
-import { EntityId } from "./entity-id.js";
+import { generateEntityId } from "../utils/randomize-entity-id";
+import { EntityId } from "./entity-id";
 import { isString } from "es-toolkit";
-import { ArgumentInvalidException } from "../../exceptions/index.js";
+import { ArgumentInvalidException } from "src/libs/exceptions";
 
 interface BaseEntityProps {
     id: EntityId;

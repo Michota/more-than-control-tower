@@ -16,6 +16,7 @@
         "zod": "4.3.6"
     },
     "devDependencies": {
-        "@mtct/typescript-config": "workspace:*"
+        "@mtct/typescript-config": "workspace:*",
+        "typescript": "5.7.3"
     }
 }

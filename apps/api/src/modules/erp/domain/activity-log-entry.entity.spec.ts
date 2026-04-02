@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { describe, expect, it } from "vitest";
-import { ActivityLogEntryEntity } from "./activity-log-entry.entity.js";
+import { ActivityLogEntryEntity } from "./activity-log-entry.entity";
 
 describe("ActivityLogEntryEntity", () => {
     it("creates an activity log entry with all properties", () => {

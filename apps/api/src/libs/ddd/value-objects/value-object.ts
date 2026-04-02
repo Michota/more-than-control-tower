@@ -1,7 +1,7 @@
-import { ArgumentInvalidException, ArgumentNotProvidedException } from "../../exceptions/index.js";
-import { DisallowProperty } from "../../types/index.js";
+import { ArgumentInvalidException, ArgumentNotProvidedException } from "../../exceptions";
+import { DisallowProperty } from "../../types";
 import { has, isEmpty } from "es-toolkit/compat";
-import { DomainPrimitive, DomainPrimitiveValue, isDomainPrimitiveAbstract } from "./domain-primitive.js";
+import { DomainPrimitive, DomainPrimitiveValue, isDomainPrimitiveAbstract } from "./domain-primitive";
 
 type DisallowId<T> = DisallowProperty<T, "id">;
 

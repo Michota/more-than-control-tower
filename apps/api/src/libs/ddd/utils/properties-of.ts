@@ -1,4 +1,4 @@
-import { Entity } from "../entities/index.js";
+import { Entity } from "../entities";
 
 /**
  * Extracts the properties of an Entity.

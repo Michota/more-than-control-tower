@@ -1,2 +1,2 @@
-export { type EntityId } from "./entity-id.js";
-export { Entity, type EntityProps } from "./entity.abstract.js";
+export { type EntityId } from "./entity-id";
+export { Entity, type EntityProps } from "./entity.abstract";

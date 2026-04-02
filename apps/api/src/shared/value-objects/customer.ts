@@ -1,6 +1,6 @@
-import { EntityProps } from "../../libs/ddd/index.js";
+import { EntityProps } from "../../libs/ddd";
 import z from "zod";
-import { EntityWithSchema } from "../ddd/entity-with-schema.abstract.js";
+import { EntityWithSchema } from "../ddd/entity-with-schema.abstract";
 
 const customerPropertiesSchema = z.object({
     email: z.email(),

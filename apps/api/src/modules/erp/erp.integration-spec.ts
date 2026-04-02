@@ -3,51 +3,51 @@ import { MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule, QueryBus } from "@nestjs/cqrs";
 import { ConfigModule } from "@nestjs/config";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
-import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module.js";
-import { ErpModule } from "./erp.module.js";
-import { HrModule } from "../hr/hr.module.js";
-import { CreateActivityCommand } from "./commands/create-activity/create-activity.command.js";
-import { LogWorkingHoursCommand } from "./commands/log-working-hours/log-working-hours.command.js";
-import { EditWorkingHoursCommand } from "./commands/edit-working-hours/edit-working-hours.command.js";
-import { DeleteWorkingHoursCommand } from "./commands/delete-working-hours/delete-working-hours.command.js";
-import { LockWorkingHoursCommand } from "./commands/lock-working-hours/lock-working-hours.command.js";
-import { DeleteActivityCommand } from "./commands/delete-activity/delete-activity.command.js";
-import { ListActivitiesQuery, type ListActivitiesResponse } from "./queries/list-activities/list-activities.query.js";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
+import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
+import { ErpModule } from "./erp.module";
+import { HrModule } from "../hr/hr.module";
+import { CreateActivityCommand } from "./commands/create-activity/create-activity.command";
+import { LogWorkingHoursCommand } from "./commands/log-working-hours/log-working-hours.command";
+import { EditWorkingHoursCommand } from "./commands/edit-working-hours/edit-working-hours.command";
+import { DeleteWorkingHoursCommand } from "./commands/delete-working-hours/delete-working-hours.command";
+import { LockWorkingHoursCommand } from "./commands/lock-working-hours/lock-working-hours.command";
+import { DeleteActivityCommand } from "./commands/delete-activity/delete-activity.command";
+import { ListActivitiesQuery, type ListActivitiesResponse } from "./queries/list-activities/list-activities.query";
 import {
     GetEmployeeWorkingHoursQuery,
     type GetEmployeeWorkingHoursResponse,
-} from "./queries/get-employee-working-hours/get-employee-working-hours.query.js";
+} from "./queries/get-employee-working-hours/get-employee-working-hours.query";
 import {
     GetEmployeeActivityLogQuery,
     type GetEmployeeActivityLogResponse,
-} from "./queries/get-employee-activity-log/get-employee-activity-log.query.js";
-import { WorkingHoursStatus } from "./domain/working-hours-status.enum.js";
+} from "./queries/get-employee-activity-log/get-employee-activity-log.query";
+import { WorkingHoursStatus } from "./domain/working-hours-status.enum";
 import {
     WorkingHoursEntryLockedError,
     WorkingHoursEntryNotFoundError,
     WorkingHoursNotOwnedError,
-} from "./domain/working-hours-entry.errors.js";
-import { ActivityNotFoundError, ActivityInUseError } from "./domain/activity.errors.js";
-import { ActivityLogService } from "./infrastructure/activity-log.service.js";
-import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cron.js";
-import { CreditWalletCommand } from "./commands/credit-wallet/credit-wallet.command.js";
-import { DebitWalletCommand } from "./commands/debit-wallet/debit-wallet.command.js";
-import { ChargeWalletCommand } from "./commands/charge-wallet/charge-wallet.command.js";
+} from "./domain/working-hours-entry.errors";
+import { ActivityNotFoundError, ActivityInUseError } from "./domain/activity.errors";
+import { ActivityLogService } from "./infrastructure/activity-log.service";
+import { ActivityLogCleanupCron } from "./infrastructure/activity-log-cleanup.cron";
+import { CreditWalletCommand } from "./commands/credit-wallet/credit-wallet.command";
+import { DebitWalletCommand } from "./commands/debit-wallet/debit-wallet.command";
+import { ChargeWalletCommand } from "./commands/charge-wallet/charge-wallet.command";
 import {
     GetWalletBalanceQuery,
     type WalletBalanceResponse,
-} from "./queries/get-wallet-balance/get-wallet-balance.query.js";
+} from "./queries/get-wallet-balance/get-wallet-balance.query";
 import {
     GetWalletTransactionsQuery,
     type GetWalletTransactionsResponse,
-} from "./queries/get-wallet-transactions/get-wallet-transactions.query.js";
-import { WalletTransactionMethod } from "./domain/wallet-transaction-method.enum.js";
-import { InsufficientWalletBalanceError, WalletNotFoundError, WalletNotOwnedError } from "./domain/wallet.errors.js";
-import { ListWalletsQuery, type ListWalletsResponse } from "./queries/list-wallets/list-wallets.query.js";
-import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command.js";
-import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command.js";
-import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command.js";
+} from "./queries/get-wallet-transactions/get-wallet-transactions.query";
+import { WalletTransactionMethod } from "./domain/wallet-transaction-method.enum";
+import { InsufficientWalletBalanceError, WalletNotFoundError, WalletNotOwnedError } from "./domain/wallet.errors";
+import { ListWalletsQuery, type ListWalletsResponse } from "./queries/list-wallets/list-wallets.query";
+import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command";
+import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command";
+import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command";
 
 describe("ERP Module — Integration Tests", () => {
     let moduleRef: TestingModule;

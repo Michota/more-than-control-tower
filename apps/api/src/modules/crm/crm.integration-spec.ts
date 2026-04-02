@@ -1,19 +1,19 @@
 import { MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule, QueryBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
-import { GetCustomerQuery, GetCustomerResponse } from "../../shared/queries/get-customer.query.js";
-import { CreateCustomerCommand } from "./commands/create-customer/create-customer.command.js";
-import { UpdateCustomerCommand } from "./commands/update-customer/update-customer.command.js";
-import { ContactType } from "./domain/customer-contact-type.enum.js";
-import { CustomerType } from "./domain/customer-type.enum.js";
-import { CustomerNotFoundError } from "./domain/customer.errors.js";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
+import { GetCustomerQuery, GetCustomerResponse } from "../../shared/queries/get-customer.query";
+import { CreateCustomerCommand } from "./commands/create-customer/create-customer.command";
+import { UpdateCustomerCommand } from "./commands/update-customer/update-customer.command";
+import { ContactType } from "./domain/customer-contact-type.enum";
+import { CustomerType } from "./domain/customer-type.enum";
+import { CustomerNotFoundError } from "./domain/customer.errors";
 import {
     GetCustomerDetailQuery,
     GetCustomerDetailResponse,
-} from "./queries/get-customer-detail/get-customer-detail.query.js";
-import { SearchCustomersQuery, SearchCustomersResponse } from "./queries/search-customers/search-customers.query.js";
-import { CrmModule } from "./crm.module.js";
+} from "./queries/get-customer-detail/get-customer-detail.query";
+import { SearchCustomersQuery, SearchCustomersResponse } from "./queries/search-customers/search-customers.query";
+import { CrmModule } from "./crm.module";
 
 describe("CRM Module — Integration Tests", () => {
     let moduleRef: TestingModule;

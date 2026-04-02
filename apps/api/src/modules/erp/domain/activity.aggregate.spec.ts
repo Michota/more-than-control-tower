@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
-import { ActivityAggregate } from "./activity.aggregate.js";
+import { EntityId } from "../../../libs/ddd/entities/entity-id";
+import { ActivityAggregate } from "./activity.aggregate";
 
 describe("ActivityAggregate", () => {
     it("creates an activity with name and description", () => {

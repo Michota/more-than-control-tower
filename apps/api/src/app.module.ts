@@ -1,4 +1,4 @@
-import { databaseConfig, generateMikroOrmOptions, validate } from "./config/index.js";
+import { databaseConfig, generateMikroOrmOptions, validate } from "./config/index";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";

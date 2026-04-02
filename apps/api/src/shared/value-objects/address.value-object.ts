@@ -1,5 +1,5 @@
 import z from "zod";
-import { ValueObjectWithSchema } from "../ddd/value-object-with-schema.abstract.js";
+import { ValueObjectWithSchema } from "../ddd/value-object-with-schema.abstract";
 
 // TODO: improve these types to be more specific, for example we can create a validation for country, state, city, etc...
 export const addressPropertiesSchema = z.object({

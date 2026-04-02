@@ -1,11 +1,11 @@
-import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
-import { DriverLicenseCategory } from "./driver-license-category.enum.js";
-import { VehicleAttribute } from "./vehicle-attribute.value-object.js";
-import { VehicleStatus } from "./vehicle-status.enum.js";
-import { VehicleAggregate } from "./vehicle.aggregate.js";
-import { VehicleAlreadyActiveError, VehicleAlreadyInactiveError } from "./vehicle.errors.js";
-import { VehicleCreatedDomainEvent } from "./events/vehicle-created.domain-event.js";
-import { VehicleStatusChangedDomainEvent } from "./events/vehicle-status-changed.domain-event.js";
+import { uuidRegex } from "src/shared/utils/uuid-regex";
+import { DriverLicenseCategory } from "./driver-license-category.enum";
+import { VehicleAttribute } from "./vehicle-attribute.value-object";
+import { VehicleStatus } from "./vehicle-status.enum";
+import { VehicleAggregate } from "./vehicle.aggregate";
+import { VehicleAlreadyActiveError, VehicleAlreadyInactiveError } from "./vehicle.errors";
+import { VehicleCreatedDomainEvent } from "./events/vehicle-created.domain-event";
+import { VehicleStatusChangedDomainEvent } from "./events/vehicle-status-changed.domain-event";
 
 describe("VehicleAggregate", () => {
     describe("create()", () => {

@@ -1,4 +1,4 @@
-import { PaginationParameters } from "../../../libs/types/pagination.js";
+import { PaginationParameters } from "src/libs/types/pagination.js";
 import { RepositoryPort } from "../../../libs/ports/repository.port.js";
 import { ContactHistoryEntry } from "../domain/contact-history-entry.value-object.js";
 import { CustomerAggregate } from "../domain/customer.aggregate.js";

@@ -1,9 +1,9 @@
 import { randomUUID } from "crypto";
 import { describe, expect, it } from "vitest";
-import { WorkingHoursEntryAggregate } from "./working-hours-entry.aggregate.js";
-import { WorkingHoursStatus } from "./working-hours-status.enum.js";
-import { WorkingHoursEntryAlreadyLockedError, WorkingHoursEntryLockedError } from "./working-hours-entry.errors.js";
-import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
+import { WorkingHoursEntryAggregate } from "./working-hours-entry.aggregate";
+import { WorkingHoursStatus } from "./working-hours-status.enum";
+import { WorkingHoursEntryAlreadyLockedError, WorkingHoursEntryLockedError } from "./working-hours-entry.errors";
+import { EntityId } from "../../../libs/ddd/entities/entity-id";
 
 describe("WorkingHoursEntryAggregate", () => {
     const employeeId = randomUUID();

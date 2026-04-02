@@ -1,7 +1,7 @@
 import { defineEntity, p } from "@mikro-orm/core";
-import { currency } from "../../../shared/persistence/currency.property.js";
-import { PriceType } from "./price-type.entity.js";
-import { Product } from "./product.entity.js";
+import { currency } from "../../../shared/persistence/currency.property";
+import { PriceType } from "./price-type.entity";
+import { Product } from "./product.entity";
 
 const PriceSchema = defineEntity({
     name: "Price",

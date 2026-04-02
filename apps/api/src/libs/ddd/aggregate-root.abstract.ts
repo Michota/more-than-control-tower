@@ -1,6 +1,6 @@
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { DomainEvent } from "./domain-event.abstract.js";
-import { EntityId, Entity } from "./entities/index.js";
+import { DomainEvent } from "./domain-event.abstract";
+import { EntityId, Entity } from "./entities";
 
 export type AggregateId = EntityId;
 export type IdOfEntity<T extends Entity<any>> = T["id"];

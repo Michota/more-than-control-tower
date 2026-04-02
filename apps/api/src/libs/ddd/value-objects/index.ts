@@ -1,1 +1,1 @@
-export { ValueObject } from "./value-object.js";
+export { ValueObject } from "./value-object";

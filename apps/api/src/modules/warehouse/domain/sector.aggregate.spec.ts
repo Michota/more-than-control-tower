@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
+import { uuidRegex } from "src/shared/utils/uuid-regex.js";
 import { DimensionUnit } from "./good-dimensions.value-object.js";
 import { SectorCapability } from "./sector-capability.enum.js";
 import { SectorDimensions } from "./sector-dimensions.value-object.js";

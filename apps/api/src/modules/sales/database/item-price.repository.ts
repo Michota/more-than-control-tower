@@ -2,7 +2,7 @@ import { EntityManager } from "@mikro-orm/core";
 import { Injectable } from "@nestjs/common";
 import { ItemPriceRepositoryPort, ResolvedPrice } from "./item-price.repository.port.js";
 import { Price } from "./price.entity.js";
-import { Decimal } from "decimal.js";
+import Decimal from "decimal.js";
 
 @Injectable()
 export class ItemPriceRepository implements ItemPriceRepositoryPort {

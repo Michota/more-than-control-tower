@@ -1,4 +1,4 @@
-import { Entity } from "../../libs/ddd/index.js";
+import { Entity } from "../../libs/ddd";
 import { ZodType } from "zod";
 
 export abstract class EntityWithSchema<T, PropertiesSchema extends ZodType<T> = ZodType<T>> extends Entity<T> {

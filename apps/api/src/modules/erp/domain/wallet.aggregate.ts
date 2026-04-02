@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Decimal } from "decimal.js";
+import Decimal from "decimal.js";
 import { AggregateRoot } from "../../../libs/ddd/aggregate-root.abstract.js";
 import { type EntityProps } from "../../../libs/ddd/entities/entity.abstract.js";
 import { WalletTransactionEntity } from "./wallet-transaction.entity.js";

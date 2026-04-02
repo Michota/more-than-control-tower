@@ -1,4 +1,4 @@
-import { ValueObject } from "../value-objects/index.js";
+import { ValueObject } from "../value-objects";
 
 /**
  * Extracts the properties of a Value Object. If the Value Object is a Domain Primitive, it extracts the value instead.

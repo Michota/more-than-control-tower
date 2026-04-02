@@ -1,4 +1,4 @@
-import { ObjectKey } from "./utils.js";
+import { ObjectKey } from "./utils";
 
 /**
  * * @description Disallow types that extend D from T
