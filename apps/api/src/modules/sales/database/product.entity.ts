@@ -1,6 +1,6 @@
 import { defineEntity, p } from "@mikro-orm/core";
-import { ItemCategory } from "./item-category.entity";
-import { Price } from "./price.entity";
+import { ItemCategory } from "./item-category.entity.js";
+import { Price } from "./price.entity.js";
 
 const ProductSchema = defineEntity({
     name: "Product",

@@ -1,3 +1,3 @@
-export { default as databaseConfig } from "./database.config";
-export { validate } from "./env/validate";
-export { generateMikroOrmOptions } from "./generate-mikro-orm.config";
+export { default as databaseConfig } from "./database.config.js";
+export { validate } from "./env/validate.js";
+export { generateMikroOrmOptions } from "./generate-mikro-orm.config.js";

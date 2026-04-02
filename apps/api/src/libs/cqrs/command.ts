@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { Command as NestCommand } from "@nestjs/cqrs";
-import { ArgumentNotProvidedException } from "../exceptions";
+import { ArgumentNotProvidedException } from "../exceptions/index.js";
 import { isEmpty } from "es-toolkit/compat";
 
 export type CommandProps<T> = Omit<T, keyof Command<any>> & Partial<Pick<Command<any>, "id" | "metadata">>;

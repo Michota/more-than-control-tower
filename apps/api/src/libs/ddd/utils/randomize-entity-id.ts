@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { EntityId } from "../entities";
+import { EntityId } from "../entities/index.js";
 
 /**
  * Generates a random EntityId.

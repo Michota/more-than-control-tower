@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
-import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id";
-import { StockTransferRequestAggregate } from "./stock-transfer-request.aggregate";
-import { StockTransferRequestStatus } from "./stock-transfer-request-status.enum";
-import { StockTransferRequestNotPendingError } from "./stock-transfer-request.errors";
-import { StockTransferRequestCreatedDomainEvent } from "./events/stock-transfer-request-created.domain-event";
-import { StockTransferRequestFulfilledDomainEvent } from "./events/stock-transfer-request-fulfilled.domain-event";
-import { uuidRegex } from "src/shared/utils/uuid-regex";
+import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id.js";
+import { StockTransferRequestAggregate } from "./stock-transfer-request.aggregate.js";
+import { StockTransferRequestStatus } from "./stock-transfer-request-status.enum.js";
+import { StockTransferRequestNotPendingError } from "./stock-transfer-request.errors.js";
+import { StockTransferRequestCreatedDomainEvent } from "./events/stock-transfer-request-created.domain-event.js";
+import { StockTransferRequestFulfilledDomainEvent } from "./events/stock-transfer-request-fulfilled.domain-event.js";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
 
 const validProps = () => ({
     goodId: randomUUID(),

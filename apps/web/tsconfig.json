@@ -1,7 +1,6 @@
 {
     "extends": "@mtct/typescript-config/react-spa.json",
     "compilerOptions": {
-        "baseUrl": ".",
         "allowJs": true,
         "paths": {
             "@/*": ["./src/*"]

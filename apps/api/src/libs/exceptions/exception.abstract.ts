@@ -1,5 +1,5 @@
 import { Except } from "type-fest";
-import { ExceptionCode } from "./exception.codes";
+import { ExceptionCode } from "./exception.codes.js";
 
 type ExceptionMetadata = Record<any, any>;
 

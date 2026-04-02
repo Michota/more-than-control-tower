@@ -1,3 +1,3 @@
-export * from "./convert-properties-to-object";
-export * from "./properties-of";
-export * from "./value-of";
+export * from "./convert-properties-to-object.js";
+export * from "./properties-of.js";
+export * from "./value-of.js";

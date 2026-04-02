@@ -2,7 +2,7 @@ import { env } from "./src/config/env.js";
 import { generateMikroOrmOptions } from "./src/config/generate-mikro-orm.config.js";
 import { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
 
-export default {
+const config: MikroOrmModuleSyncOptions = {
     ...generateMikroOrmOptions({
         host: env.DB_HOST,
         port: env.DB_PORT,
@@ -12,4 +12,6 @@ export default {
     }),
     entitiesTs: ["src/**/*.entity.ts", "src/**/*.embeddable.ts"],
     entities: ["dist/**/*.entity.js", "dist/**/*.embeddable.js"],
-} satisfies MikroOrmModuleSyncOptions;
+};
+
+export default config;

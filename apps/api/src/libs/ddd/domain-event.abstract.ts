@@ -1,7 +1,7 @@
-import { ArgumentNotProvidedException } from "../exceptions";
+import { ArgumentNotProvidedException } from "../exceptions/index.js";
 import { randomUUID } from "crypto";
 import { isEmpty } from "es-toolkit/compat";
-import { AggregateId } from "./aggregate-root.abstract";
+import { AggregateId } from "./aggregate-root.abstract.js";
 
 type DomainEventMetadata = {
     /** Timestamp when this domain event occurred */
