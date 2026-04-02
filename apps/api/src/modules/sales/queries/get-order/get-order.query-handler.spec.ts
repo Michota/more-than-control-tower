@@ -1,4 +1,4 @@
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { randomUUID } from "crypto";
 import { GetOrderQueryHandler } from "./get-order.query-handler.js";
 import { GetOrderQuery } from "./get-order.query.js";

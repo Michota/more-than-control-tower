@@ -1,4 +1,4 @@
-import { Entity, EntityProps } from "../../../libs/ddd";
+import { Entity, EntityProps } from "../../../libs/ddd/index.js";
 import { Money } from "../../../shared/value-objects/money.js";
 
 interface OrderItemProperties {

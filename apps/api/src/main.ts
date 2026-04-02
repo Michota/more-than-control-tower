@@ -4,11 +4,10 @@ import { SwaggerModule } from "@nestjs/swagger";
 import { NodeEnv } from "@mtct/shared-types";
 import cookieParser from "cookie-parser";
 
-import "tsconfig-paths/register"; // <-- Must be first import to work with tsconfig paths
-import { AppModule } from "./app.module";
-import { env } from "./config/env";
-import { DomainExceptionFilter } from "./libs/exceptions/domain-exception.filter";
-import { createDocumentFactory } from "./swagger";
+import { AppModule } from "./app.module.js";
+import { env } from "./config/env.js";
+import { DomainExceptionFilter } from "./libs/exceptions/domain-exception.filter.js";
+import { createDocumentFactory } from "./swagger/index.js";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { EntityManager, type FilterQuery } from "@mikro-orm/core";
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { Paginated } from "../../../libs/ports/repository.port.js";
 import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { WalletAggregate } from "../domain/wallet.aggregate.js";

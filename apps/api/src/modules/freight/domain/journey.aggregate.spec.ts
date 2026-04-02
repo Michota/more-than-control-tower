@@ -1,10 +1,10 @@
-import { uuidRegex } from "src/shared/utils/uuid-regex";
-import { CrewMember } from "./crew-member.value-object";
-import { CrewMemberRole } from "./crew-member-role.enum";
-import { JourneyStatus } from "./journey-status.enum";
-import { JourneyStop } from "./journey-stop.value-object";
-import { RouteStop } from "./route-stop.value-object";
-import { JourneyAggregate } from "./journey.aggregate";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
+import { CrewMember } from "./crew-member.value-object.js";
+import { CrewMemberRole } from "./crew-member-role.enum.js";
+import { JourneyStatus } from "./journey-status.enum.js";
+import { JourneyStop } from "./journey-stop.value-object.js";
+import { RouteStop } from "./route-stop.value-object.js";
+import { JourneyAggregate } from "./journey.aggregate.js";
 import {
     JourneyAlreadyCancelledError,
     JourneyAlreadyCompletedError,
@@ -19,11 +19,11 @@ import {
     JourneyStopNotFoundError,
     OrderAlreadyAssignedToStopError,
     OrderNotAssignedToStopError,
-} from "./journey.errors";
-import { JourneyCreatedDomainEvent } from "./events/journey-created.domain-event";
-import { JourneyStartedDomainEvent } from "./events/journey-started.domain-event";
-import { JourneyCompletedDomainEvent } from "./events/journey-completed.domain-event";
-import { JourneyLoadingRequestedDomainEvent } from "./events/journey-loading-requested.domain-event";
+} from "./journey.errors.js";
+import { JourneyCreatedDomainEvent } from "./events/journey-created.domain-event.js";
+import { JourneyStartedDomainEvent } from "./events/journey-started.domain-event.js";
+import { JourneyCompletedDomainEvent } from "./events/journey-completed.domain-event.js";
+import { JourneyLoadingRequestedDomainEvent } from "./events/journey-loading-requested.domain-event.js";
 
 const defaultAddress = {
     country: "PL",

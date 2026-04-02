@@ -1,10 +1,10 @@
 import { randomUUID } from "crypto";
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
-import { WalletAggregate } from "./wallet.aggregate";
-import { WalletTransactionMethod } from "./wallet-transaction-method.enum";
-import { InsufficientWalletBalanceError } from "./wallet.errors";
-import { EntityId } from "../../../libs/ddd/entities/entity-id";
+import { WalletAggregate } from "./wallet.aggregate.js";
+import { WalletTransactionMethod } from "./wallet-transaction-method.enum.js";
+import { InsufficientWalletBalanceError } from "./wallet.errors.js";
+import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 
 describe("WalletAggregate", () => {
     const employeeId = randomUUID();

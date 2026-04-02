@@ -1,5 +1,5 @@
-import { generateEntityId } from "src/libs/ddd/utils/randomize-entity-id.js";
-import { uuidRegex } from "src/shared/utils/uuid-regex.js";
+import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id.js";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
 import { ZodError } from "zod";
 import { SystemUserRole } from "./system-user-role.enum.js";
 import { SystemUserStatus } from "./system-user-status.enum.js";

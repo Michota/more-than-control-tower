@@ -1,23 +1,23 @@
 import { MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule, QueryBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
-import { GetSystemUserQuery, GetSystemUserResponse } from "../../shared/queries/get-system-user.query";
-import { CreateSystemUserCommand } from "./commands/create-system-user/create-system-user.command";
-import { UpdateSystemUserCommand } from "./commands/update-system-user/update-system-user.command";
-import { AssignRolesCommand } from "./commands/assign-roles/assign-roles.command";
-import { SuspendSystemUserCommand } from "./commands/suspend-system-user/suspend-system-user.command";
-import { ActivateSystemUserCommand } from "./commands/activate-system-user/activate-system-user.command";
-import { SystemUserRole } from "./domain/system-user-role.enum";
-import { SystemUserStatus } from "./domain/system-user-status.enum";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
+import { GetSystemUserQuery, GetSystemUserResponse } from "../../shared/queries/get-system-user.query.js";
+import { CreateSystemUserCommand } from "./commands/create-system-user/create-system-user.command.js";
+import { UpdateSystemUserCommand } from "./commands/update-system-user/update-system-user.command.js";
+import { AssignRolesCommand } from "./commands/assign-roles/assign-roles.command.js";
+import { SuspendSystemUserCommand } from "./commands/suspend-system-user/suspend-system-user.command.js";
+import { ActivateSystemUserCommand } from "./commands/activate-system-user/activate-system-user.command.js";
+import { SystemUserRole } from "./domain/system-user-role.enum.js";
+import { SystemUserStatus } from "./domain/system-user-status.enum.js";
 import {
     SystemUserNotFoundError,
     CannotRemoveOwnAdminRoleError,
     LastActiveAdminError,
-} from "./domain/system-user.errors";
-import { ListSystemUsersQuery, ListSystemUsersResponse } from "./queries/list-system-users/list-system-users.query";
-import { SystemUser } from "./database/system-user.entity";
-import { SystemModule } from "./system.module";
+} from "./domain/system-user.errors.js";
+import { ListSystemUsersQuery, ListSystemUsersResponse } from "./queries/list-system-users/list-system-users.query.js";
+import { SystemUser } from "./database/system-user.entity.js";
+import { SystemModule } from "./system.module.js";
 
 describe("System Module — Integration Tests", () => {
     let moduleRef: TestingModule;
