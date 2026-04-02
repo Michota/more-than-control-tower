@@ -46,7 +46,7 @@ export class AuthHttpController {
                 password: body.password,
             }),
         );
-        setAuthCookies(res, tokens);
+        await setAuthCookies(res, tokens);
         return { ok: true };
     }
 
@@ -63,7 +63,7 @@ export class AuthHttpController {
                 password: body.password,
             }),
         );
-        setAuthCookies(res, tokens);
+        await setAuthCookies(res, tokens);
         return { ok: true };
     }
 
@@ -73,10 +73,7 @@ export class AuthHttpController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: "Refresh access token using cookie" })
     @ApiOkResponse()
-    async refreshToken(
-        @Req() req: Request,
-        @Res({ passthrough: true }) res: Response,
-    ): Promise<{ ok: true }> {
+    async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<{ ok: true }> {
         const refreshToken = (req.cookies as Record<string, string>)?.refreshToken;
 
         if (!refreshToken) {
@@ -86,7 +83,7 @@ export class AuthHttpController {
         const tokens = await this.commandBus.execute<RefreshTokenCommand, RefreshTokenResult>(
             new RefreshTokenCommand({ refreshToken }),
         );
-        setAuthCookies(res, tokens);
+        await setAuthCookies(res, tokens);
         return { ok: true };
     }
 
@@ -94,17 +91,20 @@ export class AuthHttpController {
     @Post("logout")
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: "Clear auth cookies" })
-    logout(@Res({ passthrough: true }) res: Response): { ok: true } {
-        clearAuthCookies(res);
+    async logout(@Res({ passthrough: true }) res: Response): Promise<{ ok: true }> {
+        await clearAuthCookies(res);
         return { ok: true };
     }
 
+    /**
+     * Pure auth-guard probe — returns 204 if the JWT is valid, 401 otherwise.
+     * The response body is intentionally empty; the status code is the signal.
+     * TODO: add explicit guard once role-based access control is enforced here.
+     */
     @Get("session")
+    @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: "Check if current session is valid" })
-    @ApiOkResponse()
-    session(): { authenticated: true } {
-        return { authenticated: true };
-    }
+    session(): void {}
 
     @Post("activation-token")
     @ApiOperation({ summary: "Generate activation token for an unactivated user (admin-only)" })
