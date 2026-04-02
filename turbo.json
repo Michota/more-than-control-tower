@@ -18,10 +18,10 @@
             "cache": false
         },
         "lint": {
-            "dependsOn": ["^build"]
+            "dependsOn": ["^build", "^generate", "generate"]
         },
         "check-types": {
-            "dependsOn": ["^build"]
+            "dependsOn": ["^build", "^generate", "generate"]
         },
         "generate": {
             "cache": false
