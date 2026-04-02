@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method */
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { randomUUID } from "crypto";
 import { DraftOrderCommandHandler } from "./draft-order.command-handler.js";
 import { DraftOrderCommand } from "./draft-order.command.js";

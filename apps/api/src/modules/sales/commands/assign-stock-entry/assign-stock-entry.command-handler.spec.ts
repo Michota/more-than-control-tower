@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method */
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { randomUUID } from "crypto";
 import { AssignStockEntryCommandHandler } from "./assign-stock-entry.command-handler.js";
 import { AssignStockEntryCommand } from "./assign-stock-entry.command.js";

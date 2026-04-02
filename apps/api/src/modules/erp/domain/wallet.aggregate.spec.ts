@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { describe, expect, it } from "vitest";
 import { WalletAggregate } from "./wallet.aggregate.js";
 import { WalletTransactionMethod } from "./wallet-transaction-method.enum.js";
