@@ -8,6 +8,7 @@
         "build": "tsc -b && vite build",
         "preview": "vite preview",
         "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
+        "generate": "paraglide-js compile --project ../../packages/i18n/project.inlang --outdir ./src/lib/paraglide",
         "check-types": "tsc --noEmit"
     },
     "dependencies": {
@@ -16,7 +17,7 @@
         "@mtct/i18n": "workspace:*",
         "@mtct/shared-types": "workspace:*",
         "@tanstack/react-form": "1.28.0",
-        "@tanstack/react-query": "5.75.0",
+        "@tanstack/react-query": "5.95.2",
         "@tanstack/react-router": "1.120.3",
         "class-variance-authority": "0.7.1",
         "clsx": "2.1.1",
@@ -37,7 +38,7 @@
         "@tailwindcss/vite": "4.1.7",
         "@tanstack/eslint-plugin-query": "5.96.1",
         "@tanstack/eslint-plugin-router": "1.161.6",
-        "@tanstack/react-query-devtools": "5.75.0",
+        "@tanstack/react-query-devtools": "5.95.2",
         "@tanstack/react-router-devtools": "1.120.3",
         "@tanstack/router-plugin": "1.120.3",
         "@types/react": "19.1.2",

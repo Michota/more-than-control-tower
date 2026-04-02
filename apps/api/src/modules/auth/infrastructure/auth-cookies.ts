@@ -1,15 +1,6 @@
 import type { Response } from "express";
 import { NodeEnv } from "@mtct/shared-types";
-import { env } from "../../../config/env.js";
-
-const IS_PRODUCTION = env.NODE_ENV === NodeEnv.Production;
-
-const COOKIE_OPTIONS_BASE = {
-    httpOnly: true,
-    secure: IS_PRODUCTION,
-    sameSite: "strict" as const,
-    path: "/",
-};
+import type { ApiEnv } from "../../../config/env.js";
 
 /** Parse duration strings like "15m", "7d", "1h" to milliseconds. */
 function durationToMs(duration: string): number {
@@ -23,19 +14,43 @@ function durationToMs(duration: string): number {
     return value * multipliers[unit];
 }
 
-export function setAuthCookies(res: Response, tokens: { accessToken: string; refreshToken: string }): void {
+let _env: ApiEnv | undefined;
+async function getEnv(): Promise<ApiEnv> {
+    if (!_env) {
+        _env = (await import("../../../config/env.js")).env;
+    }
+    return _env;
+}
+
+function cookieOptionsBase(env: ApiEnv) {
+    return {
+        httpOnly: true,
+        secure: env.NODE_ENV === NodeEnv.Production,
+        sameSite: "strict" as const,
+        path: "/",
+    };
+}
+
+export async function setAuthCookies(
+    res: Response,
+    tokens: { accessToken: string; refreshToken: string },
+): Promise<void> {
+    const env = await getEnv();
+    const base = cookieOptionsBase(env);
+
     res.cookie("accessToken", tokens.accessToken, {
-        ...COOKIE_OPTIONS_BASE,
+        ...base,
         maxAge: durationToMs(env.JWT_EXPIRES_IN),
     });
 
     res.cookie("refreshToken", tokens.refreshToken, {
-        ...COOKIE_OPTIONS_BASE,
+        ...base,
         maxAge: durationToMs(env.JWT_REFRESH_EXPIRES_IN),
     });
 }
 
-export function clearAuthCookies(res: Response): void {
-    res.clearCookie("accessToken", COOKIE_OPTIONS_BASE);
-    res.clearCookie("refreshToken", COOKIE_OPTIONS_BASE);
+export async function clearAuthCookies(res: Response): Promise<void> {
+    const env = await getEnv();
+    res.clearCookie("accessToken", cookieOptionsBase(env));
+    res.clearCookie("refreshToken", cookieOptionsBase(env));
 }

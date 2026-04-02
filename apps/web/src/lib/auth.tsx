@@ -1,26 +1,18 @@
-import { createContext, useCallback, useContext, type ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSessionAuthApi, sessionAuthQueryKey } from "@mtct/api-client/hooks/useSessionAuth";
 import { useLoginAuthApi } from "@mtct/api-client/hooks/useLoginAuth";
 import { useLogoutAuthApi } from "@mtct/api-client/hooks/useLogoutAuth";
-
-interface AuthContextValue {
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { AuthContext } from "@/lib/auth-context";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const queryClient = useQueryClient();
 
-    const { data, isLoading, isError } = useSessionAuthApi({
+    const { isSuccess, isLoading } = useSessionAuthApi({
         query: { retry: false },
     });
 
-    const isAuthenticated = !isError && !!data;
+    const isAuthenticated = isSuccess;
 
     const loginMutation = useLoginAuthApi({
         mutation: {
@@ -50,13 +42,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [logoutMutation]);
 
     return <AuthContext value={{ isAuthenticated, isLoading, login, logout }}>{children}</AuthContext>;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useAuth(): AuthContextValue {
-    const ctx = useContext(AuthContext);
-    if (!ctx) {
-        throw new Error("useAuth must be used within AuthProvider");
-    }
-    return ctx;
 }

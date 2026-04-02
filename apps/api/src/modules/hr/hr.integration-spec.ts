@@ -72,11 +72,13 @@ describe("HR Module — Integration Tests", () => {
         await orm.schema.refresh();
 
         permissionRegistry.registerForModule("freight", [
-            { key: "view-routes", name: "View Routes" },
-            { key: "execute-route", name: "Execute Route" },
-            { key: "drive-cat-c", name: "Drive Cat C" },
+            { key: "view-routes", messageKey: "permission_freight_view_routes" },
+            { key: "execute-route", messageKey: "permission_freight_execute_route" },
+            { key: "drive-cat-c", messageKey: "permission_freight_drive_cat_c" },
         ]);
-        permissionRegistry.registerForModule("warehouse", [{ key: "create-receipt", name: "Create Receipt" }]);
+        permissionRegistry.registerForModule("warehouse", [
+            { key: "create-receipt", messageKey: "permission_warehouse_create_receipt" },
+        ]);
     });
 
     afterAll(async () => {

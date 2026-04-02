@@ -7,6 +7,22 @@
     "auth_invalid_credentials": "Nieprawidłowy e-mail lub hasło",
     "auth_logout": "Wyloguj",
 
+    "locale_pl": "Polski",
+    "locale_en": "English",
+
+    "common_save": "Zapisz",
+
+    "sidebar_warehouse": "Magazyn",
+    "sidebar_warehouse_warehouses": "Magazyny",
+    "sidebar_warehouse_goods": "Towary",
+    "sidebar_warehouse_stock": "Zapasy",
+    "sidebar_warehouse_goods_receipts": "Przyjęcia towaru",
+    "sidebar_warehouse_stock_transfers": "Transfery magazynowe",
+    "sidebar_warehouse_sectors": "Sektory",
+
+    "warehouse_view_goods": "Przeglądaj towary",
+    "sales_draft_order": "Nowe zamówienie",
+
     "error_not_found": "Nie znaleziono zasobu.",
     "error_internal_server_error": "Wystąpił nieoczekiwany błąd.",
     "error_validation_failed": "Walidacja nie powiodła się.",

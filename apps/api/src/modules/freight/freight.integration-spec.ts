@@ -99,9 +99,9 @@ describe("Freight Module — Integration Tests", () => {
         // (SalesModule not loaded due to dependency chain — permissions only)
         const registry = moduleRef.get<PermissionRegistry>(PERMISSION_REGISTRY);
         registry.registerForModule("sales", [
-            { key: "complete-order", name: "Complete Order" },
-            { key: "view-orders", name: "View Orders" },
-            { key: "draft-order", name: "Draft Order" },
+            { key: "complete-order", messageKey: "permission_sales_complete_order" },
+            { key: "view-orders", messageKey: "permission_sales_view_orders" },
+            { key: "draft-order", messageKey: "permission_sales_draft_order" },
         ]);
 
         await orm.schema.refresh();
