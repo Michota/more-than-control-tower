@@ -1,6 +1,6 @@
 import { CodeAggregate } from "./code.aggregate.js";
 import { CodeType } from "./code-type.enum.js";
-import { uuidRegex } from "../../../shared/utils/uuid-regex";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
 import { randomUUID } from "crypto";
 import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id.js";
 

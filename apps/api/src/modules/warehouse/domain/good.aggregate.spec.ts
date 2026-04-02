@@ -1,7 +1,7 @@
 import { DimensionUnit, GoodDimensions } from "./good-dimensions.value-object.js";
 import { GoodWeight, WeightUnit } from "./good-weight.value-object.js";
 import { GoodAggregate } from "./good.aggregate.js";
-import { uuidRegex } from "../../../shared/utils/uuid-regex";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
 import { GoodCreatedDomainEvent } from "./events/good-created.domain-event.js";
 
 describe("GoodAggregate.create()", () => {

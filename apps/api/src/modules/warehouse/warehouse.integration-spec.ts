@@ -45,7 +45,7 @@ import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-co
 import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-for-good.query.js";
 import { CodeType } from "./domain/code-type.enum.js";
 import { CodeNotFoundError, CodeValueAlreadyExistsError } from "./domain/code.errors.js";
-import { uuidRegex } from "../../shared/utils/uuid-regex";
+import { uuidRegex } from "../../shared/utils/uuid-regex.js";
 import { RequestStockTransferCommand } from "../../shared/commands/request-stock-transfer.command.js";
 import { FulfillStockTransferRequestCommand } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command.js";
 import { CancelStockTransferRequestCommand } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command.js";

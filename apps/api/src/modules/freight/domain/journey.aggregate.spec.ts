@@ -1,4 +1,4 @@
-import { uuidRegex } from "../../../shared/utils/uuid-regex";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
 import { CrewMember } from "./crew-member.value-object.js";
 import { CrewMemberRole } from "./crew-member-role.enum.js";
 import { JourneyStatus } from "./journey-status.enum.js";

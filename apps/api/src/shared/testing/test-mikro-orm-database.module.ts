@@ -1,6 +1,6 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import "dotenv/config";
-import { env } from "../../config/env";
+import { env } from "../../config/env.js";
 import { generateMikroOrmOptions } from "../../config/generate-mikro-orm.config.js";
 
 export function TestMikroOrmDatabaseModule() {

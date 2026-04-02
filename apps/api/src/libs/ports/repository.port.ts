@@ -7,7 +7,7 @@
     in a respective repository.**
 */
 
-import { OffsetPaginationParameters } from "../types/pagination";
+import { OffsetPaginationParameters } from "../types/pagination.js";
 
 export class Paginated<T> {
     readonly count: number;

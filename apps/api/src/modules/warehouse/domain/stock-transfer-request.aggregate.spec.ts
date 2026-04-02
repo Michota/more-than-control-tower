@@ -5,7 +5,7 @@ import { StockTransferRequestStatus } from "./stock-transfer-request-status.enum
 import { StockTransferRequestNotPendingError } from "./stock-transfer-request.errors.js";
 import { StockTransferRequestCreatedDomainEvent } from "./events/stock-transfer-request-created.domain-event.js";
 import { StockTransferRequestFulfilledDomainEvent } from "./events/stock-transfer-request-fulfilled.domain-event.js";
-import { uuidRegex } from "../../../shared/utils/uuid-regex";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
 
 const validProps = () => ({
     goodId: randomUUID(),

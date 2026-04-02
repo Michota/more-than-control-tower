@@ -1,4 +1,4 @@
-import { uuidRegex } from "../../../shared/utils/uuid-regex";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
 import { DriverLicenseCategory } from "./driver-license-category.enum.js";
 import { VehicleAttribute } from "./vehicle-attribute.value-object.js";
 import { VehicleStatus } from "./vehicle-status.enum.js";
