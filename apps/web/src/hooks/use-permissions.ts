@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Permission } from "@mtct/shared-types";
 import { api } from "@/lib/api-client";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/use-auth";
 
 export function usePermissions() {
     const { isAuthenticated } = useAuth();

@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { HTTPError } from "ky";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/use-auth";
 import { useAppForm } from "@/hooks/use-app-form";
 import { loginSchema } from "@/features/auth/validation/login-schema";
 import { t } from "@mtct/i18n";
@@ -31,11 +31,7 @@ export function useLoginForm() {
                     const body: { message?: string } = await err.response
                         .json<{ message?: string }>()
                         .catch(() => ({}));
-                    setFormError(
-                        body.message
-                            ? t(body.message)
-                            : m.error_auth_invalid_credentials(),
-                    );
+                    setFormError(body.message ? t(body.message) : m.error_auth_invalid_credentials());
                 } else {
                     setFormError(m.error_auth_invalid_credentials());
                 }
