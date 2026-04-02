@@ -7,6 +7,22 @@
     "auth_invalid_credentials": "Invalid email or password",
     "auth_logout": "Sign out",
 
+    "locale_pl": "Polski",
+    "locale_en": "English",
+
+    "common_save": "Save",
+
+    "sidebar_warehouse": "Warehouse",
+    "sidebar_warehouse_warehouses": "Warehouses",
+    "sidebar_warehouse_goods": "Goods",
+    "sidebar_warehouse_stock": "Stock",
+    "sidebar_warehouse_goods_receipts": "Goods receipts",
+    "sidebar_warehouse_stock_transfers": "Stock transfers",
+    "sidebar_warehouse_sectors": "Sectors",
+
+    "warehouse_view_goods": "Browse goods",
+    "sales_draft_order": "New order",
+
     "error_not_found": "Resource not found.",
     "error_internal_server_error": "An unexpected error occurred.",
     "error_validation_failed": "Validation failed.",
