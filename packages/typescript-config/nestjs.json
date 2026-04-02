@@ -2,8 +2,11 @@
     "$schema": "https://json.schemastore.org/tsconfig",
     "extends": "./base.json",
     "compilerOptions": {
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
+        // "bundler" resolution instead of "nodenext" because @mikro-orm/*@7.x ships as ESM-only.
+        // "nodenext" strictly enforces CJS/ESM boundaries (TS1479) which breaks all MikroORM imports
+        // in our CJS NestJS app. "bundler" trusts the runtime to handle interop, which Node + NestJS do fine.
+        "module": "es2022",
+        "moduleResolution": "bundler",
         "resolvePackageJsonExports": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true

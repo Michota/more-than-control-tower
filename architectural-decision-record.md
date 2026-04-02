@@ -1132,3 +1132,21 @@ IP addresses and user-agent strings are personal data under GDPR. Since the plat
 - IP and user-agent must be passed from controllers to command handlers
 - Storage decision may depend on ADR-021 (ERP Activity Log) direction
 - Privacy impact assessment should be completed before implementation begins
+
+# ADR-025: Use `bundler` module resolution instead of `nodenext`
+
+## Status: Accepted
+
+## Context
+
+`@mikro-orm/*@7.x` ships as ESM-only (`"type": "module"`). The API app emits CJS. With `"moduleResolution": "nodenext"`, TypeScript strictly enforces CJS/ESM boundaries, producing 152 TS1479 errors on every MikroORM import.
+
+## Decision
+
+Set `"module": "es2022"` and `"moduleResolution": "bundler"` in `packages/typescript-config/nestjs.json`. Bundler resolution trusts the runtime/build tool (SWC via `nest build`) to handle CJS/ESM interop, which it does correctly.
+
+## Consequences
+
+- All MikroORM TS1479 errors are resolved
+- TypeScript no longer catches real CJS/ESM mismatches at type-check time — runtime errors instead
+- Revisit when the API app migrates to ESM or MikroORM provides CJS exports
