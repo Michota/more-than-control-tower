@@ -1135,7 +1135,7 @@ IP addresses and user-agent strings are personal data under GDPR. Since the plat
 
 # ADR-025: Use `bundler` module resolution instead of `nodenext`
 
-## Status: Accepted
+## Status: Superseded by ADR-026
 
 ## Context
 
@@ -1150,3 +1150,69 @@ Set `"module": "es2022"` and `"moduleResolution": "bundler"` in `packages/typesc
 - All MikroORM TS1479 errors are resolved
 - TypeScript no longer catches real CJS/ESM mismatches at type-check time — runtime errors instead
 - Revisit when the API app migrates to ESM or MikroORM provides CJS exports
+
+---
+
+# ADR-026: Migrate API to native ESM with TypeScript 6
+
+## Status: Accepted
+
+**Date:** 2026-04-02
+
+## Context
+
+ADR-025 used `moduleResolution: "bundler"` as a workaround for MikroORM v7's ESM-only packages. This had a critical side effect: `nest start` (which compiles via `tsc`) emitted extensionless imports in the compiled output. Node's ESM loader rejects these, so development required `tsx` instead. Running via `tsx` bypassed the `@nestjs/swagger` CLI plugin, leaving Swagger schemas empty in dev mode.
+
+Two paths were considered:
+
+1. **Pre-generate Swagger metadata** — run the plugin's `PluginMetadataGenerator` as a build step, import the result at runtime. Works with `tsx` but adds a build step and generated file to manage.
+2. **Migrate to native ESM** — upgrade TypeScript so `nodenext` resolution works, add `.js` extensions to all imports, use `nest start` directly.
+
+Option 2 was chosen because it eliminates the root cause rather than working around it.
+
+## Decision
+
+### TypeScript 6 + nodenext
+
+Upgraded TypeScript from 5.7.3 to 6.0.2. TS 6 understands Node's `require(esm)` support, so `nodenext` no longer emits false TS1479 errors for ESM-only packages like MikroORM.
+
+Set `"module": "nodenext"` and `"moduleResolution": "nodenext"` in `packages/typescript-config/nestjs.json`. Added `"type": "module"` to `apps/api/package.json`.
+
+### Import extensions
+
+All relative imports across ~100 files received explicit `.js` extensions (e.g., `from "./foo.js"`), as required by `nodenext`. Bare `src/...` path aliases were converted to relative paths, and `baseUrl` was removed from `tsconfig.json` (deprecated in TS 6).
+
+### decimal.js import style
+
+`import Decimal from "decimal.js"` (default import) resolves as a namespace under `nodenext`. Changed to `import { Decimal } from "decimal.js"` (named import) across 26 files.
+
+### @nestjs/swagger CLI plugin fixes
+
+Two bugs were discovered and resolved:
+
+1. **TypeFlags mismatch** — `@nestjs/cli@11.0.0` bundles `typescript@5.7.3` as a hard dependency. The swagger plugin does `require("typescript")` and gets TS 5.7, but receives type objects created by the project's TS 6. TypeScript 6 changed the `TypeFlags` enum bit values (`String` moved from `4` to `32`, `Number` from `8` to `64`, etc.), so every type check in the plugin silently failed. This caused `string` properties to be emitted as `enum: string` (a bare TypeScript keyword, not a runtime value) and `number` properties as `type: () => BigInt`.
+
+   **Fix:** Added `pnpm.overrides` in root `package.json` to force `typescript@6.0.2` everywhere, ensuring the plugin and compiler use the same TypeFlags values.
+
+2. **ESM async import syntax** — The plugin's `esmCompatible` mode generates `await import("./foo.js")` for cross-file type references, but places them inside non-async arrow functions (`() => (await import(...))`), causing `SyntaxError: Unexpected reserved word` at module load time.
+
+   **Fix:** Applied a pnpm patch to `@nestjs/swagger@11.2.6` that wraps `type:` and `enum:` property initializers in `async () => ...` arrows when `esmCompatible` is enabled. Patch lives in `patches/@nestjs__swagger@11.2.6.patch`.
+
+### Dev vs production
+
+- **`nest start --watch`** — used for development. Compiles via `tsc`, runs the swagger plugin, Swagger schemas are populated.
+- **`tsx`** — still used for CLI commands (`cli-main.ts`) which don't need Swagger.
+
+## Consequences
+
+- `nest start` works correctly — both compilation and runtime
+- Swagger UI shows fully populated schemas in dev mode
+- All 513 unit tests pass, type-check has 0 errors
+- New files must use `.js` extensions on all relative imports
+- The `@nestjs/swagger` patch must be maintained until the upstream fixes ESM support (track: https://github.com/nestjs/swagger/issues/1450)
+- The `pnpm.overrides` for TypeScript must be kept until `@nestjs/cli` drops its hard `typescript` dependency or upgrades to TS 6
+
+## Known issues
+
+- **Swagger resolver errors on `/auth/activate`** — the `activationToken` and `password` properties reference `$ref: "#/components/schemas/"` (empty schema name). This appears to be caused by the async arrow wrapper returning a Promise that Swagger's schema builder doesn't fully resolve for certain DTO patterns. Needs investigation.
+- **Kubb API client codegen** — `pnpm sync:api-client` fails with `Token "" does not exist` from `@readme/json-schema-ref-parser`. Likely related to the empty schema refs above or a Kubb v3 compatibility issue.
