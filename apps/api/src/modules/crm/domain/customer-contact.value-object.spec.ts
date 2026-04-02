@@ -1,7 +1,7 @@
 import { ZodError } from "zod";
-import { ContactHistoryEntry } from "./contact-history-entry.value-object";
-import { ContactType } from "./customer-contact-type.enum";
-import { CustomerContact } from "./customer-contact.value-object";
+import { ContactHistoryEntry } from "./contact-history-entry.value-object.js";
+import { ContactType } from "./customer-contact-type.enum.js";
+import { CustomerContact } from "./customer-contact.value-object.js";
 
 const PHONE_NUMBER = "+48123456789";
 const EMAIL = "contact@more-than-control-tower.com";

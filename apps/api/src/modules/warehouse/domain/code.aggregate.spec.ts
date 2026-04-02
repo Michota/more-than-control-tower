@@ -1,8 +1,8 @@
-import { CodeAggregate } from "./code.aggregate";
-import { CodeType } from "./code-type.enum";
-import { uuidRegex } from "src/shared/utils/uuid-regex";
+import { CodeAggregate } from "./code.aggregate.js";
+import { CodeType } from "./code-type.enum.js";
+import { uuidRegex } from "../../../shared/utils/uuid-regex";
 import { randomUUID } from "crypto";
-import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id";
+import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id.js";
 
 describe("CodeAggregate", () => {
     const validGoodId = randomUUID();

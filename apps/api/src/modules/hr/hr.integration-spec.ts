@@ -1,27 +1,27 @@
 import { MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule, QueryBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
-import { GetEmployeeQuery, GetEmployeeResponse } from "../../shared/queries/get-employee.query";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
+import { GetEmployeeQuery, GetEmployeeResponse } from "../../shared/queries/get-employee.query.js";
 import {
     FindEmployeesByPermissionQuery,
     FindEmployeesByPermissionResponse,
-} from "../../shared/queries/find-employees-by-permission.query";
-import { CreateEmployeeCommand } from "./commands/create-employee/create-employee.command";
-import { UpdateEmployeeCommand } from "./commands/update-employee/update-employee.command";
-import { AssignPositionCommand } from "./commands/assign-position/assign-position.command";
-import { UnassignPositionCommand } from "./commands/unassign-position/unassign-position.command";
-import { DeactivateEmployeeCommand } from "./commands/deactivate-employee/deactivate-employee.command";
-import { DeleteEmployeeCommand } from "./commands/delete-employee/delete-employee.command";
-import { CreatePositionCommand } from "./commands/create-position/create-position.command";
-import { UpdatePositionCommand } from "./commands/update-position/update-position.command";
-import { SetPermissionOverrideCommand } from "./commands/set-permission-override/set-permission-override.command";
-import { SetAvailabilityCommand } from "./commands/set-availability/set-availability.command";
-import { LockAvailabilityCommand } from "./commands/lock-availability/lock-availability.command";
-import { ConfirmAvailabilityCommand } from "./commands/confirm-availability/confirm-availability.command";
-import { RejectAvailabilityCommand } from "./commands/reject-availability/reject-availability.command";
-import { PermissionOverrideState } from "./domain/permission-override-state.enum";
-import { AvailabilityEntryStatus } from "./domain/availability-entry-status.enum";
+} from "../../shared/queries/find-employees-by-permission.query.js";
+import { CreateEmployeeCommand } from "./commands/create-employee/create-employee.command.js";
+import { UpdateEmployeeCommand } from "./commands/update-employee/update-employee.command.js";
+import { AssignPositionCommand } from "./commands/assign-position/assign-position.command.js";
+import { UnassignPositionCommand } from "./commands/unassign-position/unassign-position.command.js";
+import { DeactivateEmployeeCommand } from "./commands/deactivate-employee/deactivate-employee.command.js";
+import { DeleteEmployeeCommand } from "./commands/delete-employee/delete-employee.command.js";
+import { CreatePositionCommand } from "./commands/create-position/create-position.command.js";
+import { UpdatePositionCommand } from "./commands/update-position/update-position.command.js";
+import { SetPermissionOverrideCommand } from "./commands/set-permission-override/set-permission-override.command.js";
+import { SetAvailabilityCommand } from "./commands/set-availability/set-availability.command.js";
+import { LockAvailabilityCommand } from "./commands/lock-availability/lock-availability.command.js";
+import { ConfirmAvailabilityCommand } from "./commands/confirm-availability/confirm-availability.command.js";
+import { RejectAvailabilityCommand } from "./commands/reject-availability/reject-availability.command.js";
+import { PermissionOverrideState } from "./domain/permission-override-state.enum.js";
+import { AvailabilityEntryStatus } from "./domain/availability-entry-status.enum.js";
 import {
     EmployeeNotFoundError,
     InvalidPositionKeyError,
@@ -29,7 +29,7 @@ import {
     PositionNotAssignedError,
     PositionKeyAlreadyExistsError,
     UnknownPermissionError,
-} from "./domain/employee.errors";
+} from "./domain/employee.errors.js";
 import {
     AvailabilityAlreadyConfirmedError,
     AvailabilityAlreadyLockedError,
@@ -37,18 +37,18 @@ import {
     AvailabilityNotOwnedError,
     AvailabilityLockedError,
     NoPendingAvailabilityError,
-} from "./domain/availability-entry.errors";
-import { ListPositionsQuery } from "./queries/list-positions/list-positions.query";
-import { type ListPositionsResponse } from "./queries/list-positions/list-positions.query-handler";
-import { GetEmployeeAvailabilityQuery } from "./queries/get-employee-availability/get-employee-availability.query";
-import { type GetEmployeeAvailabilityResponse } from "./queries/get-employee-availability/get-employee-availability.query-handler";
+} from "./domain/availability-entry.errors.js";
+import { ListPositionsQuery } from "./queries/list-positions/list-positions.query.js";
+import { type ListPositionsResponse } from "./queries/list-positions/list-positions.query-handler.js";
+import { GetEmployeeAvailabilityQuery } from "./queries/get-employee-availability/get-employee-availability.query.js";
+import { type GetEmployeeAvailabilityResponse } from "./queries/get-employee-availability/get-employee-availability.query-handler.js";
 import {
     CheckEmployeeAvailabilityQuery,
     type CheckEmployeeAvailabilityResponse,
-} from "../../shared/queries/check-employee-availability.query";
-import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry";
-import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
-import { HrModule } from "./hr.module";
+} from "../../shared/queries/check-employee-availability.query.js";
+import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastructure/permission-registry.js";
+import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module.js";
+import { HrModule } from "./hr.module.js";
 
 describe("HR Module — Integration Tests", () => {
     let moduleRef: TestingModule;

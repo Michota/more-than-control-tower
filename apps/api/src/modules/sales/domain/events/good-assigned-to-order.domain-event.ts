@@ -1,4 +1,4 @@
-import { DomainEvent, DomainEventProperties } from "../../../../libs/ddd";
+import { DomainEvent, DomainEventProperties } from "../../../../libs/ddd/index.js";
 
 export class GoodAssignedToOrderDomainEvent extends DomainEvent {
     readonly productId: string;

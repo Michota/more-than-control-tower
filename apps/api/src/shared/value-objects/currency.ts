@@ -1,4 +1,4 @@
-import { ArgumentInvalidException } from "../../libs/exceptions";
+import { ArgumentInvalidException } from "../../libs/exceptions/index.js";
 import { ValueObject } from "../../libs/ddd/index.js";
 
 export class Currency extends ValueObject<string> {

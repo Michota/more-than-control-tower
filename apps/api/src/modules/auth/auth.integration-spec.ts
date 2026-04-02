@@ -2,29 +2,29 @@ import { MikroORM } from "@mikro-orm/postgresql";
 import { UnauthorizedException } from "@nestjs/common";
 import { CommandBus, CqrsModule } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
-import { CreateSystemUserCommand } from "../system/commands/create-system-user/create-system-user.command";
-import { SuspendSystemUserCommand } from "../system/commands/suspend-system-user/suspend-system-user.command";
-import { ActivateSystemUserCommand } from "../system/commands/activate-system-user/activate-system-user.command";
-import { SystemUserRole } from "../system/domain/system-user-role.enum";
-import { SystemModule } from "../system/system.module";
-import { AuthModule } from "./auth.module";
-import { LoginCommand, LoginResult } from "./commands/login/login.command";
-import { SetPasswordCommand } from "./commands/set-password/set-password.command";
-import { ChangePasswordCommand } from "./commands/change-password/change-password.command";
-import { ActivateAccountCommand, ActivateAccountResult } from "./commands/activate-account/activate-account.command";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
+import { CreateSystemUserCommand } from "../system/commands/create-system-user/create-system-user.command.js";
+import { SuspendSystemUserCommand } from "../system/commands/suspend-system-user/suspend-system-user.command.js";
+import { ActivateSystemUserCommand } from "../system/commands/activate-system-user/activate-system-user.command.js";
+import { SystemUserRole } from "../system/domain/system-user-role.enum.js";
+import { SystemModule } from "../system/system.module.js";
+import { AuthModule } from "./auth.module.js";
+import { LoginCommand, LoginResult } from "./commands/login/login.command.js";
+import { SetPasswordCommand } from "./commands/set-password/set-password.command.js";
+import { ChangePasswordCommand } from "./commands/change-password/change-password.command.js";
+import { ActivateAccountCommand, ActivateAccountResult } from "./commands/activate-account/activate-account.command.js";
 import {
     GenerateActivationTokenCommand,
     GenerateActivationTokenResult,
-} from "./commands/generate-activation-token/generate-activation-token.command";
-import { RefreshTokenCommand, RefreshTokenResult } from "./commands/refresh-token/refresh-token.command";
+} from "./commands/generate-activation-token/generate-activation-token.command.js";
+import { RefreshTokenCommand, RefreshTokenResult } from "./commands/refresh-token/refresh-token.command.js";
 import {
     InvalidCredentialsError,
     AccountNotActivatedError,
     AccountSuspendedError,
     AccountAlreadyActivatedError,
     InvalidActivationTokenError,
-} from "./domain/auth.errors";
+} from "./domain/auth.errors.js";
 
 describe("Auth Module — Integration Tests", () => {
     let moduleRef: TestingModule;
