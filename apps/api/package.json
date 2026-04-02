@@ -11,7 +11,7 @@
     "mikro-orm": {},
     "scripts": {
         "build": "nest build",
-        "dev": "nest start --watch",
+        "dev": "tsx watch src/main.ts",
         "start": "tsx src/main.ts",
         "start:debug": "tsx watch --inspect src/main.ts",
         "start:prod": "node dist/main",
