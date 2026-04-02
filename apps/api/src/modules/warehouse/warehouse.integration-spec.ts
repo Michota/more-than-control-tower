@@ -1,64 +1,64 @@
 import { MikroORM } from "@mikro-orm/postgresql";
 import { CommandBus, CqrsModule, QueryBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
-import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module";
-import { ConfirmGoodsReceiptCommand } from "./commands/confirm-goods-receipt/confirm-goods-receipt.command";
-import { CreateGoodCommand } from "./commands/create-good/create-good.command";
-import { CreateWarehouseCommand } from "./commands/create-warehouse/create-warehouse.command";
-import { OpenGoodsReceiptCommand } from "./commands/open-goods-receipt/open-goods-receipt.command";
-import { RemoveStockCommand } from "./commands/remove-stock/remove-stock.command";
-import { SetGoodsReceiptLinesCommand } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command";
-import { TransferStockCommand } from "./commands/transfer-stock/transfer-stock.command";
-import { DimensionUnit } from "./domain/good-dimensions.value-object";
-import { WeightUnit } from "./domain/good-weight.value-object";
-import { EditGoodCommand } from "./commands/edit-good/edit-good.command";
+import { TestMikroOrmDatabaseModule } from "../../shared/testing/test-mikro-orm-database.module.js";
+import { ConfirmGoodsReceiptCommand } from "./commands/confirm-goods-receipt/confirm-goods-receipt.command.js";
+import { CreateGoodCommand } from "./commands/create-good/create-good.command.js";
+import { CreateWarehouseCommand } from "./commands/create-warehouse/create-warehouse.command.js";
+import { OpenGoodsReceiptCommand } from "./commands/open-goods-receipt/open-goods-receipt.command.js";
+import { RemoveStockCommand } from "./commands/remove-stock/remove-stock.command.js";
+import { SetGoodsReceiptLinesCommand } from "./commands/set-goods-receipt-lines/set-goods-receipt-lines.command.js";
+import { TransferStockCommand } from "./commands/transfer-stock/transfer-stock.command.js";
+import { DimensionUnit } from "./domain/good-dimensions.value-object.js";
+import { WeightUnit } from "./domain/good-weight.value-object.js";
+import { EditGoodCommand } from "./commands/edit-good/edit-good.command.js";
 import {
     IncorporatedGoodCannotBeEditedError,
     InsufficientStockError,
     StockEntryNotFoundError,
-} from "./domain/good.errors";
-import { GoodsReceiptStatus } from "./domain/goods-receipt-status.enum";
-import { StockRemovalReason } from "./domain/stock-removal-reason.enum";
-import { GetGoodQuery } from "./queries/get-good/get-good.query";
-import { GetGoodsReceiptQuery } from "./queries/get-goods-receipt/get-goods-receipt.query";
-import { ListWarehouseStockQuery } from "./queries/list-warehouse-stock/list-warehouse-stock.query";
-import { WarehouseModule } from "./warehouse.module";
-import { CreateSectorCommand } from "./commands/create-sector/create-sector.command";
-import { MoveStockToSectorCommand } from "./commands/move-stock-to-sector/move-stock-to-sector.command";
-import { EditWarehouseCommand } from "./commands/edit-warehouse/edit-warehouse.command";
-import { DeleteGoodsCommand } from "./commands/delete-goods/delete-goods.command";
-import { SectorCapability } from "./domain/sector-capability.enum";
-import { SectorNotInWarehouseError } from "./domain/good.errors";
-import { ListSectorsQuery } from "./queries/list-sectors/list-sectors.query";
-import { GetSectorLoadQuery } from "./queries/get-sector-load/get-sector-load.query";
-import { ListWarehousesQuery } from "./queries/list-warehouses/list-warehouses.query";
+} from "./domain/good.errors.js";
+import { GoodsReceiptStatus } from "./domain/goods-receipt-status.enum.js";
+import { StockRemovalReason } from "./domain/stock-removal-reason.enum.js";
+import { GetGoodQuery } from "./queries/get-good/get-good.query.js";
+import { GetGoodsReceiptQuery } from "./queries/get-goods-receipt/get-goods-receipt.query.js";
+import { ListWarehouseStockQuery } from "./queries/list-warehouse-stock/list-warehouse-stock.query.js";
+import { WarehouseModule } from "./warehouse.module.js";
+import { CreateSectorCommand } from "./commands/create-sector/create-sector.command.js";
+import { MoveStockToSectorCommand } from "./commands/move-stock-to-sector/move-stock-to-sector.command.js";
+import { EditWarehouseCommand } from "./commands/edit-warehouse/edit-warehouse.command.js";
+import { DeleteGoodsCommand } from "./commands/delete-goods/delete-goods.command.js";
+import { SectorCapability } from "./domain/sector-capability.enum.js";
+import { SectorNotInWarehouseError } from "./domain/good.errors.js";
+import { ListSectorsQuery } from "./queries/list-sectors/list-sectors.query.js";
+import { GetSectorLoadQuery } from "./queries/get-sector-load/get-sector-load.query.js";
+import { ListWarehousesQuery } from "./queries/list-warehouses/list-warehouses.query.js";
 import {
     ActivateWarehouseCommand,
     DeactivateWarehouseCommand,
-} from "./commands/change-warehouse-status/change-warehouse-status.command";
-import { DeactivateSectorCommand } from "./commands/change-sector-status/change-sector-status.command";
-import { WarehouseHasStockError, GoodHasActiveStockError, GoodNotFoundError } from "./domain/good.errors";
-import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module";
-import { AttachCodeToGoodCommand } from "./commands/attach-code-to-good/attach-code-to-good.command";
-import { DetachCodeFromGoodCommand } from "./commands/detach-code-from-good/detach-code-from-good.command";
-import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-code.query";
-import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-for-good.query";
-import { CodeType } from "./domain/code-type.enum";
-import { CodeNotFoundError, CodeValueAlreadyExistsError } from "./domain/code.errors";
-import { uuidRegex } from "src/shared/utils/uuid-regex";
-import { RequestStockTransferCommand } from "../../shared/commands/request-stock-transfer.command";
-import { FulfillStockTransferRequestCommand } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command";
-import { CancelStockTransferRequestCommand } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command";
-import { RejectStockTransferRequestCommand } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.command";
-import { GetStockTransferRequestQuery } from "./queries/get-stock-transfer-request/get-stock-transfer-request.query";
-import { ListStockTransferRequestsQuery } from "./queries/list-stock-transfer-requests/list-stock-transfer-requests.query";
-import { StockTransferRequestStatus } from "./domain/stock-transfer-request-status.enum";
+} from "./commands/change-warehouse-status/change-warehouse-status.command.js";
+import { DeactivateSectorCommand } from "./commands/change-sector-status/change-sector-status.command.js";
+import { WarehouseHasStockError, GoodHasActiveStockError, GoodNotFoundError } from "./domain/good.errors.js";
+import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module.js";
+import { AttachCodeToGoodCommand } from "./commands/attach-code-to-good/attach-code-to-good.command.js";
+import { DetachCodeFromGoodCommand } from "./commands/detach-code-from-good/detach-code-from-good.command.js";
+import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-code.query.js";
+import { ListCodesForGoodQuery } from "./queries/list-codes-for-good/list-codes-for-good.query.js";
+import { CodeType } from "./domain/code-type.enum.js";
+import { CodeNotFoundError, CodeValueAlreadyExistsError } from "./domain/code.errors.js";
+import { uuidRegex } from "../../shared/utils/uuid-regex.js";
+import { RequestStockTransferCommand } from "../../shared/commands/request-stock-transfer.command.js";
+import { FulfillStockTransferRequestCommand } from "./commands/fulfill-stock-transfer-request/fulfill-stock-transfer-request.command.js";
+import { CancelStockTransferRequestCommand } from "./commands/cancel-stock-transfer-request/cancel-stock-transfer-request.command.js";
+import { RejectStockTransferRequestCommand } from "./commands/reject-stock-transfer-request/reject-stock-transfer-request.command.js";
+import { GetStockTransferRequestQuery } from "./queries/get-stock-transfer-request/get-stock-transfer-request.query.js";
+import { ListStockTransferRequestsQuery } from "./queries/list-stock-transfer-requests/list-stock-transfer-requests.query.js";
+import { StockTransferRequestStatus } from "./domain/stock-transfer-request-status.enum.js";
 import {
     StockTransferRequestNotFoundError,
     StockTransferRequestNotPendingError,
-} from "./domain/stock-transfer-request.errors";
-import { ScanCodeQuery, type ScanCodeResponse } from "../../shared/queries/scan-code.query";
-import { type FindGoodByCodeResponse } from "../../shared/queries/find-good-by-code.query";
+} from "./domain/stock-transfer-request.errors.js";
+import { ScanCodeQuery, type ScanCodeResponse } from "../../shared/queries/scan-code.query.js";
+import { type FindGoodByCodeResponse } from "../../shared/queries/find-good-by-code.query.js";
 
 describe("Warehouse Module — Integration Tests", () => {
     let moduleRef: TestingModule;

@@ -1,0 +1,27 @@
+diff --git a/dist/plugin/visitors/model-class.visitor.js b/dist/plugin/visitors/model-class.visitor.js
+index 58580f80dc1c719251937e74a350952c140ab70f..39045361aeefcfb5911a1773e7b4bdb46c62f552 100644
+--- a/dist/plugin/visitors/model-class.visitor.js
++++ b/dist/plugin/visitors/model-class.visitor.js
+@@ -231,7 +231,8 @@ class ModelClassVisitor extends abstract_visitor_1.AbstractFileVisitor {
+             return [];
+         }
+         const identifier = (0, type_reference_to_identifier_util_1.typeReferenceToIdentifier)(typeReferenceDescriptor, hostFilename, options, factory, type, this._typeImports);
+-        const initializer = factory.createArrowFunction(undefined, undefined, [], undefined, undefined, identifier);
++        const asyncModifier = options.esmCompatible ? [factory.createModifier(ts.SyntaxKind.AsyncKeyword)] : undefined;
++        const initializer = factory.createArrowFunction(asyncModifier, undefined, [], undefined, undefined, identifier);
+         return [factory.createPropertyAssignment(key, initializer)];
+     }
+     createInitializerForArrayLiteralTypeNode(node, factory, typeChecker, existingProperties, hostFilename, options) {
+@@ -318,7 +319,11 @@ class ModelClassVisitor extends abstract_visitor_1.AbstractFileVisitor {
+         }
+         const typeReferenceDescriptor = { typeName: (0, ast_utils_1.getText)(type, typeChecker) };
+         const enumIdentifier = (0, type_reference_to_identifier_util_1.typeReferenceToIdentifier)(typeReferenceDescriptor, hostFilename, options, factory, type, this._typeImports);
+-        const enumProperty = factory.createPropertyAssignment(key, enumIdentifier);
++        let enumValue = enumIdentifier;
++        if (options.esmCompatible) {
++            enumValue = factory.createArrowFunction([factory.createModifier(ts.SyntaxKind.AsyncKeyword)], undefined, [], undefined, undefined, enumIdentifier);
++        }
++        const enumProperty = factory.createPropertyAssignment(key, enumValue);
+         if (isArrayType) {
+             const isArrayKey = 'isArray';
+             const isArrayProperty = factory.createPropertyAssignment(isArrayKey, factory.createIdentifier('true'));

@@ -1,4 +1,4 @@
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { generateEntityId } from "../../../libs/ddd/utils/randomize-entity-id.js";
 import { Currency } from "../../../shared/value-objects/currency.js";
 import { Money } from "../../../shared/value-objects/money.js";

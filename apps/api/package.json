@@ -2,6 +2,7 @@
     "name": "@mtct/api",
     "version": "0.0.1",
     "private": true,
+    "type": "module",
     "license": "UNLICENSED",
     "pnpm": {
         "onlyBuiltDependencies": [
@@ -11,9 +12,9 @@
     "mikro-orm": {},
     "scripts": {
         "build": "nest build",
-        "dev": "tsx watch src/main.ts",
-        "start": "tsx src/main.ts",
-        "start:debug": "tsx watch --inspect src/main.ts",
+        "dev": "nest start --watch",
+        "start": "nest start",
+        "start:debug": "nest start --debug --watch",
         "start:prod": "node dist/main",
         "cli": "tsx dist/src/cli/cli-main.js",
         "migration:create": "mikro-orm migration:create",
@@ -82,7 +83,6 @@
         "ts-node": "10.9.2",
         "tsconfig-paths": "4.2.0",
         "tsx": "4.21.0",
-        "typescript": "5.7.3",
         "typescript-eslint": "8.20.0",
         "vitest": "4.1.1"
     }

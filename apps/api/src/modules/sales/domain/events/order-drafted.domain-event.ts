@@ -1,6 +1,6 @@
-import { DomainEvent, DomainEventProperties } from "../../../../libs/ddd";
-import { OrderLines } from "../order-lines.value-object";
-import { OrderSource } from "../order-source.enum";
+import { DomainEvent, DomainEventProperties } from "../../../../libs/ddd/index.js";
+import { OrderLines } from "../order-lines.value-object.js";
+import { OrderSource } from "../order-source.enum.js";
 
 export class OrderDraftedDomainEvent extends DomainEvent {
     readonly customerId: string;

@@ -1,5 +1,3 @@
-import "tsconfig-paths/register";
-
 const originalWarn = console.warn;
 console.warn = (...args: unknown[]) => {
     if (typeof args[0] === "string" && args[0].includes("driver specific imports")) {

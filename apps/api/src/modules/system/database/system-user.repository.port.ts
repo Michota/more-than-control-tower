@@ -1,4 +1,4 @@
-import { PaginationParameters } from "src/libs/types/pagination.js";
+import { PaginationParameters } from "../../../libs/types/pagination.js";
 import { RepositoryPort } from "../../../libs/ports/repository.port.js";
 import { SystemUserAggregate } from "../domain/system-user.aggregate.js";
 
