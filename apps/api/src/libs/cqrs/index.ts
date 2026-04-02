@@ -1,1 +1,1 @@
-export { Command } from "../cqrs/command";
+export { Command } from "../cqrs/command.js";

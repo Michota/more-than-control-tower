@@ -1,4 +1,4 @@
-import { CustomerAddress } from "./customer-address.value-object";
+import { CustomerAddress } from "./customer-address.value-object.js";
 
 const validAddress = () =>
     new CustomerAddress({

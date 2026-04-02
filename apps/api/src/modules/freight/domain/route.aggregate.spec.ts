@@ -1,18 +1,18 @@
-import { uuidRegex } from "src/shared/utils/uuid-regex";
-import { CrewMember } from "./crew-member.value-object";
-import { CrewMemberRole } from "./crew-member-role.enum";
-import { RouteSchedule, ScheduleType } from "./route-schedule.value-object";
-import { RouteStatus } from "./route-status.enum";
-import { RouteStop } from "./route-stop.value-object";
-import { RouteAggregate } from "./route.aggregate";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
+import { CrewMember } from "./crew-member.value-object.js";
+import { CrewMemberRole } from "./crew-member-role.enum.js";
+import { RouteSchedule, ScheduleType } from "./route-schedule.value-object.js";
+import { RouteStatus } from "./route-status.enum.js";
+import { RouteStop } from "./route-stop.value-object.js";
+import { RouteAggregate } from "./route.aggregate.js";
 import {
     RouteAlreadyActiveError,
     RouteAlreadyArchivedError,
     RouteAlreadyInactiveError,
     RouteArchivedCannotBeModifiedError,
-} from "./route.errors";
-import { RouteCreatedDomainEvent } from "./events/route-created.domain-event";
-import { RouteArchivedDomainEvent } from "./events/route-archived.domain-event";
+} from "./route.errors.js";
+import { RouteCreatedDomainEvent } from "./events/route-created.domain-event.js";
+import { RouteArchivedDomainEvent } from "./events/route-archived.domain-event.js";
 
 describe("RouteAggregate", () => {
     describe("create()", () => {

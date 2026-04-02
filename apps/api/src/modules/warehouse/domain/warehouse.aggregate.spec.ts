@@ -1,5 +1,5 @@
-import { uuidRegex } from "src/shared/utils/uuid-regex.js";
-import { Address } from "src/shared/value-objects/address.value-object.js";
+import { uuidRegex } from "../../../shared/utils/uuid-regex.js";
+import { Address } from "../../../shared/value-objects/address.value-object.js";
 import { WarehouseStatus } from "./warehouse-status.enum.js";
 import { WarehouseType } from "./warehouse-type.enum.js";
 import { WarehouseAggregate } from "./warehouse.aggregate.js";

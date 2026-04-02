@@ -1,5 +1,5 @@
 import { defineEntity, p } from "@mikro-orm/core";
-import { Product } from "./product.entity";
+import { Product } from "./product.entity.js";
 
 const OrderLineSchema = defineEntity({
     name: "OrderLine",

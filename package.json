@@ -30,7 +30,16 @@
         "lint-staged": "16.4.0",
         "prettier": "3.4.2",
         "prettier-plugin-tailwindcss": "0.7.2",
-        "turbo": "2.5.4"
+        "turbo": "2.5.4",
+        "typescript": "6.0.2"
     },
-    "packageManager": "pnpm@10.28.1"
+    "packageManager": "pnpm@10.28.1",
+    "pnpm": {
+        "overrides": {
+            "typescript": "6.0.2"
+        },
+        "patchedDependencies": {
+            "@nestjs/swagger@11.2.6": "patches/@nestjs__swagger@11.2.6.patch"
+        }
+    }
 }

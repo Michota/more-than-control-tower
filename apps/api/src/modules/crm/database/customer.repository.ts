@@ -7,7 +7,7 @@ import { CustomerRepositoryPort, PersistedContactSnapshot } from "./customer.rep
 import { Customer } from "./customer.entity.js";
 import { CustomerContact } from "./customer-contact.entity.js";
 import { CustomerMapper } from "./customer.mapper.js";
-import { PaginationParameters } from "src/libs/types/pagination.js";
+import { PaginationParameters } from "../../../libs/types/pagination.js";
 
 const POPULATE = ["addresses", "contacts"] as const;
 

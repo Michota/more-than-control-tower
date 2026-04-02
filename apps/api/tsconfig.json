@@ -2,7 +2,6 @@
     "extends": "@mtct/typescript-config/nestjs.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": "./",
         "types": ["vitest/globals"]
     },
     "exclude": [".kanelrc.js", "node_modules", "dist"]

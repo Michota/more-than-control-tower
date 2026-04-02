@@ -3,7 +3,7 @@ import { EntityId } from "../../../libs/ddd/entities/entity-id.js";
 import { Mapper } from "../../../libs/ddd/mapper.interface.js";
 import { Currency } from "../../../shared/value-objects/currency.js";
 import { Money } from "../../../shared/value-objects/money.js";
-import Decimal from "decimal.js";
+import { Decimal } from "decimal.js";
 import { OrderLine as DomainOrderLine } from "../domain/order-line.value-object.js";
 import { OrderLines } from "../domain/order-lines.value-object.js";
 import { OrderItemEntity } from "../domain/order-item.entity.js";

@@ -1,4 +1,4 @@
-import { ValueObject } from "../../libs/ddd";
+import { ValueObject } from "../../libs/ddd/index.js";
 import { ValueObjectProperties } from "../../libs/ddd/value-objects/value-object.js";
 import { ZodType } from "zod";
 
