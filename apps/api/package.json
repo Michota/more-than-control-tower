@@ -15,7 +15,7 @@
         "start": "tsx src/main.ts",
         "start:debug": "tsx watch --inspect src/main.ts",
         "start:prod": "node dist/main",
-        "cli": "node dist/src/cli/cli-main.js",
+        "cli": "tsx dist/src/cli/cli-main.js",
         "migration:create": "mikro-orm migration:create",
         "migration:up": "mikro-orm migration:up",
         "migration:down": "mikro-orm migration:down",
