@@ -1,2 +1,9 @@
 export PATH="$HOME/.local/share/pnpm:$PATH"
+
+if [ ! -f packages/api-client/openapi.json ]; then
+  echo "ERROR: packages/api-client/openapi.json not found."
+  echo "Run 'pnpm sync:api-client' with backend running before pushing."
+  exit 1
+fi
+
 pnpm run check-types
