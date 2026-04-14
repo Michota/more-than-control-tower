@@ -78,8 +78,7 @@ export const client = async <TData, TError = unknown, TVariables = unknown>(
         retry: 0,
     });
 
-    const text = await response.text();
-    const data = text ? (JSON.parse(text) as TData) : (null as TData);
+    const data = await response.json<TData>().catch(() => null as TData);
     return { data, status: response.status, statusText: response.statusText };
 };
 
