@@ -80,8 +80,8 @@ export const client = async <TData, TError = unknown, TVariables = unknown>(
         retry: 0,
     });
 
-    const hasBody = response.status !== 204 && response.headers.get("content-length") !== "0";
-    const data = hasBody ? await response.json<TData>() : (null as TData);
+    const text = await response.text();
+    const data = (text ? JSON.parse(text) : null) as TData;
     return { data, status: response.status, statusText: response.statusText };
 };
 

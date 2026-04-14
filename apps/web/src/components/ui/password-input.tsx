@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import * as m from "@/lib/paraglide/messages";
 
-function PasswordInput({ className, ...props }: Omit<React.ComponentProps<"input">, "type">) {
+function PasswordInput({ className, ref, ...props }: Omit<React.ComponentProps<"input">, "type">) {
     const [visible, setVisible] = React.useState(false);
 
     return (
         <div className="relative">
-            <Input type={visible ? "text" : "password"} className={cn("pr-9", className)} {...props} />
+            <Input ref={ref} type={visible ? "text" : "password"} className={cn("pr-9", className)} {...props} />
             <Button
                 type="button"
                 variant="ghost"
