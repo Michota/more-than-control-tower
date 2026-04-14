@@ -3,6 +3,7 @@ import { useLocation } from "@tanstack/react-router";
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -11,9 +12,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Warehouse, Package, Boxes, ClipboardList, ArrowLeftRight, LayoutGrid } from "lucide-react";
+import { Warehouse, Package, Boxes, ClipboardList, ArrowLeftRight, LayoutGrid, LogOut } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import * as m from "@/lib/paraglide/messages";
+import { useAuth } from "@/hooks/use-auth";
 
 interface NavItem {
     label: () => string;
@@ -56,6 +58,7 @@ const warehouseItems: NavItem[] = [
 
 export function AppSidebar() {
     const location = useLocation();
+    const { logout } = useAuth();
 
     return (
         <Sidebar>
@@ -83,6 +86,16 @@ export function AppSidebar() {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
+            <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton onClick={() => void logout()}>
+                            <LogOut />
+                            <span>{m.common_logout()}</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarFooter>
         </Sidebar>
     );
 }

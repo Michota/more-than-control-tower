@@ -220,5 +220,6 @@
     "permission_hr_manage_availability_desc": "Confirm/reject availability and set availability without approval",
 
     "common_show_password": "Show password",
-    "common_hide_password": "Hide password"
+    "common_hide_password": "Hide password",
+    "common_logout": "Log out"
 }
