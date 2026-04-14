@@ -22,13 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
     });
 
-    const logoutMutation = useLogoutAuthApi({
-        mutation: {
-            onSettled: () => {
-                void queryClient.invalidateQueries({ queryKey: sessionAuthQueryKey() });
-            },
-        },
-    });
+    const logoutMutation = useLogoutAuthApi();
 
     const login = useCallback(
         async (email: string, password: string) => {
@@ -39,7 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = useCallback(async () => {
         await logoutMutation.mutateAsync().catch(() => {});
-    }, [logoutMutation]);
+        queryClient.removeQueries({ queryKey: sessionAuthQueryKey() });
+    }, [logoutMutation, queryClient]);
 
     return <AuthContext value={{ isAuthenticated, isLoading, login, logout }}>{children}</AuthContext>;
 }
