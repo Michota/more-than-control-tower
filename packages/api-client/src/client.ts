@@ -54,10 +54,11 @@ const api = ky.create({
                         return ky(request, { credentials: "include", retry: 0 });
                     }
                 } catch {
-                    // Refresh failed — redirect to login
+                    // Refresh failed — let the error propagate.
+                    // Auth state is managed reactively via session query;
+                    // route guards handle redirect to login.
                 }
 
-                window.location.href = "/login";
                 return response;
             },
         ],
