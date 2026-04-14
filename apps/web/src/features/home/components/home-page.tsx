@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useTheme } from "@/lib/theme";
+import { getNextTheme, getSystemTheme, useTheme } from "@/lib/theme";
 import { usePermissions } from "@/hooks/use-permissions";
 import { WarehousePermission, SalesPermission } from "@mtct/shared-types";
 import { Monitor, Moon, Sun } from "lucide-react";
@@ -8,19 +8,16 @@ import * as m from "@/lib/paraglide/messages";
 function ThemeToggle() {
     const { setTheme, theme } = useTheme();
 
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const next =
-        theme === "system" ? (systemTheme === "dark" ? "light" : "dark") : theme === "light" ? "dark" : "system";
+    const next = getNextTheme(theme, getSystemTheme());
+
+    const icon =
+        theme === "system" ? <Monitor className="size-4" /> : theme === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />;
+
+    const label = `Theme: ${theme}`;
 
     return (
-        <Button variant="outline" size="icon" onClick={() => setTheme(next)}>
-            {theme === "system" ? (
-                <Monitor className="size-4" />
-            ) : theme === "dark" ? (
-                <Moon className="size-4" />
-            ) : (
-                <Sun className="size-4" />
-            )}
+        <Button variant="outline" size="icon" aria-label={label} onClick={() => setTheme(next)}>
+            {icon}
         </Button>
     );
 }
