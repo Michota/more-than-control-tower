@@ -12,7 +12,8 @@
     },
     "scripts": {
         "export:openapi": "curl -sf http://localhost:3000/api-json | npx prettier --parser json > openapi.json",
-        "generate": "[ -f openapi.json ] && kubb generate && echo 'export type Schemas = string;' > src/gen/models/Schemas.ts || echo 'skipped: openapi.json not found (run pnpm sync:api-client)'",
+        "generate": "[ -f openapi.json ] && kubb generate && pnpm generate:fix-schemas || echo 'skipped: openapi.json not found (run pnpm sync:api-client)'",
+        "generate:fix-schemas": "echo '// TODO: remove when OpenAPI spec empty $refs (#/components/schemas/) are fixed in backend\nexport type Schemas = string;' > src/gen/models/Schemas.ts",
         "sync": "pnpm export:openapi && pnpm generate"
     },
     "dependencies": {

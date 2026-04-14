@@ -54,9 +54,10 @@ const api = ky.create({
                         return ky(request, { credentials: "include", retry: 0 });
                     }
                 } catch {
-                    // Refresh failed — let the error propagate.
-                    // Auth state is managed reactively via session query;
-                    // route guards handle redirect to login.
+                    // Refresh failed — fall through to return the 401.
+                    // Ky will throw HTTPError for non-2xx, so React Query
+                    // sees an error. Auth state is managed reactively via
+                    // session query; route guards handle redirect to login.
                 }
 
                 return response;
@@ -79,7 +80,8 @@ export const client = async <TData, TError = unknown, TVariables = unknown>(
         retry: 0,
     });
 
-    const data = await response.json<TData>().catch(() => null as TData);
+    const hasBody = response.status !== 204 && response.headers.get("content-length") !== "0";
+    const data = hasBody ? await response.json<TData>() : (null as TData);
     return { data, status: response.status, statusText: response.statusText };
 };
 
