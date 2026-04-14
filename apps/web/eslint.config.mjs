@@ -1,5 +1,6 @@
 // @ts-check
 import { baseConfig } from "../../packages/eslint-config/base.mjs";
+import { i18nConfig } from "../../packages/eslint-config/i18n.mjs";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 import pluginRouter from "@tanstack/eslint-plugin-router";
 import reactHooks from "eslint-plugin-react-hooks";
@@ -11,6 +12,7 @@ export default tseslint.config(
         ignores: ["dist", "src/routeTree.gen.ts", "src/lib/paraglide"],
     },
     ...baseConfig,
+    ...i18nConfig,
     ...pluginQuery.configs["flat/recommended"],
     ...pluginRouter.configs["flat/recommended"],
     {
