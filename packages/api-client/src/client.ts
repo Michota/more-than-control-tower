@@ -24,6 +24,8 @@ export type ResponseConfig<TData = unknown> = {
 
 export type ResponseErrorConfig<TError = unknown> = TError;
 
+export type Client = typeof client;
+
 const api = ky.create({
     prefixUrl: "/api",
     credentials: "include",
