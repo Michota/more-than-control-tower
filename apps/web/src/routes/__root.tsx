@@ -9,7 +9,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         <TooltipProvider>
             <Outlet />
             <ReactQueryDevtools />
-            <TanStackRouterDevtools />
+            <TanStackRouterDevtools position="top-right" />
         </TooltipProvider>
     ),
 });
