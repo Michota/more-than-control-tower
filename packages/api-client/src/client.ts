@@ -65,7 +65,8 @@ const api = ky.create({
 export const client = async <TData, TError = unknown, TVariables = unknown>(
     config: RequestConfig<TVariables>,
 ): Promise<ResponseConfig<TData>> => {
-    const response = await api(config.url ?? "", {
+    const url = (config.url ?? "").replace(/^\//, "");
+    const response = await api(url, {
         method: config.method,
         headers: config.headers,
         signal: config.signal,
@@ -75,7 +76,8 @@ export const client = async <TData, TError = unknown, TVariables = unknown>(
         retry: 0,
     });
 
-    const data = (await response.json()) as TData;
+    const text = await response.text();
+    const data = text ? (JSON.parse(text) as TData) : (null as TData);
     return { data, status: response.status, statusText: response.statusText };
 };
 
