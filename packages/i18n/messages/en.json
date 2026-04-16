@@ -217,5 +217,9 @@
     "permission_erp_view_wallet_desc": "View wallet balance and transactions",
 
     "permission_hr_manage_availability": "Manage Availability",
-    "permission_hr_manage_availability_desc": "Confirm/reject availability and set availability without approval"
+    "permission_hr_manage_availability_desc": "Confirm/reject availability and set availability without approval",
+
+    "common_show_password": "Show password",
+    "common_hide_password": "Hide password",
+    "common_logout": "Log out"
 }

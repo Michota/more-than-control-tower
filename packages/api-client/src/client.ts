@@ -24,6 +24,8 @@ export type ResponseConfig<TData = unknown> = {
 
 export type ResponseErrorConfig<TError = unknown> = TError;
 
+export type Client = typeof client;
+
 const api = ky.create({
     prefixUrl: "/api",
     credentials: "include",
@@ -52,10 +54,12 @@ const api = ky.create({
                         return ky(request, { credentials: "include", retry: 0 });
                     }
                 } catch {
-                    // Refresh failed — redirect to login
+                    // Refresh failed — fall through to return the 401.
+                    // Ky will throw HTTPError for non-2xx, so React Query
+                    // sees an error. Auth state is managed reactively via
+                    // session query; route guards handle redirect to login.
                 }
 
-                window.location.href = "/login";
                 return response;
             },
         ],
@@ -65,7 +69,8 @@ const api = ky.create({
 export const client = async <TData, TError = unknown, TVariables = unknown>(
     config: RequestConfig<TVariables>,
 ): Promise<ResponseConfig<TData>> => {
-    const response = await api(config.url ?? "", {
+    const url = (config.url ?? "").replace(/^\//, "");
+    const response = await api(url, {
         method: config.method,
         headers: config.headers,
         signal: config.signal,
@@ -75,7 +80,8 @@ export const client = async <TData, TError = unknown, TVariables = unknown>(
         retry: 0,
     });
 
-    const data = (await response.json()) as TData;
+    const text = await response.text();
+    const data = (text ? JSON.parse(text) : null) as TData;
     return { data, status: response.status, statusText: response.statusText };
 };
 

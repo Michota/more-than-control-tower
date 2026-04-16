@@ -217,5 +217,9 @@
     "permission_erp_view_wallet_desc": "Wyświetl saldo portfela i transakcje",
 
     "permission_hr_manage_availability": "Zarządzaj dostępnością",
-    "permission_hr_manage_availability_desc": "Potwierdzaj/odrzucaj dostępność i ustawiaj dostępność bez zatwierdzenia"
+    "permission_hr_manage_availability_desc": "Potwierdzaj/odrzucaj dostępność i ustawiaj dostępność bez zatwierdzenia",
+
+    "common_show_password": "Pokaż hasło",
+    "common_hide_password": "Ukryj hasło",
+    "common_logout": "Wyloguj się"
 }

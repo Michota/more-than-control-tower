@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { HTTPError } from "ky";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,7 +9,6 @@ import type { z } from "zod";
 
 export function useLoginForm() {
     const { login } = useAuth();
-    const navigate = useNavigate();
     const [formError, setFormError] = useState<string | null>(null);
 
     const form = useAppForm({
@@ -25,7 +23,6 @@ export function useLoginForm() {
             setFormError(null);
             try {
                 await login(value.email, value.password);
-                await navigate({ to: "/" });
             } catch (err) {
                 if (err instanceof HTTPError) {
                     const body: { message?: string } = await err.response

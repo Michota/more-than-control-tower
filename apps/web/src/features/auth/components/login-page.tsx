@@ -42,11 +42,7 @@ export function LoginPage() {
 
                         <form.AppField name="password">
                             {(field) => (
-                                <field.Input
-                                    label={m.auth_password_label()}
-                                    type="password"
-                                    autoComplete="current-password"
-                                />
+                                <field.PasswordInput label={m.auth_password_label()} autoComplete="current-password" />
                             )}
                         </form.AppField>
 
