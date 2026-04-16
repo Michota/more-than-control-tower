@@ -15,7 +15,7 @@ function getStoredTheme(): Theme {
     return "system";
 }
 
-function getSystemTheme(): ResolvedTheme {
+export function getSystemTheme(): ResolvedTheme {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -49,6 +49,12 @@ function subscribe(listener: () => void) {
 
 function getSnapshot(): Theme {
     return getStoredTheme();
+}
+
+export function getNextTheme(current: Theme, systemPref: ResolvedTheme): Theme {
+    if (current === "system") return systemPref === "dark" ? "light" : "dark";
+    if (current === "light") return "dark";
+    return "system";
 }
 
 export function useTheme() {
