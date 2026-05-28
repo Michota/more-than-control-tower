@@ -64,6 +64,7 @@ import { PERMISSION_REGISTRY, PermissionRegistry } from "../../shared/infrastruc
 import { CreateEmployeeCommand } from "../hr/commands/create-employee/create-employee.command.js";
 import { CreatePositionCommand } from "../hr/commands/create-position/create-position.command.js";
 import { AssignPositionCommand } from "../hr/commands/assign-position/assign-position.command.js";
+import { PositionKeyAlreadyExistsError } from "../hr/domain/employee.errors.js";
 import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
 import { CancelTransferRequestsByRequesterCommand } from "../../shared/commands/cancel-transfer-requests-by-requester.command.js";
 
@@ -124,10 +125,9 @@ describe("Freight Module — Integration Tests", () => {
         try {
             await commandBus.execute(new CreatePositionCommand({ key, displayName, permissionKeys }));
         } catch (e: unknown) {
+            if (e instanceof PositionKeyAlreadyExistsError) return;
             const msg = e instanceof Error ? e.message : String(e);
-            if (!msg.includes("already exists")) {
-                throw new Error(`Failed to create position "${key}": ${msg}`);
-            }
+            throw new Error(`Failed to create position "${key}": ${msg}`);
         }
     }
 

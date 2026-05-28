@@ -4,7 +4,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "tsc"
+        "build": "tsc",
+        "build:watch": "tsc --watch",
+        "check-types": "tsc --noEmit"
     },
     "exports": {
         ".": {

@@ -1,0 +1,15 @@
+services:
+    postgres:
+        image: postgres:18
+        container_name: mtct-postgres-test
+        environment:
+            POSTGRES_DB: ${TEST_DB_NAME:-app_test}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+        ports:
+            - "127.0.0.1:5433:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${TEST_DB_NAME:-app_test}"]
+            interval: 5s
+            timeout: 3s
+            retries: 5

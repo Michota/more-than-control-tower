@@ -1,0 +1,85 @@
+services:
+    postgres:
+        image: postgres:18
+        container_name: mtct-postgres-dev
+        environment:
+            POSTGRES_DB: ${DB_NAME:-mtct}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+        volumes:
+            - postgres_dev_data:/var/lib/postgresql
+        ports:
+            - "127.0.0.1:5432:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-mtct}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    api:
+        build:
+            context: .
+            dockerfile: apps/api/Dockerfile.dev
+        container_name: mtct-api-dev
+        user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+        volumes:
+            - ./apps/api/src:/app/apps/api/src
+            - ./packages/shared-types/src:/app/packages/shared-types/src
+        environment:
+            NODE_ENV: ${NODE_ENV:-development}
+            SERVER_PORT: ${SERVER_PORT:-3000}
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_USER: ${DB_USER:-postgres}
+            DB_PASSWORD: ${DB_PASSWORD:-postgres}
+            DB_NAME: ${DB_NAME:-mtct}
+            CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4200}
+            JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-at-least-32-chars-long}
+            JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+            JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-jwt-refresh-secret-at-least-32-chars}
+            JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-36h}
+        ports:
+            - "3000:3000"
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+    web:
+        build:
+            context: .
+            dockerfile: apps/web/Dockerfile.dev
+        container_name: mtct-web-dev
+        user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+        volumes:
+            - ./apps/web/src:/app/apps/web/src
+            - ./apps/web/public:/app/apps/web/public
+            - ./apps/web/index.html:/app/apps/web/index.html
+            - ./packages/shared-types/src:/app/packages/shared-types/src
+            - ./packages/api-client/src:/app/packages/api-client/src
+            - ./packages/i18n/src:/app/packages/i18n/src
+            - ./packages/i18n/messages:/app/packages/i18n/messages
+        environment:
+            API_PROXY_TARGET: http://api:3000
+        ports:
+            - "4200:4200"
+        depends_on:
+            - api
+
+    pgadmin:
+        image: dpage/pgadmin4:latest
+        container_name: mtct-pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@mtct.local}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+            PGADMIN_LISTEN_PORT: 5050
+        ports:
+            - "5050:5050"
+        volumes:
+            - pgadmin_data:/var/lib/pgadmin
+        depends_on:
+            postgres:
+                condition: service_healthy
+
+volumes:
+    postgres_dev_data:
+    pgadmin_data:

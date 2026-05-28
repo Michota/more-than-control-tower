@@ -1,14 +1,21 @@
 services:
     postgres:
         image: postgres:18
+        container_name: mtct-postgres
         environment:
-            POSTGRES_DB: ${DB_NAME}
-            POSTGRES_USER: ${DB_USER}
-            POSTGRES_PASSWORD: ${DB_PASSWORD}
-        ports:
-            - "5432:5432"
+            POSTGRES_DB: ${DB_NAME:-mtct}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
         volumes:
             - postgres_data:/var/lib/postgresql
+        ports:
+            - "127.0.0.1:5432:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-mtct}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        restart: unless-stopped
 
 volumes:
     postgres_data:

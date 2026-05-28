@@ -126,6 +126,12 @@ describe("HR Module — Integration Tests", () => {
         }
     }
 
+    function futureDate(daysAhead: number): string {
+        const d = new Date();
+        d.setDate(d.getDate() + daysAhead);
+        return d.toISOString().slice(0, 10);
+    }
+
     // ─── Position CRUD ───────────────────────────────────────
 
     describe("Position Management", () => {
@@ -446,13 +452,15 @@ describe("HR Module — Integration Tests", () => {
     describe("Set Availability", () => {
         it("sets availability entries for an employee (by employee → PENDING_APPROVAL)", async () => {
             const { employeeId: id, userId } = await createLinkedEmployee();
+            const d1 = futureDate(1);
+            const d2 = futureDate(2);
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
                     entries: [
-                        { date: "2026-04-01", startTime: "08:00", endTime: "16:00" },
-                        { date: "2026-04-02", startTime: "09:00", endTime: "17:00" },
+                        { date: d1, startTime: "08:00", endTime: "16:00" },
+                        { date: d2, startTime: "09:00", endTime: "17:00" },
                     ],
                     actorId: userId,
                 }),
@@ -463,9 +471,9 @@ describe("HR Module — Integration Tests", () => {
             );
 
             expect(result.entries).toHaveLength(2);
-            expect(result.entries[0].date).toBe("2026-04-01");
+            expect(result.entries[0].date).toBe(d1);
             expect(result.entries[0].status).toBe(AvailabilityEntryStatus.PENDING_APPROVAL);
-            expect(result.entries[1].date).toBe("2026-04-02");
+            expect(result.entries[1].date).toBe(d2);
         });
 
         it("sets availability entries by manager → CONFIRMED", async () => {
@@ -474,7 +482,7 @@ describe("HR Module — Integration Tests", () => {
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
-                    entries: [{ date: "2026-04-03", startTime: "08:00", endTime: "16:00" }],
+                    entries: [{ date: futureDate(3), startTime: "08:00", endTime: "16:00" }],
                     actorId: MANAGER_USER_ID,
                 }),
             );
@@ -489,11 +497,12 @@ describe("HR Module — Integration Tests", () => {
 
         it("replaces existing entries for the same dates", async () => {
             const { employeeId: id, userId } = await createLinkedEmployee();
+            const day = futureDate(5);
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
-                    entries: [{ date: "2026-04-05", startTime: "08:00", endTime: "12:00" }],
+                    entries: [{ date: day, startTime: "08:00", endTime: "12:00" }],
                     actorId: userId,
                 }),
             );
@@ -501,7 +510,7 @@ describe("HR Module — Integration Tests", () => {
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
-                    entries: [{ date: "2026-04-05", startTime: "10:00", endTime: "18:00" }],
+                    entries: [{ date: day, startTime: "10:00", endTime: "18:00" }],
                     actorId: userId,
                 }),
             );
@@ -510,10 +519,10 @@ describe("HR Module — Integration Tests", () => {
                 new GetEmployeeAvailabilityQuery(id),
             );
 
-            const april5 = result.entries.filter((e) => e.date === "2026-04-05");
-            expect(april5).toHaveLength(1);
-            expect(april5[0].startTime).toBe("10:00");
-            expect(april5[0].endTime).toBe("18:00");
+            const replaced = result.entries.filter((e) => e.date === day);
+            expect(replaced).toHaveLength(1);
+            expect(replaced[0].startTime).toBe("10:00");
+            expect(replaced[0].endTime).toBe("18:00");
         });
 
         it("throws EmployeeNotFoundError for non-existent employee", async () => {
@@ -521,7 +530,7 @@ describe("HR Module — Integration Tests", () => {
                 commandBus.execute(
                     new SetAvailabilityCommand({
                         employeeId: "00000000-0000-0000-0000-000000000000",
-                        entries: [{ date: "2026-04-01", startTime: "08:00", endTime: "16:00" }],
+                        entries: [{ date: futureDate(1), startTime: "08:00", endTime: "16:00" }],
                         actorId: MANAGER_USER_ID,
                     }),
                 ),
@@ -535,7 +544,7 @@ describe("HR Module — Integration Tests", () => {
                 commandBus.execute(
                     new SetAvailabilityCommand({
                         employeeId: id,
-                        entries: [{ date: "2026-04-10", startTime: "08:00", endTime: "16:00" }],
+                        entries: [{ date: futureDate(10), startTime: "08:00", endTime: "16:00" }],
                         actorId: "someone-else",
                     }),
                 ),
@@ -574,39 +583,41 @@ describe("HR Module — Integration Tests", () => {
     describe("Confirm Availability", () => {
         it("confirms pending entries", async () => {
             const { employeeId: id, userId } = await createLinkedEmployee();
+            const day = futureDate(7);
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
-                    entries: [{ date: "2026-05-01", startTime: "08:00", endTime: "16:00" }],
+                    entries: [{ date: day, startTime: "08:00", endTime: "16:00" }],
                     actorId: userId,
                 }),
             );
 
-            await commandBus.execute(new ConfirmAvailabilityCommand({ employeeId: id, dates: ["2026-05-01"] }));
+            await commandBus.execute(new ConfirmAvailabilityCommand({ employeeId: id, dates: [day] }));
 
             const result = await queryBus.execute<GetEmployeeAvailabilityQuery, GetEmployeeAvailabilityResponse>(
                 new GetEmployeeAvailabilityQuery(id),
             );
 
-            const may1 = result.entries.find((e) => e.date === "2026-05-01");
-            expect(may1).toBeDefined();
-            expect(may1!.status).toBe(AvailabilityEntryStatus.CONFIRMED);
+            const entry = result.entries.find((e) => e.date === day);
+            expect(entry).toBeDefined();
+            expect(entry!.status).toBe(AvailabilityEntryStatus.CONFIRMED);
         });
 
         it("throws when entries already confirmed", async () => {
             const id = await createEmployee();
+            const day = futureDate(8);
 
             await commandBus.execute(
                 new SetAvailabilityCommand({
                     employeeId: id,
-                    entries: [{ date: "2026-05-02", startTime: "08:00", endTime: "16:00" }],
+                    entries: [{ date: day, startTime: "08:00", endTime: "16:00" }],
                     actorId: MANAGER_USER_ID,
                 }),
             );
 
             await expect(
-                commandBus.execute(new ConfirmAvailabilityCommand({ employeeId: id, dates: ["2026-05-02"] })),
+                commandBus.execute(new ConfirmAvailabilityCommand({ employeeId: id, dates: [day] })),
             ).rejects.toThrow(AvailabilityAlreadyConfirmedError);
         });
     });
