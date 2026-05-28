@@ -7,3 +7,8 @@ if [ ! -f packages/api-client/openapi.json ]; then
 fi
 
 pnpm run check-types
+
+if ! git rev-parse @{push} >/dev/null 2>&1 || git diff --name-only HEAD @{push} | grep -q '^apps/api/'; then
+  pnpm run test:db:up
+  pnpm run test:api:integration
+fi

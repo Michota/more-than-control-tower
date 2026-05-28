@@ -4,11 +4,12 @@ dist
 /node_modules
 /build
 
-# Turbo
-.turbo
-
 # TanStack Router
 .tanstack
+
+# Paraglide / inlang
+packages/i18n/project.inlang/cache/
+packages/i18n/project.inlang/project_id
 
 # Logs
 logs

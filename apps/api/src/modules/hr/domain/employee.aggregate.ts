@@ -67,7 +67,8 @@ export class EmployeeAggregate extends AggregateRoot<EmployeeProperties> {
     }
 
     update(props: Partial<Pick<EmployeeProperties, "firstName" | "lastName" | "email" | "phone">>): void {
-        Object.assign(this.properties, props);
+        const defined = Object.fromEntries(Object.entries(props).filter(([, v]) => v !== undefined));
+        Object.assign(this.properties, defined);
         this.validate();
     }
 

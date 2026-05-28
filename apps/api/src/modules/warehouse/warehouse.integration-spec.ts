@@ -39,6 +39,7 @@ import {
 import { DeactivateSectorCommand } from "./commands/change-sector-status/change-sector-status.command.js";
 import { WarehouseHasStockError, GoodHasActiveStockError, GoodNotFoundError } from "./domain/good.errors.js";
 import { PermissionRegistryModule } from "../../shared/infrastructure/permission-registry.module.js";
+import { StockReservationCheckerModule } from "../../shared/infrastructure/stock-reservation-checker.module.js";
 import { AttachCodeToGoodCommand } from "./commands/attach-code-to-good/attach-code-to-good.command.js";
 import { DetachCodeFromGoodCommand } from "./commands/detach-code-from-good/detach-code-from-good.command.js";
 import { FindGoodByCodeQuery } from "./queries/find-good-by-code/find-good-by-code.query.js";
@@ -68,7 +69,13 @@ describe("Warehouse Module — Integration Tests", () => {
 
     beforeAll(async () => {
         moduleRef = await Test.createTestingModule({
-            imports: [TestMikroOrmDatabaseModule(), CqrsModule.forRoot(), PermissionRegistryModule, WarehouseModule],
+            imports: [
+                TestMikroOrmDatabaseModule(),
+                CqrsModule.forRoot(),
+                PermissionRegistryModule,
+                StockReservationCheckerModule,
+                WarehouseModule,
+            ],
         }).compile();
 
         await moduleRef.init();
